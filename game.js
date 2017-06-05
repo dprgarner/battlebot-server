@@ -1,36 +1,39 @@
 const Rx = require('rxjs/Rx');
 
-function game({ incomingTurn$, reducer, validator }) {
-  // There's a cyclic dependency of streams, here, so something needs to be a
-  // subject.
-  const validTurn$ = new Rx.Subject();
+function game({ reducer, validator }) {
+  // Put the resulting game in a .let()
+  return incomingTurn$ => {
+    // There's a cyclic dependency of streams, here, so something needs to be
+    // a subject.
+    const validTurn$ = new Rx.Subject();
 
-  // The initial game state comes from an empty call to reducer.
-  const state$ = validTurn$
-    .startWith(reducer())
-    .scan(reducer);
+    // The initial game state comes from an empty call to reducer.
+    const state$ = validTurn$
+      .startWith(reducer())
+      .scan(reducer);
 
-  // Validate each turn against the current state of the game.
-  const turnWithValidity$ = incomingTurn$
-    .withLatestFrom(state$, (turn, state) => ({
-      turn,
-      valid: validator(state, turn),
-    }))
-    .share();
+    // Validate each turn against the current state of the game.
+    const turnWithValidity$ = incomingTurn$
+      .withLatestFrom(state$, (turn, state) => ({
+        turn,
+        valid: validator(state, turn),
+      }))
+      .share();
 
-  // Feed valid turns back into the validTurn$ subject.
-  turnWithValidity$
-    .filter(({ valid }) => valid)
-    .map(({ turn }) => turn)
-    .subscribe(validTurn$);
+    // Feed valid turns back into the validTurn$ subject.
+    turnWithValidity$
+      .filter(({ valid }) => valid)
+      .map(({ turn }) => turn)
+      .subscribe(validTurn$);
 
-  // Return a stream of all the attempted turns, with their validity and
-  // resulting state.
-  return turnWithValidity$
-    .withLatestFrom(state$, ({ turn, valid }, state) => (
-      { turn, valid, state }
-    ))
-    .share();
+    // Return a stream of all the attempted turns, with their validity and
+    // resulting state.
+    return turnWithValidity$
+      .withLatestFrom(state$, ({ turn, valid }, state) => (
+        { turn, valid, state }
+      ))
+      .share(); 
+  }
 }
 
 const incomingTurnA$ = Rx.Observable
@@ -58,15 +61,15 @@ function validator(state, turn) {
   return turn.player === state.nextPlayer;
 }
 
-const output$ = game({ incomingTurn$, reducer, validator });
+const updates$ = incomingTurn$.let(game({ reducer, validator }));
 
-const invalidTurnsA$ = output$
+const invalidTurnsA$ = updates$
   .filter(data => data.turn.player === 'A' && !data.valid);
-const validTurnsA$ = output$
+const validTurnsA$ = updates$
   .filter(data => data.turn.player === 'A' && data.valid);
-const invalidTurnsB$ = output$
+const invalidTurnsB$ = updates$
   .filter(data => data.turn.player === 'B' && !data.valid);
-const validTurnsB$ = output$
+const validTurnsB$ = updates$
   .filter(data => data.turn.player === 'B' && data.valid);
 
 const updatesA$ = Rx.Observable.merge(
