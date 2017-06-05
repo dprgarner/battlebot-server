@@ -1,7 +1,8 @@
 const Rx = require('rxjs/Rx');
 
 function game({ reducer, validator }) {
-  // Put the resulting game in a .let()
+  // This function transforms the incomingTurn$ stream into the update$
+  // stream.
   return incomingTurn$ => {
     // There's a cyclic dependency of streams, here, so something needs to be
     // a subject.
@@ -12,6 +13,11 @@ function game({ reducer, validator }) {
       .startWith(reducer())
       .scan(reducer);
 
+    // Emits the final state of the game, and closes.
+    const gameComplete$ = state$
+      .skipWhile(state => !state.complete)
+      .take(1);
+
     // Validate each turn against the current state of the game.
     const turnWithValidity$ = incomingTurn$
       .withLatestFrom(state$, (turn, state) => ({
@@ -21,10 +27,14 @@ function game({ reducer, validator }) {
       .share();
 
     // Feed valid turns back into the validTurn$ subject.
-    turnWithValidity$
+    const validTurnSubscription = turnWithValidity$
       .filter(({ valid }) => valid)
       .map(({ turn }) => turn)
       .subscribe(validTurn$);
+
+    // Unsubscribe from validTurn$ when the game ends. This ends all
+    // subscriptions to incomingTurns$... seems a little odd, though.
+    gameComplete$.subscribe(() => validTurnSubscription.unsubscribe());
 
     // Return a stream of all the attempted turns, with their validity and
     // resulting state.
@@ -32,28 +42,31 @@ function game({ reducer, validator }) {
       .withLatestFrom(state$, ({ turn, valid }, state) => (
         { turn, valid, state }
       ))
-      .share(); 
+      .takeUntil(gameComplete$)
+      .share();
   }
 }
 
 const incomingTurnA$ = Rx.Observable
-  .interval(800)
+  .interval(80)
   .map((x) => x);
 
 const incomingTurnB$ = Rx.Observable
-  .interval(1000)
+  .interval(100)
   .delay(500)
   .map((x) => -x);
 
 const incomingTurn$ = incomingTurnA$
-    .map(turn => ({ player: 'A', turn }))
-    .merge(incomingTurnB$.map(turn => ({ player: 'B', turn })));
+  .map(turn => ({ player: 'A', turn }))
+  .merge(incomingTurnB$.map(turn => ({ player: 'B', turn })))
+  .do(x => console.log(x));
 
-function reducer(state = { nextPlayer: 'A', count: 0 }, turn) {
+function reducer(state = { nextPlayer: 'A', complete: false, count: 0 }, turn) {
   if (!turn) return state;
   return {
     nextPlayer: state.nextPlayer === 'A' ? 'B' : 'A',
     count: state.count + turn.turn,
+    complete: Math.abs(state.count) >= 10,
   };
 }
 
@@ -61,7 +74,8 @@ function validator(state, turn) {
   return turn.player === state.nextPlayer;
 }
 
-const updates$ = incomingTurn$.let(game({ reducer, validator }));
+const updates$ = incomingTurn$
+  .let(game({ reducer, validator }));
 
 const invalidTurnsA$ = updates$
   .filter(data => data.turn.player === 'A' && !data.valid);
@@ -84,4 +98,7 @@ const updatesB$ = Rx.Observable.merge(
 );
 
 updatesA$.subscribe(x => console.log('A:', x, '\n'));
-updatesB$.subscribe(x => console.log('B:', x, '\n'));
+updatesB$.subscribe({
+  next: x => console.log('B:', x, '\n'),
+  complete: x => console.log('done'),
+});
