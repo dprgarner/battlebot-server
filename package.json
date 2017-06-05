@@ -1,5 +1,5 @@
 {
-  "name": "battlebots",
+  "name": "battlebot-server",
   "version": "0.0.1",
   "description": "A server for AI battles!",
   "main": "index.js",

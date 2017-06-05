@@ -3,7 +3,8 @@ const Rx = require('rxjs/Rx');
 function game({ reducer, validator }) {
   // This function transforms the incomingTurn$ stream into the update$
   // stream.
-  return incomingTurn$ => (incomingTurn$
+  return incomingTurn$ => {
+    const update$ = incomingTurn$
       .startWith({ state: reducer(), turn: null, valid: null })
       .scan(({ state }, turn) => {
         let valid = false;
@@ -16,10 +17,16 @@ function game({ reducer, validator }) {
         }
         return { turn, valid, state: newState };
       })
-      .share()
+      .share();
+
+    return update$
       .takeWhile(({ state: { complete } }) => !complete)
       .skip(1)
-    );
+
+      // Need to have the last update emit, too.
+      // .concat(update$.skipWhile(({ state: { complete } }) => !complete).take(1))
+      // .share();
+  };
 }
 
 const incomingTurnA$ = Rx.Observable
@@ -39,8 +46,8 @@ const incomingTurn$ = incomingTurnA$
 
 function reducer(state = { nextPlayer: 'A', complete: false, count: 0 }, turn) {
   if (!turn) return state;
+  // if (Math.random() < 0.1) throw new Error('bad reducing', state);
 
-  if (Math.random() < 0.1) throw new Error('bad reducing', state);
   const count = state.count + turn.turn;
   return {
     nextPlayer: state.nextPlayer === 'A' ? 'B' : 'A',
@@ -78,11 +85,11 @@ const updatesB$ = Rx.Observable.merge(
   invalidTurnsB$
 );
 
-// updatesA$.subscribe(
-//   x => console.log('A:', x, '\n'),
-//   e => console.log('argh!', e),
-//   x => console.log('done')
-// );
+updatesA$.subscribe(
+  x => console.log('A:', x, '\n'),
+  e => console.log('argh!', e),
+  x => console.log('done')
+);
 updatesB$.subscribe(
   x => console.log('B:', x, '\n'),
   e => console.log('argh!', e),
