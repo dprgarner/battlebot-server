@@ -9,21 +9,26 @@ function game({ reducer, validator }) {
     const validTurn$ = new Rx.Subject();
 
     // The initial game state comes from an empty call to reducer.
+    //
+    // I'd prefer it if the reducer was pure... but just in case there's some
+    // inherent randomness in it, the outgoing state must be shared by all
+    // observers.
     const state$ = validTurn$
       .startWith(reducer())
-      .scan(reducer);
-
-    // Emits the final state of the game, and closes.
-    const gameComplete$ = state$
-      .skipWhile(state => !state.complete)
-      .take(1);
+      .scan(reducer)
+      .share();
 
     // Validate each turn against the current state of the game.
+    // This must be wrapped in a try/catch to stop an unscrupulous
+    // player from deliberately crashing the game with an invalid action.
     const turnWithValidity$ = incomingTurn$
-      .withLatestFrom(state$, (turn, state) => ({
-        turn,
-        valid: validator(state, turn),
-      }))
+      .withLatestFrom(state$, (turn, state) => {
+        let valid = false;
+        try {
+          valid = validator(state, turn);
+        } catch (e) {}
+        return { turn, valid };
+      })
       .share();
 
     // Feed valid turns back into the validTurn$ subject.
@@ -32,9 +37,17 @@ function game({ reducer, validator }) {
       .map(({ turn }) => turn)
       .subscribe(validTurn$);
 
+    // Emits the final state of the game, and closes.
+    const gameComplete$ = state$
+      .skipWhile(state => !state.complete)
+      .take(1);
+
     // Unsubscribe from validTurn$ when the game ends. This ends all
     // subscriptions to incomingTurns$... seems a little odd, though.
-    gameComplete$.subscribe(() => validTurnSubscription.unsubscribe());
+    gameComplete$.subscribe(
+      () => validTurnSubscription.unsubscribe(),
+      err => validTurnSubscription.unsubscribe()
+    );
 
     // Return a stream of all the attempted turns, with their validity and
     // resulting state.
@@ -43,7 +56,7 @@ function game({ reducer, validator }) {
         { turn, valid, state }
       ))
       .merge(incomingTurn$.ignoreElements())
-      .takeUntil(gameComplete$)
+      .takeUntil(gameComplete$);
   }
 }
 
@@ -58,15 +71,15 @@ const incomingTurnB$ = Rx.Observable
 
 const incomingTurn$ = incomingTurnA$
   .map(turn => ({ player: 'A', turn }))
-  .merge(incomingTurnB$.map(turn => ({ player: 'B', turn })))
-  .take(5).concat(Rx.Observable.throw(new Error('bang')))
+  .merge(incomingTurnB$.map(turn => ({ player: 'B', turn })));
 
 function reducer(state = { nextPlayer: 'A', complete: false, count: 0 }, turn) {
   if (!turn) return state;
+  const count = state.count + turn.turn;
   return {
     nextPlayer: state.nextPlayer === 'A' ? 'B' : 'A',
-    count: state.count + turn.turn,
-    complete: Math.abs(state.count) >= 10,
+    count,
+    complete: Math.abs(count) >= 10,
   };
 }
 
@@ -97,9 +110,15 @@ const updatesB$ = Rx.Observable.merge(
   invalidTurnsB$
 );
 
-updatesA$.subscribe(x => console.log('A:', x, '\n'));
+updatesA$.subscribe(
+  x => console.log('A:', x, '\n'),
+  e => console.log('argh!', e),
+  x => console.log('done')
+);
 updatesB$.subscribe(
   x => console.log('B:', x, '\n'),
   e => console.log('argh!', e),
   x => console.log('done')
 );
+
+setTimeout(() => { console.log('okay')}, 1000);
