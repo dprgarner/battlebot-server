@@ -42,24 +42,24 @@ function game({ reducer, validator }) {
       .withLatestFrom(state$, ({ turn, valid }, state) => (
         { turn, valid, state }
       ))
+      .merge(incomingTurn$.ignoreElements())
       .takeUntil(gameComplete$)
-      .share();
   }
 }
 
 const incomingTurnA$ = Rx.Observable
-  .interval(80)
+  .interval(50)
   .map((x) => x);
 
 const incomingTurnB$ = Rx.Observable
-  .interval(100)
-  .delay(500)
+  .interval(25)
+  .delay(25)
   .map((x) => -x);
 
 const incomingTurn$ = incomingTurnA$
   .map(turn => ({ player: 'A', turn }))
   .merge(incomingTurnB$.map(turn => ({ player: 'B', turn })))
-  .do(x => console.log(x));
+  .take(5).concat(Rx.Observable.throw(new Error('bang')))
 
 function reducer(state = { nextPlayer: 'A', complete: false, count: 0 }, turn) {
   if (!turn) return state;
@@ -98,7 +98,8 @@ const updatesB$ = Rx.Observable.merge(
 );
 
 updatesA$.subscribe(x => console.log('A:', x, '\n'));
-updatesB$.subscribe({
-  next: x => console.log('B:', x, '\n'),
-  complete: x => console.log('done'),
-});
+updatesB$.subscribe(
+  x => console.log('B:', x, '\n'),
+  e => console.log('argh!', e),
+  x => console.log('done')
+);
