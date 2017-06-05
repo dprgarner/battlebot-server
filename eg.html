@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Battle bot</title>
+</head>
+<body>
+<script type="text/javascript">
+  function showMessage(msg) {
+    console.log(msg);
+  }
+
+  const ws = new WebSocket(`ws://localhost:8080`);
+  ws.onerror = (err) => showMessage('WebSocket error:' + err);
+  ws.onopen = () => {
+    showMessage('WebSocket connection established');
+
+    let i = 0;
+    setInterval(function timeout() {
+      ws.send('string: ' + i++);
+    }, 500);
+  };
+  ws.onclose = () => showMessage('WebSocket connection closed');
+  ws.onmessage = ({ data }) => showMessage('Received: ' + data);
+</script>
+
+
+</body>
+</html>
