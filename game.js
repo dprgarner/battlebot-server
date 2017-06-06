@@ -1,4 +1,5 @@
 const Rx = require('rxjs/Rx');
+const _ = require('underscore');
 
 const sanityCheck = {'A': {}, 'B': {}};
 
@@ -22,8 +23,8 @@ function game({ reducer, validator }) {
         }
         // Stop the reducer from being called with the same values multiple
         // times.
-        // if (sanityCheck[turn.player][turn.turn]) throw new Error(sanityCheck);
-        // sanityCheck[turn.player][turn.turn] = true;
+        if (sanityCheck[turn.player][turn.turn]) throw new Error(sanityCheck);
+        sanityCheck[turn.player][turn.turn] = true;
 
         return { turn, valid, state: newState };
       })
@@ -36,6 +37,22 @@ function game({ reducer, validator }) {
   };
 }
 
+function createGame({ players, reducer, validator }) {
+  return incomingMessage$ => {
+    // TODO pluck out the players' turns from incomingMessage$
+    const incomingTurn$ = incomingMessage$
+
+    const update$ = incomingTurn$
+      .let(game({ reducer, validator }));
+
+    return Rx.Observable.from(players)
+      .flatMap(playerId => update$
+        .filter(data => !data.turn || data.valid || data.turn.player === playerId)
+        .map(data => ({ to: playerId, data }))
+      );
+  }
+}
+
 const incomingTurnA$ = Rx.Observable
   .interval(50)
   .map((x) => x + 1);
@@ -43,12 +60,12 @@ const incomingTurnA$ = Rx.Observable
 const incomingTurnB$ = Rx.Observable
   .interval(25)
   .delay(25)
-  .map((x) => -x - 1);
+  .map((x) => -x - 1)
 
 const incomingTurn$ = incomingTurnA$
   .map(turn => ({ player: 'A', turn }))
   .merge(incomingTurnB$.map(turn => ({ player: 'B', turn })))
-  // .take(5).concat(Rx.Observable.throw(new Error('bad incomingTurn')))
+  // .take(5)  //.concat(Rx.Observable.throw(new Error('bad incomingTurn')))
 
 function reducer(state = { nextPlayer: 'A', complete: false, count: 0 }, turn) {
   if (!turn) return state;
@@ -67,27 +84,28 @@ function validator(state, turn) {
   return turn.player === state.nextPlayer;
 }
 
-const update$ = incomingTurn$
-  .let(game({ reducer, validator }));
+const updateEachPlayer$ = incomingTurn$
+  .let(createGame({ players: ['A', 'B'], reducer, validator }));
 
-const updateA$ = update$
-  .filter(data => !data.turn || data.turn.player === 'A' || data.valid);
-const updateB$ = update$
-  .filter(data => !data.turn || data.turn.player === 'B' || data.valid);
-
-updateA$.subscribe(
-  x => console.log('A:', x, '\n'),
-  e => console.log('argh!', e),
-  x => console.log('done')
-);
-
-setTimeout(() => {
-  console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~');
-  updateB$.subscribe(
-    x => console.log('B:', x, '\n'),
+updateEachPlayer$
+  .filter(({ to }) => to === 'A')
+  .map(({ data }) => data)
+  .subscribe(
+    x => console.log('A:', x, '\n'),
     e => console.log('argh!', e),
     x => console.log('done')
   );
+
+setTimeout(() => {
+  console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+  updateEachPlayer$
+    .filter(({ to }) => to === 'B')
+    .map(({ data }) => data)
+    .subscribe(
+      x => console.log('B:', x, '\n'),
+      e => console.log('argh!', e),
+      x => console.log('done')
+    );
 }, 100);
 
 setTimeout(() => { console.log('okay')}, 1000);
