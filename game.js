@@ -15,13 +15,14 @@ function game({ reducer, validator }) {
         if (valid) {
           newState = reducer(state, turn);
         }
+        console.log('      Um', turn, Math.random())
         return { turn, valid, state: newState };
-      })
-      .share();
+      });
 
     return update$
       .takeWhile(({ state: { complete } }) => !complete)
-      .skip(1)
+      .shareReplay();
+      // .skip(1)
 
       // Need to have the last update emit, too.
       // .concat(update$.skipWhile(({ state: { complete } }) => !complete).take(1))
@@ -31,12 +32,12 @@ function game({ reducer, validator }) {
 
 const incomingTurnA$ = Rx.Observable
   .interval(50)
-  .map((x) => x);
+  .map((x) => x + 1);
 
 const incomingTurnB$ = Rx.Observable
   .interval(25)
   .delay(25)
-  .map((x) => -x)
+  .map((x) => -x - 1)
   .do(x => console.log(x))
 
 const incomingTurn$ = incomingTurnA$
@@ -52,7 +53,7 @@ function reducer(state = { nextPlayer: 'A', complete: false, count: 0 }, turn) {
   return {
     nextPlayer: state.nextPlayer === 'A' ? 'B' : 'A',
     count,
-    complete: Math.abs(count) >= 10,
+    complete: Math.abs(count) >= 5,
   };
 }
 
@@ -62,38 +63,27 @@ function validator(state, turn) {
   return turn.player === state.nextPlayer;
 }
 
-const updates$ = incomingTurn$
+const update$ = incomingTurn$
   .let(game({ reducer, validator }));
 
-const invalidTurnsA$ = updates$
-  .filter(data => data.turn.player === 'A' && !data.valid);
-const validTurnsA$ = updates$
-  .filter(data => data.turn.player === 'A' && data.valid);
-const invalidTurnsB$ = updates$
-  .filter(data => data.turn.player === 'B' && !data.valid);
-const validTurnsB$ = updates$
-  .filter(data => data.turn.player === 'B' && data.valid);
+const updateA$ = update$
+  .filter(data => !data.turn || data.turn.player === 'A' || data.valid);
+const updateB$ = update$
+  .filter(data => !data.turn || data.turn.player === 'B' || data.valid);
 
-const updatesA$ = Rx.Observable.merge(
-  validTurnsA$,
-  validTurnsB$,
-  invalidTurnsA$
-);
-const updatesB$ = Rx.Observable.merge(
-  validTurnsA$,
-  validTurnsB$,
-  invalidTurnsB$
-);
-
-updatesA$.subscribe(
+updateA$.subscribe(
   x => console.log('A:', x, '\n'),
   e => console.log('argh!', e),
   x => console.log('done')
 );
-updatesB$.subscribe(
-  x => console.log('B:', x, '\n'),
-  e => console.log('argh!', e),
-  x => console.log('done')
-);
+
+setTimeout(() => {
+  console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+  updateB$.subscribe(
+    x => console.log('B:', x, '\n'),
+    e => console.log('argh!', e),
+    x => console.log('done')
+  );
+}, 100);
 
 setTimeout(() => { console.log('okay')}, 1000);
