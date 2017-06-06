@@ -1,5 +1,7 @@
 const Rx = require('rxjs/Rx');
 
+const sanityCheck = {'A': {}, 'B': {}};
+
 function game({ reducer, validator }) {
   // This function transforms the incomingTurn$ stream into the update$
   // stream.
@@ -15,18 +17,20 @@ function game({ reducer, validator }) {
         if (valid) {
           newState = reducer(state, turn);
         }
-        console.log('      Um', turn, Math.random())
+
+        // Stop the reducer from being called with the same values multiple
+        // times.
+        // if (sanityCheck[turn.player][turn.turn]) throw new Error(sanityCheck);
+        // sanityCheck[turn.player][turn.turn] = true;
+
         return { turn, valid, state: newState };
-      });
+      })
+      .shareReplay();
 
     return update$
       .takeWhile(({ state: { complete } }) => !complete)
+      .concat(update$.skipWhile(({ state: { complete } }) => !complete).take(1))
       .shareReplay();
-      // .skip(1)
-
-      // Need to have the last update emit, too.
-      // .concat(update$.skipWhile(({ state: { complete } }) => !complete).take(1))
-      // .share();
   };
 }
 
@@ -37,8 +41,7 @@ const incomingTurnA$ = Rx.Observable
 const incomingTurnB$ = Rx.Observable
   .interval(25)
   .delay(25)
-  .map((x) => -x - 1)
-  .do(x => console.log(x))
+  .map((x) => -x - 1);
 
 const incomingTurn$ = incomingTurnA$
   .map(turn => ({ player: 'A', turn }))
@@ -47,7 +50,7 @@ const incomingTurn$ = incomingTurnA$
 
 function reducer(state = { nextPlayer: 'A', complete: false, count: 0 }, turn) {
   if (!turn) return state;
-  // if (Math.random() < 0.1) throw new Error('bad reducing', state);
+  // if (Math.random() < 0.1) throw new Error('bad reducing' + JSON.stringify(state));
 
   const count = state.count + turn.turn;
   return {
@@ -59,7 +62,6 @@ function reducer(state = { nextPlayer: 'A', complete: false, count: 0 }, turn) {
 
 function validator(state, turn) {
   // if (Math.random() < 0.5) throw new Error('bad validation');
-
   return turn.player === state.nextPlayer;
 }
 
