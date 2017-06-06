@@ -6,9 +6,9 @@ function game({ reducer, validator }) {
   // This function transforms the incomingTurn$ stream into the update$
   // stream.
   return incomingTurn$ => {
-    // The reducer can in general have random events, so every scan must be
-    // evaluated EXACTLY once, regardless of the subscribers. (Hence all the
-    // shareReplays.)
+    // The 'reducer' can in general be non-deterministic (make random calls),
+    // so every scan must be evaluated EXACTLY once, regardless of the
+    // subscriptions. (Hence all the shareReplays.)
     const update$ = incomingTurn$
       .startWith({ state: reducer(), turn: null, valid: null })
       .scan(({ state }, turn) => {
