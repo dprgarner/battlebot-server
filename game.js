@@ -6,6 +6,9 @@ function game({ reducer, validator }) {
   // This function transforms the incomingTurn$ stream into the update$
   // stream.
   return incomingTurn$ => {
+    // The reducer can in general have random events, so every scan must be
+    // evaluated EXACTLY once, regardless of the subscribers. (Hence all the
+    // shareReplays.)
     const update$ = incomingTurn$
       .startWith({ state: reducer(), turn: null, valid: null })
       .scan(({ state }, turn) => {
@@ -17,7 +20,6 @@ function game({ reducer, validator }) {
         if (valid) {
           newState = reducer(state, turn);
         }
-
         // Stop the reducer from being called with the same values multiple
         // times.
         // if (sanityCheck[turn.player][turn.turn]) throw new Error(sanityCheck);
@@ -80,7 +82,7 @@ updateA$.subscribe(
 );
 
 setTimeout(() => {
-  console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+  console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~');
   updateB$.subscribe(
     x => console.log('B:', x, '\n'),
     e => console.log('argh!', e),
