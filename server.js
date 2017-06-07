@@ -45,7 +45,7 @@ function createWebsocketStream(opts = { port: 8080 }) {
 
 function createOutgoingObserver(outgoing$) {
   // Subscribe the ws$ stream to this function to handle cleanup of
-  // websockets when they're closed by either the client or the server.
+  // websockets when they're closed by the client.
   return ws => {
     const subscription = outgoing$.subscribe(ws);
     ws.subscribe({
@@ -57,15 +57,15 @@ function createOutgoingObserver(outgoing$) {
 
 function createWebsocketServer(opts) {
   const ws$ = createWebsocketStream(opts);
-  ws$.publish().connect();
-
   const incoming$ = ws$.mergeAll();
   incoming$.subscribe(x => console.log('In: ', x));
 
-  const outgoing$ = Rx.Observable
-    .interval(1000)
-    .share()
-    .do(x => console.log(x));
+  const outgoing$ = incoming$
+    .delay(1000)
+    .publish();
+
+  outgoing$.connect();
+  outgoing$.subscribe(x => console.log('Out: ', x));
 
   ws$.subscribe(createOutgoingObserver(outgoing$));
 }
