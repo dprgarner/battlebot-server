@@ -60,7 +60,8 @@
     }
   }
 
-  const ws = new WebSocket(`ws://echo.websocket.org`);
+  // const ws = new WebSocket(`ws://echo.websocket.org`);
+  const ws = new WebSocket(`ws://localhost:8080`);
   ws.onerror = (err) => logOther(err);
   ws.onopen = () => {
     logOther('WebSocket connection established');

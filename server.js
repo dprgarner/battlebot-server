@@ -2,9 +2,33 @@
 // https://stackoverflow.com/questions/3142705/is-there-a-websocket-client-implemented-for-python
 // https://ws4py.readthedocs.io/en/latest/sources/ws4py/
 
-// const WebSocket = require('ws');
-// const socket$ = new Rx.Subject();
-// const wss = new WebSocket.Server({ port: 8080 });
+const Rx = require('rxjs');
+const WebSocket = require('ws');
+
+const ws$ = new Rx.Observable.create(observer => {
+  console.log('Opening a server...');
+  const wss = new WebSocket.Server({ port: 8080 });
+
+  wss.on('connection', (ws) => {
+    observer.next(ws);
+  });
+
+  return () => wss.close(err => {
+    console.log('Server Closed');
+  });
+}).share();
+
+const sub = ws$.subscribe(x => console.log('new socket'));
+const sub2 = ws$.subscribe(x => console.log('new socket 2'));
+
+setTimeout(() => {
+  sub.unsubscribe();
+  sub2.unsubscribe();
+}, 5000);
+
+setTimeout(() => {
+  ws$.subscribe(x => console.log('new socket'));
+}, 8000);
 
 // // On receiving a message, wait half a second and then reverse the string.
 // wss.on('connection', (socket) => {
