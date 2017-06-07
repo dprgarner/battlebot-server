@@ -55,13 +55,4 @@ function createWebsocketServer(opts = { port: 8080 }) {
   }).share();
 }
 
-const ws$ = createWebsocketServer();
-ws$.subscribe(x => console.log('New socket'));
-
-const incoming$ = ws$.mergeAll();
-incoming$.subscribe(x => console.log(x));
-incoming$.subscribe(x => console.log(x));
-
-const outgoing$ = Rx.Observable.interval(1000).share();
-
-ws$.subscribe(createOutgoingObserver(outgoing$));
+module.exports = { createWebsocketServer, createOutgoingObserver };
