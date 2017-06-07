@@ -11,7 +11,7 @@ const incomingTurnA$ = Rx.Observable
 const incomingTurnB$ = Rx.Observable
   .interval(25)
   .delay(25)
-  .map((x) => -x - 1)
+  .map((x) => -x - 1);
 
 const incomingTurn$ = incomingTurnA$
   .map(turn => ({ player: 'A', turn }))

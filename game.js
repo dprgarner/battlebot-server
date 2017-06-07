@@ -1,6 +1,6 @@
 const Rx = require('rxjs/Rx');
 
-const sanityCheck = {'A': {}, 'B': {}};
+const sanityCheck = {};
 
 function game({ reducer, validator }) {
   // This function transforms the incomingTurn$ stream into the update$
@@ -22,8 +22,9 @@ function game({ reducer, validator }) {
         }
         // Stop the reducer from being called with the same values multiple
         // times.
-        if (sanityCheck[turn.player][turn.turn]) throw new Error(sanityCheck);
-        sanityCheck[turn.player][turn.turn] = true;
+        // if (!sanityCheck[turn.player]) sanityCheck[turn.player] = {};
+        // if (sanityCheck[turn.player][turn.turn]) throw new Error(sanityCheck);
+        // sanityCheck[turn.player][turn.turn] = true;
 
         return { turn, valid, state: newState };
       })

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Battle bot</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <style type="text/css">
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    .log {
+      margin: 0;
+      padding: 0;
+      background-color: #ccc;
+      vertical-align: top;
+    }
+    .half {
+      display: inline-block;
+      width: 49%;
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;">
+
+<div class="log">
+  <h1>Info:</h1>
+  <pre id="log-other"></pre>
+</div>
+<div class="log half">
+  <h1>To Server:</h1>
+  <pre id="log-out"></pre>
+</div>
+<div class="log half">
+  <h1>From Server:</h1>
+  <pre id="log-in"></pre>
+</div>
+
+<script type="text/javascript">
+  function logOther(msg) {
+    $('#log-other').text($('#log-other').text() + '\n' + msg);
+  }
+
+  function showMessage(msg) {
+    console.log(msg);
+    try {
+      $('#log-in').text($('#log-in').text() + '\n' + JSON.stringify(msg));
+    } catch (e) {
+      logOther(e.message);
+      console.error(e);
+    }
+  }
+
+  function sendMessage(msg) {
+    ws.send(JSON.stringify(msg));
+    try {
+      $('#log-out').text($('#log-out').text() + '\n' + JSON.stringify(msg));
+    } catch (e) {
+      logOther(e.message);
+      console.error(e);
+    }
+  }
+
+  const ws = new WebSocket(`ws://echo.websocket.org`);
+  ws.onerror = (err) => logOther(err);
+  ws.onopen = () => {
+    logOther('WebSocket connection established');
+
+    let i = 0;
+    setInterval(function timeout() {
+      sendMessage({'number': i++});
+    }, 500);
+  };
+  ws.onclose = () => logOther('WebSocket connection closed');
+  ws.onmessage = ({ data }) => showMessage(JSON.parse(data));
+</script>
+
+
+</body>
+</html>
