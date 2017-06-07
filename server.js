@@ -26,19 +26,7 @@ function createWebsocketSubject(ws) {
   return Rx.Subject.create(observer, observable);
 }
 
-function createOutgoingObserver(outgoing$) {
-  // Subscribe the socketServer stream to this function to handle cleanup of
-  // websockets when they're closed by either the client or the server.
-  return ws => {
-    const subscription = outgoing$.subscribe(ws);
-    ws.subscribe({
-      complete: () => subscription.unsubscribe(),
-      err: () => subscription.unsubscribe(),
-    });
-  }
-}
-
-function createWebsocketServer(opts = { port: 8080 }) {
+function createWebsocketStream(opts = { port: 8080 }) {
   // A stream of WebSocket subjects.
   return new Rx.Observable.create(observer => {
     console.log('Opening a server...');
@@ -55,4 +43,33 @@ function createWebsocketServer(opts = { port: 8080 }) {
   }).share();
 }
 
-module.exports = { createWebsocketServer, createOutgoingObserver };
+function createOutgoingObserver(outgoing$) {
+  // Subscribe the ws$ stream to this function to handle cleanup of
+  // websockets when they're closed by either the client or the server.
+  return ws => {
+    const subscription = outgoing$.subscribe(ws);
+    ws.subscribe({
+      complete: () => subscription.unsubscribe(),
+      err: () => subscription.unsubscribe(),
+    });
+  }
+}
+
+function createWebsocketServer(opts) {
+  const ws$ = createWebsocketStream(opts);
+  ws$.publish().connect();
+
+  const incoming$ = ws$.mergeAll();
+  incoming$.subscribe(x => console.log('In: ', x));
+
+  const outgoing$ = Rx.Observable
+    .interval(1000)
+    .share()
+    .do(x => console.log(x));
+
+  ws$.subscribe(createOutgoingObserver(outgoing$));
+}
+
+createWebsocketServer();
+
+module.exports = { createWebsocketServer };
