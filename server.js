@@ -6,40 +6,62 @@ const Rx = require('rxjs');
 const WebSocket = require('ws');
 
 function createWebsocketSubject(ws) {
+  // Wraps the WebSocket in/out streams with an RxJS Subject. The subject acts
+  // as an Observer on outgoing messages and an Observable on incoming
+  // messages.
   const observer = {
     next: (x) => ws.send(x),
-    error: (err) => ws.close(1, err),
-    complete: () => ws.close(0),
+    error: (err) => ws.close(1, 'ERROR'),
+    complete: () => ws.close(),
   };
 
-  const observable = Rx.Observable.create(observer => {
-    ws.on('message', (data) => observer.next(data));
-    ws.on('error', (err) => observer.error(err));
-    ws.on('close', () => observer.complete());
+  const observable = Rx.Observable.create(obs => {
+    ws.on('message', (data) => obs.next(data));
+    ws.on('error', (err) => obs.error(err));
+    ws.on('close', () => obs.complete());
 
-    return () => ws.close();
+    return () => obs.complete();
   }).share();
 
   return Rx.Subject.create(observer, observable);
 }
 
-// A stream of WebSocket subjects.
-const ws$ = new Rx.Observable.create(observer => {
-  console.log('Opening a server...');
-  const wss = new WebSocket.Server({ port: 8080 });
+function createOutgoingObserver(outgoing$) {
+  // Subscribe the socketServer stream to this function to handle cleanup of
+  // websockets when they're closed by either the client or the server.
+  return ws => {
+    const subscription = outgoing$.subscribe(ws);
+    ws.subscribe({
+      complete: () => subscription.unsubscribe(),
+      err: () => subscription.unsubscribe(),
+    });
+  }
+}
 
-  wss.on('connection', (ws) => {
-    observer.next(createWebsocketSubject(ws));
-  });
+function createWebsocketServer(opts = { port: 8080 }) {
+  // A stream of WebSocket subjects.
+  return new Rx.Observable.create(observer => {
+    console.log('Opening a server...');
+    const wss = new WebSocket.Server(opts);
 
-  return () => wss.close(err => {
-    if (err) console.error(err);
-    console.log('Server Closed');
-  });
-}).share();
+    wss.on('connection', (ws) => {
+      observer.next(createWebsocketSubject(ws));
+    });
 
+    return () => wss.close(err => {
+      if (err) console.error(err);
+      console.log('Server Closed');
+    });
+  }).share();
+}
+
+const ws$ = createWebsocketServer();
 ws$.subscribe(x => console.log('New socket'));
 
 const incoming$ = ws$.mergeAll();
 incoming$.subscribe(x => console.log(x));
 incoming$.subscribe(x => console.log(x));
+
+const outgoing$ = Rx.Observable.interval(1000).share();
+
+ws$.subscribe(createOutgoingObserver(outgoing$));
