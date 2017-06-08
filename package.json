@@ -9,10 +9,12 @@
   "author": "David Garner",
   "license": "ISC",
   "dependencies": {
+    "hash.js": "^1.0.3",
     "rxjs": "^5.4.0",
     "ws": "^3.0.0"
   },
   "devDependencies": {
+    "crypto-js": "^3.1.9-1",
     "http-server": "^0.10.0"
   }
 }

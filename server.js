@@ -4,6 +4,8 @@
 
 const Rx = require('rxjs');
 const WebSocket = require('ws');
+var { sha256 } = require('hash.js');
+
 
 function createWebsocketSubject(ws) {
   // Wraps the WebSocket in/out streams with an RxJS Subject. The subject acts
@@ -56,13 +58,27 @@ function createOutgoingObserver(outgoing$) {
   }
 }
 
-function login(message) {
+const passes = {
+  'botName': 'pass123',
+}
+
+function login(message, salt) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      // const botName = Math.random() < 0.5 ? 'BotName': null;
-      const botName = 'BotName';
-      console.log(message);
-      resolve(botName)
+      try {
+        const { login_id, login_hash } = JSON.parse(message);
+        const pass = passes[login_id];
+        const expectedHash = sha256()
+          .update(pass || '')
+          .update(salt)
+          .digest('hex');
+        console.log(pass, salt);
+        console.log('expected:', expectedHash);
+        console.log('actual:', login_hash);
+        resolve((expectedHash === login_hash) && login_id);
+      } catch (e) {
+        reject(e);
+      }
     }, 10);
   });
 }
@@ -73,15 +89,22 @@ function authenticate() {
   // inauthenticated sockets are closed and filtered out.
   return ws$ => ws$
     .flatMap(ws => {
-      // To stop any events being omitted during authentication.
+      const salt = sha256()
+        .update(Math.random() + '')
+        .digest('hex');
+      ws.next(JSON.stringify({ salt }));
+
+      // To stop any incoming messages being omitted during authentication.
       const replayWs = ws.shareReplay().skip(1);
       replayWs.publish().connect();
 
       return ws
         .take(1)
-        .switchMap(message => Rx.Observable.fromPromise(login(message)))
-        .catch(() => Rx.Observable.of(false))
-        .do(x => !x && ws.complete())
+        .switchMap(message => Rx.Observable.fromPromise(
+          login(message, salt)
+        ))
+        .catch(() => Rx.Observable.of(false).do(x => console.log('nope')))
+        .do(x => !x && ws.complete())  // An unabashed side-effect
         .filter(x => x)
         .map((botId) => ({ ws: replayWs, botId }))
     })
