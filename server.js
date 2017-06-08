@@ -45,9 +45,10 @@ function createWebsocketStream(opts = { port: 8080 }) {
 
 function createOutgoingObserver(outgoing$) {
   // Subscribe the ws$ stream to this function to handle cleanup of
-  // websockets when they're closed by the client.
-  return ws => {
+  // websocket observers when they're closed by the client.
+  return (ws) => {
     const subscription = outgoing$.subscribe(ws);
+
     ws.subscribe({
       complete: () => subscription.unsubscribe(),
       err: () => subscription.unsubscribe(),
@@ -55,9 +56,39 @@ function createOutgoingObserver(outgoing$) {
   }
 }
 
+function login(message) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const botName = Math.random() < 0.5 ? 'BotName': null;
+      console.log(message);
+      reject(botName)
+    }, 1000);
+  });
+}
+
+function authenticate() {
+  // This function transforms the ws$ stream into a stream where each event is
+  // an object containing the authenticated socket and the bot ID, and where
+  // inauthenticated sockets are closed and filtered out.
+  return ws$ => ws$
+    .flatMap(ws => ws
+      .take(1)
+      .switchMap(message => Rx.Observable.fromPromise(login(message)))
+      .catch(() => Rx.Observable.of(false))
+      .do(x => !x && ws.complete())
+      .filter(x => x)
+      .map((botId) => ({ ws, botId }))
+    )
+    .share();
+}
+
 function createWebsocketServer(opts) {
-  const ws$ = createWebsocketStream(opts);
-  const incoming$ = ws$.mergeAll();
+  const aws$ = createWebsocketStream(opts)
+    .let(authenticate());
+
+  const incoming$ = aws$
+    .map(({ ws }) => ws)
+    .mergeAll();
   incoming$.subscribe(x => console.log('In: ', x));
 
   const outgoing$ = incoming$
@@ -67,7 +98,9 @@ function createWebsocketServer(opts) {
   outgoing$.connect();
   outgoing$.subscribe(x => console.log('Out: ', x));
 
-  ws$.subscribe(createOutgoingObserver(outgoing$));
+  aws$
+    .map(({ ws }) => ws)
+    .subscribe(createOutgoingObserver(outgoing$));
 }
 
 createWebsocketServer();
