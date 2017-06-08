@@ -59,10 +59,11 @@ function createOutgoingObserver(outgoing$) {
 function login(message) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      const botName = Math.random() < 0.5 ? 'BotName': null;
+      // const botName = Math.random() < 0.5 ? 'BotName': null;
+      const botName = 'BotName';
       console.log(message);
-      reject(botName)
-    }, 1000);
+      resolve(botName)
+    }, 10);
   });
 }
 
@@ -71,14 +72,19 @@ function authenticate() {
   // an object containing the authenticated socket and the bot ID, and where
   // inauthenticated sockets are closed and filtered out.
   return ws$ => ws$
-    .flatMap(ws => ws
-      .take(1)
-      .switchMap(message => Rx.Observable.fromPromise(login(message)))
-      .catch(() => Rx.Observable.of(false))
-      .do(x => !x && ws.complete())
-      .filter(x => x)
-      .map((botId) => ({ ws, botId }))
-    )
+    .flatMap(ws => {
+      // To stop any events being omitted during authentication.
+      const replayWs = ws.shareReplay().skip(1);
+      replayWs.publish().connect();
+
+      return ws
+        .take(1)
+        .switchMap(message => Rx.Observable.fromPromise(login(message)))
+        .catch(() => Rx.Observable.of(false))
+        .do(x => !x && ws.complete())
+        .filter(x => x)
+        .map((botId) => ({ ws: replayWs, botId }))
+    })
     .share();
 }
 
@@ -96,7 +102,7 @@ function createWebsocketServer(opts) {
     .publish();
 
   outgoing$.connect();
-  outgoing$.subscribe(x => console.log('Out: ', x));
+  // outgoing$.subscribe(x => console.log('Out: ', x));
 
   aws$
     .map(({ ws }) => ws)
