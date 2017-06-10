@@ -9,11 +9,14 @@ var { sha256 } = require('hash.js');
 
 function createWebsocketSubject(ws) {
   // Wraps the WebSocket in/out streams with an RxJS Subject. The subject acts
-  // as an Observer on outgoing messages and an Observable on incoming
+  // as an Observer on outgoing messages and an Observable for incoming
   // messages.
   const observer = {
     next: (x) => ws.send(x),
-    error: (err) => ws.close(1, 'ERROR'),
+    error: (err) => {
+      console.error(err);
+      ws.close(1002, 'ERROR')
+    },
     complete: () => ws.close(),
   };
 
@@ -30,7 +33,7 @@ function createWebsocketSubject(ws) {
 
 function createWebsocketStream(opts = { port: 8080 }) {
   // A stream of WebSocket subjects.
-  return new Rx.Observable.create(observer => {
+  return Rx.Observable.create(observer => {
     console.log('Opening a server...');
     const wss = new WebSocket.Server(opts);
 
@@ -45,41 +48,32 @@ function createWebsocketStream(opts = { port: 8080 }) {
   }).share();
 }
 
-function createOutgoingObserver(outgoing$) {
-  // Subscribe the ws$ stream to this function to handle cleanup of
-  // websocket observers when they're closed by the client.
-  return (ws) => {
-    const subscription = outgoing$.subscribe(ws);
-
-    ws.subscribe({
-      complete: () => subscription.unsubscribe(),
-      err: () => subscription.unsubscribe(),
-    });
-  }
-}
-
 const passes = {
   'botName': 'pass123',
+  'otherBotName': 'pass123',
+}
+
+function createHash(str) {
+  return sha256().update(str).digest('hex');
 }
 
 function login(message, salt) {
   return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      try {
-        const { login_id, login_hash } = JSON.parse(message);
-        const pass = passes[login_id];
-        const expectedHash = sha256()
-          .update(pass || '')
-          .update(salt)
-          .digest('hex');
-        console.log(pass, salt);
-        console.log('expected:', expectedHash);
-        console.log('actual:', login_hash);
-        resolve((expectedHash === login_hash) && login_id);
-      } catch (e) {
-        reject(e);
+    try {
+      const { login_id, login_hash } = JSON.parse(message);
+      const pass = passes[login_id];
+      const expectedHash = createHash(pass + salt);
+
+      const loginValid = (expectedHash === login_hash);
+      if (loginValid) {
+        console.log('Logged in:', login_id);
+        return resolve(login_id);
       }
-    }, 10);
+      console.log('Invalid login:', login_id);
+      resolve(false);
+    } catch (e) {
+      reject(e);
+    }
   });
 }
 
@@ -89,49 +83,76 @@ function authenticate() {
   // inauthenticated sockets are closed and filtered out.
   return ws$ => ws$
     .flatMap(ws => {
-      const salt = sha256()
-        .update(Math.random() + '')
-        .digest('hex');
-      ws.next(JSON.stringify({ salt }));
-
       // To stop any incoming messages being omitted during authentication.
       const replayWs = ws.shareReplay().skip(1);
       replayWs.publish().connect();
 
-      return ws
+      const salt = createHash(Math.random());
+      ws.next(JSON.stringify({ salt }));
+
+      const loginId$ = ws
         .take(1)
-        .switchMap(message => Rx.Observable.fromPromise(
-          login(message, salt)
-        ))
-        .catch(() => Rx.Observable.of(false).do(x => console.log('nope')))
-        .do(x => !x && ws.complete())  // An unabashed side-effect
+        .switchMap(message => Rx.Observable.fromPromise(login(message, salt)))
+        .catch((e) => 
+          Rx.Observable
+            .of(false)
+            .do(() => console.error(e))
+        )
+        .share();
+
+      // Close invalid websockets.
+      loginId$
+        .filter(x => !x)
+        .subscribe(() => ws.complete());
+
+      // Return only valid websockets.
+      return loginId$
         .filter(x => x)
-        .map((botId) => ({ ws: replayWs, botId }))
+        .map((id) => ({ ws: replayWs, id }))
     })
     .share();
 }
 
-function createWebsocketServer(opts) {
-  const aws$ = createWebsocketStream(opts)
+function createWebsocketServer(transform, opts) {
+  const authedSockets$ = createWebsocketStream(opts)
     .let(authenticate());
 
-  const incoming$ = aws$
-    .map(({ ws }) => ws)
-    .mergeAll();
-  incoming$.subscribe(x => console.log('In: ', x));
+  const incoming$ = authedSockets$
+    .flatMap(({ ws, id }) => ws
+      .map(msg => (
+        { from: id, data: JSON.parse(msg) }
+      ))
+    );
 
   const outgoing$ = incoming$
-    .delay(1000)
+    .let(transform)
     .publish();
-
   outgoing$.connect();
-  // outgoing$.subscribe(x => console.log('Out: ', x));
 
-  aws$
-    .map(({ ws }) => ws)
-    .subscribe(createOutgoingObserver(outgoing$));
+  authedSockets$.subscribe(({ ws, id }) => {
+    const subscription = outgoing$
+      .filter(({ to }) => to === id)
+      .map(({ data }) => JSON.stringify(data))
+      .subscribe(ws);
+
+    // Handle cleanup of the subscriptions when the socket is closed by the
+    // client (or server).
+    ws.subscribe({
+      complete: () => subscription.unsubscribe(),
+      err: () => subscription.unsubscribe(),
+    });
+  });
 }
 
-createWebsocketServer();
+createWebsocketServer(incoming$ => (
+  incoming$
+    .delay(1000)
+    .combineLatest(
+      Rx.Observable.of(1,2,3),
+      ({ from: id, data: { number } }, x) => (
+        { to: id, data: { number: x + number }}
+      )
+    )
+));
 
 module.exports = { createWebsocketServer };

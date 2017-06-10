@@ -22,6 +22,8 @@
 </head>
 <body style="margin:0;padding:0;">
 
+<input type="text" id="botId" value="botName" />
+<button onclick="connect()">New bot</button>
 <div class="log">
   <h1>Info:</h1>
   <pre id="log-other"></pre>
@@ -65,7 +67,6 @@
     $('#log-other').text($('#log-other').text() + '\n' + msg);
   }
 
-
   function showMessage(msg) {
     console.log(msg);
     try {
@@ -76,7 +77,7 @@
     }
   }
 
-  function sendMessage(msg) {
+  function sendMessage(ws, msg) {
     ws.send(JSON.stringify(msg));
     try {
       $('#log-out').text($('#log-out').text() + '\n' + JSON.stringify(msg));
@@ -86,32 +87,41 @@
     }
   }
 
-  // const ws = new WebSocket(`ws://echo.websocket.org`);
-  const ws = new WebSocket(`ws://localhost:8080`);
-  ws.onerror = (err) => logOther(err);
-  ws.onopen = () => {
-    logOther('WebSocket connection established');
+  let connected = false;
 
-    let i = 0;
-    setInterval(function timeout() {
-      sendMessage({'number': i++});
-    }, 500);
-  };
-  ws.onclose = () => logOther('WebSocket connection closed');
+  function connect() {
+    const botId = $('#botId').val();
+    if (connected) return;
+    const ws = new WebSocket(`ws://localhost:8080`);
 
-  let authed = false;
-  ws.onmessage = ({ data }) => {
-    const dataObj = JSON.parse(data);
-    showMessage(JSON.parse(data))
-    if (!authed) {
-      console.log(dataObj.salt);
-      sha256("pass123" + dataObj.salt).then(function(digest) {
-        console.log(digest);
-        sendMessage({ login_id: 'botName', login_hash: digest });
-        authed = true;
-      });
+    ws.onerror = (err) => logOther(err);
+    ws.onopen = () => {
+      logOther('WebSocket connection established');
+      let i = 0;
+      setInterval(function timeout() {
+        sendMessage(ws, {'number': i++});
+      }, 500);
+      connected = true;
+    };
+    ws.onclose = () => {
+      logOther('WebSocket connection closed');
+      connected = false;
     }
-  };
+
+    let authed = false;
+    ws.onmessage = ({ data }) => {
+      const dataObj = JSON.parse(data);
+      showMessage(JSON.parse(data))
+      if (!authed) {
+        console.log(dataObj.salt);
+        sha256("pass123" + dataObj.salt).then(function(digest) {
+          console.log(digest);
+          sendMessage(ws, { login_id: botId, login_hash: digest });
+          authed = true;
+        });
+      }
+    };
+  }
 </script>
 
 </body>
