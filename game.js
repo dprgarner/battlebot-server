@@ -1,56 +1,58 @@
 const Rx = require('rxjs/Rx');
 
-// const sanityCheck = {};
+const sanityCheck = {};
 
-function game({ updater, validator }) {
-  // This function transforms the incomingTurn$ stream into the update$
-  // stream.
-  return incomingTurn$ => {
-    // The updater can in general be non-deterministic (make random calls),
-    // so every scan must be evaluated EXACTLY once, regardless of the
-    // subscriptions. (Hence all the shareReplays.)
-    const update$ = incomingTurn$
-      .startWith({ state: updater(), turn: null, valid: null })
-      .scan(({ state }, { from: player, data: turn }) => {
-        let valid = false;
-        let newState = state;
-        try {
-          valid = validator(state, player, turn);
-        } catch (e) {}
-        if (valid) {
-          newState = updater(state, player, turn);
-        }
-        // Stop the updater from being called with the same values multiple
-        // times.
-        // if (!sanityCheck[turn.player]) sanityCheck[turn.player] = {};
-        // if (sanityCheck[turn.player][turn.turn]) throw new Error(sanityCheck);
-        // sanityCheck[turn.player][turn.turn] = true;
+function runGame({ updater, validator }) {
+  // This function transforms a stream of incoming turns into a stream of updates,
+  // validating the turns and updating the state of the game.
 
-        return { turn, valid, state: newState };
-      })
-      .shareReplay();
+  // The updater can in general be non-deterministic (make random calls),
+  // so every scan must be evaluated EXACTLY once, regardless of the
+  // subscriptions. (Hence the shareReplay.)
+  return incoming$ => incoming$
+    .startWith({ state: updater(), turn: null, valid: null })
+    .scan(({ state }, { from: player, data: turn }) => {
+      let valid = false;
+      let newState = state;
+      try {
+        valid = validator(state, player, turn);
+      } catch (e) {}
+      if (valid) {
+        newState = updater(state, player, turn);
+      }
+      // Stop the updater from being called with the same values multiple
+      // times.
+      if (!sanityCheck[player]) sanityCheck[player] = {};
+      if (sanityCheck[player][turn]) throw new Error(sanityCheck);
+      sanityCheck[player][turn] = true;
 
-    return update$
-      .takeWhile(({ state: { complete } }) => !complete)
-      .concat(update$.skipWhile(({ state: { complete } }) => !complete).take(1))
-      .shareReplay();
-  };
+      return { player, turn, valid, state: newState };
+    })
+    .shareReplay();
 }
 
-function createGame({ players, updater, validator }) {
-  return incomingMessage$ => {
-    // TODO pluck out the players' turns from incomingMessage$
-    const incomingTurn$ = incomingMessage$;
-
-    const update$ = incomingTurn$
-      .let(game({ updater, validator }));
-
-    return Rx.Observable.from(players)
-      .flatMap(playerId => update$
-        .filter(data => !data.turn || data.valid || data.turn.player === playerId)
-        .map(data => ({ to: playerId, data }))
-      );
-  }
+function addLastTurn() {
+  return update$ => update$
+    .takeWhile(({ state: { complete } }) => !complete)
+    .concat(update$.skipWhile(({ state: { complete } }) => !complete).take(1))
+    .shareReplay();
 }
 
-module.exports = createGame;
+function tagUpdates(players) {
+  return update$ => Rx.Observable.from(players)
+    .flatMap(playerId => update$
+      .filter(({ player, turn, valid }) => (
+        !turn || valid || player === playerId
+      ))
+      .map(data => ({ to: playerId, data }))
+    )
+}
+
+function game({ players, updater, validator }) {
+  return incomingMessage$ => incomingMessage$
+    .let(runGame({ updater, validator }))
+    .let(addLastTurn())
+    .let(tagUpdates(players));
+}
+
+module.exports = game;

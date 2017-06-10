@@ -1,6 +1,6 @@
 const Rx = require('rxjs');
 
-const createGame = require('./game');
+const game = require('./game');
 
 /* A file for testing out the createGame transformation with a fake game. */
 
@@ -37,7 +37,7 @@ function validator(state, player, turn) {
 }
 
 const updateEachPlayer$ = incomingTurn$
-  .let(createGame({ players: ['A', 'B'], updater, validator }));
+  .let(game({ players: ['A', 'B'], updater, validator }));
 
 updateEachPlayer$
   .filter(({ to }) => to === 'A')
