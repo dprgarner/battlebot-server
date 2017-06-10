@@ -1,6 +1,6 @@
 const Rx = require('rxjs/Rx');
 
-const sanityCheck = {};
+// const sanityCheck = {};
 
 function runGame({ updater, validator }) {
   // This function transforms a stream of incoming turns into a stream of updates,
@@ -22,9 +22,9 @@ function runGame({ updater, validator }) {
       }
       // Stop the updater from being called with the same values multiple
       // times.
-      if (!sanityCheck[player]) sanityCheck[player] = {};
-      if (sanityCheck[player][turn]) throw new Error(sanityCheck);
-      sanityCheck[player][turn] = true;
+      // if (!sanityCheck[player]) sanityCheck[player] = {};
+      // if (sanityCheck[player][turn]) throw new Error('failed sanityCheck');
+      // sanityCheck[player][turn] = true;
 
       return { player, turn, valid, state: newState };
     })
@@ -39,6 +39,8 @@ function addLastTurn() {
 }
 
 function tagUpdates(players) {
+  // Puts valid turns into the expected outgoing form, and sends updates to
+  // the expected players.
   return update$ => Rx.Observable.from(players)
     .flatMap(playerId => update$
       .filter(({ player, turn, valid }) => (

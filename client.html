@@ -70,7 +70,7 @@
   function showMessage(msg) {
     console.log(msg);
     try {
-      $('#log-in').text($('#log-in').text() + '\n' + JSON.stringify(msg));
+      $('#log-in').text($('#log-in').text() + '\n' + JSON.stringify(msg, null, 2));
     } catch (e) {
       logOther(e.message);
       console.error(e);
@@ -80,7 +80,7 @@
   function sendMessage(ws, msg) {
     ws.send(JSON.stringify(msg));
     try {
-      $('#log-out').text($('#log-out').text() + '\n' + JSON.stringify(msg));
+      $('#log-out').text($('#log-out').text() + '\n' + JSON.stringify(msg, null, 2));
     } catch (e) {
       logOther(e.message);
       console.error(e);
@@ -99,7 +99,9 @@
       logOther('WebSocket connection established');
       let i = 0;
       setInterval(function timeout() {
-        sendMessage(ws, {'number': i++});
+        sendMessage(ws, botId === 'botName' ? { n: i } : { n: -i });
+        i++;
+        // sendMessage(ws, {'number': i++});
       }, 500);
       connected = true;
     };

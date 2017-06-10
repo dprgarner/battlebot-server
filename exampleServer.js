@@ -1,15 +1,17 @@
 const Rx = require('rxjs');
-const createAuthenticatedServer = require('./server');
 
-const initialState = { nextPlayer: 'A', complete: false, count: 0 };
+const createAuthenticatedServer = require('./server');
+const game = require('./game');
+
+const initialState = { nextPlayer: 'botName', complete: false, count: 0 };
 
 function updater(state = initialState, player, turn) {
   if (!turn) return state;
   // if (Math.random() < 0.1) throw new Error('bad reducing' + JSON.stringify(state));
 
-  const count = state.count + turn;
+  const count = state.count + turn.n;
   return {
-    nextPlayer: state.nextPlayer === 'A' ? 'B' : 'A',
+    nextPlayer: state.nextPlayer === 'botName' ? 'otherBotName' : 'botName',
     count,
     complete: Math.abs(count) >= 5,
   };
@@ -17,10 +19,10 @@ function updater(state = initialState, player, turn) {
 
 function validator(state, player, turn) {
   // if (Math.random() < 0.5) throw new Error('bad validation');
-  return player === state.nextPlayer;
+  return player === state.nextPlayer && typeof(turn.n) === 'number';
 }
 
-createAuthenticatedServer(incoming$ => incoming$.let(createGame(
+createAuthenticatedServer(incoming$ => incoming$.let(game(
   {
     players: ['botName', 'otherBotName'],
     updater,
