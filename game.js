@@ -1,26 +1,26 @@
 const Rx = require('rxjs/Rx');
 
-const sanityCheck = {};
+// const sanityCheck = {};
 
-function game({ reducer, validator }) {
+function game({ updater, validator }) {
   // This function transforms the incomingTurn$ stream into the update$
   // stream.
   return incomingTurn$ => {
-    // The 'reducer' can in general be non-deterministic (make random calls),
+    // The updater can in general be non-deterministic (make random calls),
     // so every scan must be evaluated EXACTLY once, regardless of the
     // subscriptions. (Hence all the shareReplays.)
     const update$ = incomingTurn$
-      .startWith({ state: reducer(), turn: null, valid: null })
-      .scan(({ state }, turn) => {
+      .startWith({ state: updater(), turn: null, valid: null })
+      .scan(({ state }, { from: player, data: turn }) => {
         let valid = false;
         let newState = state;
         try {
-          valid = validator(state, turn);
+          valid = validator(state, player, turn);
         } catch (e) {}
         if (valid) {
-          newState = reducer(state, turn);
+          newState = updater(state, player, turn);
         }
-        // Stop the reducer from being called with the same values multiple
+        // Stop the updater from being called with the same values multiple
         // times.
         // if (!sanityCheck[turn.player]) sanityCheck[turn.player] = {};
         // if (sanityCheck[turn.player][turn.turn]) throw new Error(sanityCheck);
@@ -37,13 +37,13 @@ function game({ reducer, validator }) {
   };
 }
 
-function createGame({ players, reducer, validator }) {
+function createGame({ players, updater, validator }) {
   return incomingMessage$ => {
     // TODO pluck out the players' turns from incomingMessage$
-    const incomingTurn$ = incomingMessage$
+    const incomingTurn$ = incomingMessage$;
 
     const update$ = incomingTurn$
-      .let(game({ reducer, validator }));
+      .let(game({ updater, validator }));
 
     return Rx.Observable.from(players)
       .flatMap(playerId => update$
@@ -53,4 +53,4 @@ function createGame({ players, reducer, validator }) {
   }
 }
 
-module.exports = { game, createGame };
+module.exports = createGame;

@@ -1,7 +1,3 @@
-// https://ws4py.readthedocs.io/en/latest/sources/managertutorial/
-// https://stackoverflow.com/questions/3142705/is-there-a-websocket-client-implemented-for-python
-// https://ws4py.readthedocs.io/en/latest/sources/ws4py/
-
 const Rx = require('rxjs');
 const WebSocket = require('ws');
 
@@ -82,15 +78,4 @@ function createAuthenticatedServer(transform, opts) {
   });
 }
 
-createAuthenticatedServer(incoming$ => (
-  incoming$
-    .delay(1000)
-    .combineLatest(
-      Rx.Observable.of(1,2,3),
-      ({ from: id, data: { number } }, x) => (
-        { to: id, data: { number: x + number }}
-      )
-    )
-));
-
-module.exports = { createAuthenticatedServer };
+module.exports = createAuthenticatedServer;

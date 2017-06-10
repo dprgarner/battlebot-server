@@ -1,7 +1,6 @@
-const Rx = require('rxjs/Rx');
+const Rx = require('rxjs');
 
-const { createGame } = require('./game');
-const { createWebsocketServer, createOutgoingObserver } = require('./server');
+const createGame = require('./game');
 
 /* A file for testing out the createGame transformation with a fake game. */
 
@@ -15,15 +14,16 @@ const incomingTurnB$ = Rx.Observable
   .map((x) => -x - 1);
 
 const incomingTurn$ = incomingTurnA$
-  .map(turn => ({ player: 'A', turn }))
-  .merge(incomingTurnB$.map(turn => ({ player: 'B', turn })))
+  .map(data => ({ from: 'A', data }))
+  .merge(incomingTurnB$.map(data => ({ from: 'B', data })))
   // .take(5)  //.concat(Rx.Observable.throw(new Error('bad incomingTurn')))
 
-function reducer(state = { nextPlayer: 'A', complete: false, count: 0 }, turn) {
+const initialState = { nextPlayer: 'A', complete: false, count: 0 };
+function updater(state = initialState, player, turn) {
   if (!turn) return state;
   // if (Math.random() < 0.1) throw new Error('bad reducing' + JSON.stringify(state));
 
-  const count = state.count + turn.turn;
+  const count = state.count + turn;
   return {
     nextPlayer: state.nextPlayer === 'A' ? 'B' : 'A',
     count,
@@ -31,13 +31,13 @@ function reducer(state = { nextPlayer: 'A', complete: false, count: 0 }, turn) {
   };
 }
 
-function validator(state, turn) {
+function validator(state, player, turn) {
   // if (Math.random() < 0.5) throw new Error('bad validation');
-  return turn.player === state.nextPlayer;
+  return player === state.nextPlayer;
 }
 
 const updateEachPlayer$ = incomingTurn$
-  .let(createGame({ players: ['A', 'B'], reducer, validator }));
+  .let(createGame({ players: ['A', 'B'], updater, validator }));
 
 updateEachPlayer$
   .filter(({ to }) => to === 'A')
@@ -61,3 +61,4 @@ setTimeout(() => {
 }, 100);
 
 setTimeout(() => { console.log('okay')}, 1000);
+
