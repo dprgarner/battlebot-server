@@ -2,8 +2,8 @@ const Rx = require('rxjs');
 const { sha256 } = require('hash.js');
 
 const passes = {
-  'botName': 'pass123',
-  'otherBotName': 'pass123',
+  'A': 'pass123',
+  'B': 'pass123',
 }
 
 function createHash(str) {

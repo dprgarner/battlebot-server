@@ -18,12 +18,22 @@
       display: inline-block;
       width: 49%;
     }
+    .hoverer {
+      position: fixed;
+      top: 0;
+    }
   </style>
 </head>
 <body style="margin:0;padding:0;">
 
-<input type="text" id="botId" value="botName" />
-<button onclick="connect()">New bot</button>
+<div class="hoverer">
+<button onclick="connect('A')">Bot A</button>
+<button onclick="connect('B')">Bot B</button>
+<button onclick="playNumber(1)">+1</button>
+<button onclick="playNumber(-1)">-1</button>
+<button onclick="connect('A')">Bot A request start</button>
+<button onclick="connect('B')">Bot B request start</button>
+</div>
 <div class="log">
   <h1>Info:</h1>
   <pre id="log-other"></pre>
@@ -56,7 +66,6 @@
     return hexCodes.join("");
   }
 
-
   function sha256(msg) {
     return crypto.subtle.digest('SHA-256', new TextEncoder('utf-8').encode(msg))
     .then(hash => hex(hash))
@@ -88,21 +97,24 @@
   }
 
   let connected = false;
+  let ws = null;
 
-  function connect() {
-    const botId = $('#botId').val();
+  function startGame() {
+    sendMessage(ws, { type: 'start', timeout: 120, game: 'numberwang' })
+  }  
+
+  function playNumber(n) {
+    sendMessage(ws, { type: 'turn', game_id: 'asdf', n });
+  }
+
+  function connect(botId) {
     if (connected) return;
-    const ws = new WebSocket(`ws://localhost:8080`);
+
+    ws = new WebSocket(`ws://localhost:8080`);
 
     ws.onerror = (err) => logOther(err);
     ws.onopen = () => {
       logOther('WebSocket connection established');
-      let i = 0;
-      setInterval(function timeout() {
-        sendMessage(ws, botId === 'botName' ? { n: i } : { n: -i });
-        i++;
-        // sendMessage(ws, {'number': i++});
-      }, 500);
       connected = true;
     };
     ws.onclose = () => {

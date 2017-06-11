@@ -1,8 +1,7 @@
 const Rx = require('rxjs');
 
 const game = require('./game');
-
-/* A file for testing out the createGame transformation with a fake game. */
+const { updater, validator, players, initialState } = require('./exampleGameCommon');
 
 const incomingTurnA$ = Rx.Observable
   .interval(50)
@@ -10,34 +9,19 @@ const incomingTurnA$ = Rx.Observable
 
 const incomingTurnB$ = Rx.Observable
   .interval(25)
-  .delay(25)
+  .delay(120)
   .map((x) => -x - 1);
 
 const incomingTurn$ = incomingTurnA$
-  .map(data => ({ from: 'A', data }))
-  .merge(incomingTurnB$.map(data => ({ from: 'B', data })))
-  // .take(5)  //.concat(Rx.Observable.throw(new Error('bad incomingTurn')))
-
-const initialState = { nextPlayer: 'A', complete: false, count: 0 };
-function updater(state = initialState, player, turn) {
-  if (!turn) return state;
-  // if (Math.random() < 0.1) throw new Error('bad reducing' + JSON.stringify(state));
-
-  const count = state.count + turn;
-  return {
-    nextPlayer: state.nextPlayer === 'A' ? 'B' : 'A',
-    count,
-    complete: Math.abs(count) >= 5,
-  };
-}
-
-function validator(state, player, turn) {
-  // if (Math.random() < 0.5) throw new Error('bad validation');
-  return player === state.nextPlayer;
-}
+  .map(n => (
+    { from: 'A', data: { type: 'turn', game_id: 'asdf', n } }
+  ))
+  .merge(incomingTurnB$.map(n => (
+    { from: 'B', data: { type: 'turn', game_id: 'asdf', n } }
+  )));
 
 const updateEachPlayer$ = incomingTurn$
-  .let(game({ players: ['A', 'B'], updater, validator }));
+  .let(game({ players, updater, validator, initialState }))
 
 updateEachPlayer$
   .filter(({ to }) => to === 'A')
@@ -59,6 +43,3 @@ setTimeout(() => {
       x => console.log('done')
     );
 }, 100);
-
-setTimeout(() => { console.log('okay')}, 1000);
-

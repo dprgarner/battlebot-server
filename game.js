@@ -2,7 +2,7 @@ const Rx = require('rxjs/Rx');
 
 // const sanityCheck = {};
 
-function runGame({ updater, validator }) {
+function runGame(updater, validator) {
   // This function transforms a stream of incoming turns into a stream of updates,
   // validating the turns and updating the state of the game.
 
@@ -10,15 +10,16 @@ function runGame({ updater, validator }) {
   // so every scan must be evaluated EXACTLY once, regardless of the
   // subscriptions. (Hence the shareReplay.)
   return incoming$ => incoming$
-    .startWith({ state: updater(), turn: null, valid: null })
-    .scan(({ state }, { from: player, data: turn }) => {
+    .scan(({ state: oldState }, { from: player, data: turn }) => {
       let valid = false;
-      let newState = state;
+      let state = oldState;
       try {
-        valid = validator(state, player, turn);
-      } catch (e) {}
+        valid = validator(oldState, player, turn);
+      } catch (e) {
+        console.error(e);
+      }
       if (valid) {
-        newState = updater(state, player, turn);
+        state = updater(oldState, player, turn);
       }
       // Stop the updater from being called with the same values multiple
       // times.
@@ -26,7 +27,7 @@ function runGame({ updater, validator }) {
       // if (sanityCheck[player][turn]) throw new Error('failed sanityCheck');
       // sanityCheck[player][turn] = true;
 
-      return { player, turn, valid, state: newState };
+      return { player, turn, valid, state };
     })
     .shareReplay();
 }
@@ -34,8 +35,7 @@ function runGame({ updater, validator }) {
 function addLastTurn() {
   return update$ => update$
     .takeWhile(({ state: { complete } }) => !complete)
-    .concat(update$.skipWhile(({ state: { complete } }) => !complete).take(1))
-    .shareReplay();
+    .concat(update$.skipWhile(({ state: { complete } }) => !complete).take(1));
 }
 
 function tagUpdates(players) {
@@ -50,11 +50,17 @@ function tagUpdates(players) {
     )
 }
 
-function game({ players, updater, validator }) {
-  return incomingMessage$ => incomingMessage$
-    .let(runGame({ updater, validator }))
-    .let(addLastTurn())
-    .let(tagUpdates(players));
+function game({ players, updater, validator, initialState }) {
+  return incomingMessage$ => {
+    const outgoing$ = incomingMessage$
+      .filter(({ data: { type, game_id } }) => type === 'turn' && game_id === 'asdf')
+      .startWith({ state: initialState, turn: null, valid: null })
+      .let(runGame(updater, validator))
+      .let(addLastTurn())
+      .let(tagUpdates(players))
+
+    return outgoing$;
+  }
 }
 
 module.exports = game;

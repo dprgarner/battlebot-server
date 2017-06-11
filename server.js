@@ -49,18 +49,17 @@ function createAuthenticatedServer(transform, opts) {
   const authedSockets$ = createWebsocketStream(opts)
     .let(authenticate());
 
-  const incoming$ = authedSockets$.flatMap(
-    ({ ws, id }) => ws.map(
-      msg => ({ from: id, data: JSON.parse(msg) })
-    )
-  );
+  const incoming$ = authedSockets$
+    .flatMap(({ ws, id }) => ws.map(msg => (
+        { from: id, data: JSON.parse(msg) }
+    )))
 
   // Process incoming messages to outgoing messages with the operator
   // transform.
   const outgoing$ = incoming$
     .let(transform)
-    .publish();
-  outgoing$.connect();
+
+  outgoing$.subscribe(x => null) // This is a bit hacky.
 
   // Send outgoing messages to the appropriate socket.
   authedSockets$.subscribe(({ ws, id }) => {
