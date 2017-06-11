@@ -1,13 +1,9 @@
 const Rx = require('rxjs');
-const { sha256 } = require('hash.js');
+const { createHash } = require('./hash');
 
 const passes = {
   'A': 'pass123',
   'B': 'pass123',
-}
-
-function createHash(str) {
-  return sha256().update(str).digest('hex');
 }
 
 function login(message, salt) {

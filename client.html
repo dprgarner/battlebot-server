@@ -31,8 +31,8 @@
 <button onclick="connect('B')">Bot B</button>
 <button onclick="playNumber(1)">+1</button>
 <button onclick="playNumber(-1)">-1</button>
-<button onclick="connect('A')">Bot A request start</button>
-<button onclick="connect('B')">Bot B request start</button>
+<button onclick="startGame()">Bot A request start</button>
+<button onclick="startGame()">Bot B request start</button>
 </div>
 <div class="log">
   <h1>Info:</h1>
@@ -100,11 +100,11 @@
   let ws = null;
 
   function startGame() {
-    sendMessage(ws, { type: 'start', timeout: 120, game: 'numberwang' })
+    sendMessage(ws, { type: 'request_game', game: 'numberwang', params: {} })
   }  
 
   function playNumber(n) {
-    sendMessage(ws, { type: 'turn', game_id: 'asdf', n });
+    sendMessage(ws, { type: 'turn', game_id: 'asdf', game: 'numberwang', n });
   }
 
   function connect(botId) {
@@ -130,8 +130,9 @@
         console.log(dataObj.salt);
         sha256("pass123" + dataObj.salt).then(function(digest) {
           console.log(digest);
+          sendMessage(ws, { login_id: botId, login_hash: digest });
           setTimeout(() => {
-            sendMessage(ws, { login_id: botId, login_hash: digest });
+            startGame();
           }, 10)
           authed = true;
         });

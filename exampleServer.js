@@ -2,16 +2,46 @@ const Rx = require('rxjs');
 
 const createAuthenticatedServer = require('./server');
 const game = require('./game');
-const { updater, validator, createInitialState } = require('./numberwang');
+const newGameRequests = require('./matchmaking');
+const { createShortHash } = require('./hash');
+const numberwang = require('./numberwang');
+
+const games = { numberwang };
 
 createAuthenticatedServer(incoming$ => {
-  const players = ['A', 'B'];
-  const initialState = createInitialState(players);
+  const gameName = 'numberwang';
 
+  const game$ = incoming$
+    .do(() => console.log('Message caught by game$'))
+    .let(newGameRequests(gameName))
+    .publishReplay();
 
-  // { type: 'start', timeout: 120, game: 'numberwang' }
+  game$.connect()
 
-  return incoming$
-    .let(game({ updater, validator, players, initialState }))
-    .do(x => console.log('out:', x), null, () => console.log('Game completed'))
+  const outgoing$ = game$
+    .do(() => console.log('New game'))
+    .flatMap(players => {
+      const gameId = 'asdf';
+
+      const outgoing$ = incoming$
+        .do(() => console.log('Message caught by game$'))
+        .filter(({ data: { game_id, game } }) => game_id === gameId && game === gameName)
+        .let(game({
+          updater: games[gameName].updater,
+          validator: games[gameName].validator,
+          players,
+          initialState: games[gameName].createInitialState(players),
+        }))
+        .do(x => console.log('caught by game:', x))
+        .publishReplay();
+
+      outgoing$.connect()
+
+      return outgoing$;
+    })
+    .publishReplay();
+
+  outgoing$.connect();
+
+  return outgoing$;
 });
