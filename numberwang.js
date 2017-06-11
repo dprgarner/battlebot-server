@@ -1,12 +1,8 @@
 const Rx = require('rxjs');
 
-/* A file for testing out the game transformation with a fake game. */
+/* A silly game for testing out the game transformations. */
 
 function updater(state, player, turn) {
-  if (!turn) {
-    console.log('this happened', state);
-    return state;
-  }
   // if (Math.random() < 0.1) throw new Error('bad reducing' + JSON.stringify(state));
 
   const count = state.count + turn.n;
@@ -22,7 +18,8 @@ function validator(state, player, turn) {
   return player === state.nextPlayer && typeof(turn.n) === 'number';
 }
 
-const players = ['A', 'B'];
-const initialState = { nextPlayer: 'A', complete: false, count: 0, players };
+function createInitialState(players) {
+  return { nextPlayer: players[0], complete: false, count: 0, players };
+}
 
-module.exports =  { updater, validator, players, initialState };
+module.exports =  { updater, validator, createInitialState };

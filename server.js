@@ -56,10 +56,7 @@ function createAuthenticatedServer(transform, opts) {
 
   // Process incoming messages to outgoing messages with the operator
   // transform.
-  const outgoing$ = incoming$
-    .let(transform)
-
-  outgoing$.subscribe(x => null) // This is a bit hacky.
+  const outgoing$ = incoming$.let(transform);
 
   // Send outgoing messages to the appropriate socket.
   authedSockets$.subscribe(({ ws, id }) => {

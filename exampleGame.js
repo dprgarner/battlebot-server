@@ -1,7 +1,10 @@
 const Rx = require('rxjs');
 
 const game = require('./game');
-const { updater, validator, players, initialState } = require('./exampleGameCommon');
+const { updater, validator, createInitialState } = require('./numberwang');
+
+const players = ['A', 'B'];
+const initialState = createInitialState(players);
 
 const incomingTurnA$ = Rx.Observable
   .interval(50)

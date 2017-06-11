@@ -51,13 +51,16 @@ function tagUpdates(players) {
 }
 
 function game({ players, updater, validator, initialState }) {
-  return incomingMessage$ => {
-    const outgoing$ = incomingMessage$
+  return incoming$ => {
+    const outgoing$ = incoming$
       .filter(({ data: { type, game_id } }) => type === 'turn' && game_id === 'asdf')
       .startWith({ state: initialState, turn: null, valid: null })
       .let(runGame(updater, validator))
       .let(addLastTurn())
       .let(tagUpdates(players))
+      .publishReplay()
+
+    outgoing$.connect();
 
     return outgoing$;
   }
