@@ -130,7 +130,9 @@
         console.log(dataObj.salt);
         sha256("pass123" + dataObj.salt).then(function(digest) {
           console.log(digest);
-          sendMessage(ws, { login_id: botId, login_hash: digest });
+          setTimeout(() => {
+            sendMessage(ws, { login_id: botId, login_hash: digest });
+          }, 10)
           authed = true;
         });
       }

@@ -8,6 +8,9 @@ createAuthenticatedServer(incoming$ => {
   const players = ['A', 'B'];
   const initialState = createInitialState(players);
 
+
+  // { type: 'start', timeout: 120, game: 'numberwang' }
+
   return incoming$
     .let(game({ updater, validator, players, initialState }))
     .do(x => console.log('out:', x), null, () => console.log('Game completed'))

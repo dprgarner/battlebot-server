@@ -1,7 +1,5 @@
 const Rx = require('rxjs/Rx');
 
-// const sanityCheck = {};
-
 function runGame(updater, validator) {
   // This function transforms a stream of incoming turns into a stream of updates,
   // validating the turns and updating the state of the game.
@@ -21,11 +19,6 @@ function runGame(updater, validator) {
       if (valid) {
         state = updater(oldState, player, turn);
       }
-      // Stop the updater from being called with the same values multiple
-      // times.
-      // if (!sanityCheck[player]) sanityCheck[player] = {};
-      // if (sanityCheck[player][turn]) throw new Error('failed sanityCheck');
-      // sanityCheck[player][turn] = true;
 
       return { player, turn, valid, state };
     })
@@ -60,6 +53,9 @@ function game({ players, updater, validator, initialState }) {
       .let(tagUpdates(players))
       .publishReplay()
 
+    // Start processing the stream without waiting for subscribers. This is
+    // necessary to fix a bug where incoming turns aren't processed until >1
+    // socket has connected.
     outgoing$.connect();
 
     return outgoing$;
