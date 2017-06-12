@@ -16,18 +16,22 @@ function createInitialState(players) {
   };
 }
 
-function reducer(state, turn) {
-  // if (Math.random() < 0.1) throw new Error('bad reducing' + JSON.stringify(state));
-  const nextPlayer = _.without(state.players, turn.player)[0];
-  const n = state.board.n + turn.n;
-  const complete = Math.abs(n) >= 3;
-
-  return { players: state.players, nextPlayer, complete, board: { n } };
-}
-
 function validator(state, turn) {
   // if (Math.random() < 0.5) throw new Error('bad validation');
-  return turn.player === state.nextPlayer && typeof(turn.n) === 'number';
+  if (turn.player !== state.nextPlayer) return false;
+
+  return typeof(turn.n) === 'number';
+}
+
+function reducer({ players, board }, turn) {
+  // Must return a state object with { players, nextPlayer, complete }.
+
+  // if (Math.random() < 0.1) throw new Error('bad reducing' + JSON.stringify(state));
+  const nextPlayer = _.without(players, turn.player)[0];
+  const n = board.n + turn.n;
+  const complete = Math.abs(n) >= 3;
+
+  return { players, nextPlayer, complete, board: { n } };
 }
 
 module.exports =  { createInitialState, validator, reducer };
