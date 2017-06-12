@@ -1,4 +1,10 @@
+const _ = require('underscore');
 const Rx = require('rxjs/Rx');
+const { createShortHash } = require('./hash');
+const { wsObserver, wsObservable } = require('./socketStreams');
+const numberwang = require('./numberwang');
+
+const games = { numberwang };
 
 function runGame(updater, validator) {
   // This function transforms a stream of incoming turns into a stream of updates,
@@ -8,7 +14,7 @@ function runGame(updater, validator) {
   // so every scan must be evaluated EXACTLY once, regardless of the
   // subscriptions. (Hence the shareReplay.)
   return incoming$ => incoming$
-    .scan(({ state: oldState }, { from: player, data: turn }) => {
+    .scan(({ state: oldState }, { player, turn }) => {
       let valid = false;
       let state = oldState;
       try {
@@ -39,27 +45,54 @@ function tagUpdates(players) {
       .filter(({ player, turn, valid }) => (
         !turn || valid || player === playerId
       ))
-      .map(data => ({ to: playerId, data }))
+      .map(turn => ({ to: playerId, turn }))
     )
 }
 
-function game({ players, updater, validator, initialState }) {
-  return incoming$ => {
-    const outgoing$ = incoming$
-      .filter(({ data: { type, game_id } }) => type === 'turn' && game_id === 'asdf')
-      .startWith({ state: initialState, turn: null, valid: null })
-      .let(runGame(updater, validator))
-      .let(addLastTurn())
-      .let(tagUpdates(players))
-      .publishReplay()
-
-    // Start processing the stream without waiting for subscribers. This is
-    // necessary to fix a bug where incoming turns aren't processed until >1
-    // socket has connected.
-    outgoing$.connect();
-
-    return outgoing$;
-  }
+function filterAndTag(player) {
+  return incoming$ => incoming$
+    .do(x => console.log('in', player, x))
+    .filter(({ type }) => type === 'turn')
+    .map(turn => ({ player, turn }));
 }
 
-module.exports = game;
+function filterAndUntag(player) {
+  return incoming$ => incoming$
+    .filter(({ to }) => to === player)
+    .map(({ turn }) => turn)
+    .do((x) => console.log('out', player, x));
+}
+
+function playGame(sockets) {
+  const gameName = sockets[0].game;
+  const game = games[gameName];
+  const gameId = createShortHash(Math.random());
+
+  sockets = (Math.random() < 0.5) ? sockets : [...sockets].reverse();
+  const players = _.pluck(sockets, 'botId');
+
+  const inA$ = wsObservable(sockets[0].ws)
+    .let(filterAndTag(players[0]))
+
+  const inB$ = wsObservable(sockets[1].ws)
+    .let(filterAndTag(players[1]))
+
+  const initialState = game.createInitialState(players);
+
+  const out$ = inA$
+    .merge(inB$)
+    .startWith({ state: initialState, turn: null, valid: null, player: null })
+    .let(runGame(game.updater, game.validator))
+    .let(addLastTurn())
+    .let(tagUpdates(players))
+
+  out$
+    .let(filterAndUntag(players[0]))
+    .subscribe(wsObserver(sockets[0].ws));
+
+  out$
+    .let(filterAndUntag(players[1]))
+    .subscribe(wsObserver(sockets[1].ws));
+}
+
+module.exports = playGame;
