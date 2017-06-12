@@ -1,10 +1,8 @@
 const _ = require('underscore');
 const Rx = require('rxjs/Rx');
 const { createShortHash } = require('./hash');
-const { wsObserver, wsObservable } = require('./socketStreams');
-const numberwang = require('./numberwang');
-
-const games = { numberwang };
+const { wsObserver, wsObservable } = require('./sockets');
+const games = require('./games');
 
 function runGame(updater, validator) {
   // This function transforms a stream of incoming turns into a stream of updates,

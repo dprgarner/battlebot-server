@@ -3,8 +3,8 @@ const Rx = require('rxjs');
 const WebSocket = require('ws');
 
 var authenticate = require('./authenticate');
-const { createWebsocketStream } = require('./socketStreams');
-var playGame = require('./game');
+const { createWebsocketStream } = require('./sockets');
+var playGame = require('./playGame');
 
 function matchPlayers(connection$) {
   // Creates a stream of matched pairs of connected players. A new game should
@@ -30,7 +30,7 @@ function matchPlayers(connection$) {
     .map(({ createGame }) => createGame);
 }
 
-function createGameServer(opts) {
+function createGameSocketServer(opts) {
   createWebsocketStream(opts)
     .let(authenticate())
     .groupBy(({ game }) => game)
@@ -38,6 +38,6 @@ function createGameServer(opts) {
     .subscribe(playGame);
 }
 
-createGameServer();
+createGameSocketServer();
 
 module.exports = createGameServer;

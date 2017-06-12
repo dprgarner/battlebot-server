@@ -1,6 +1,6 @@
 const Rx = require('rxjs');
 const { createHash } = require('./hash');
-const { wsObserver, wsObservable } = require('./socketStreams');
+const { wsObserver, wsObservable } = require('./sockets');
 
 const passes = {
   'numberwang': {
