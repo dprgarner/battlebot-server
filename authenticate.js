@@ -18,10 +18,9 @@ function login(message, salt) {
 
       const loginValid = (expectedHash === login_hash);
       if (loginValid) {
-        console.log('Logged in:', bot_id);
         return resolve({ game, botId: bot_id });
       }
-      console.log('Invalid login:', bot_id);
+      console.log(`Invalid login attempt from ${bot_id}`);
       resolve(false);
     } catch (e) {
       reject(e);
@@ -62,6 +61,8 @@ function authenticate() {
       return loginId$
         .filter(x => x)
         .map(({ botId, game }) => ({ ws, botId, game }))
+        .do(({ botId, game }) => console.log(`The ${game} bot ${botId} has connected.`))
+        .share();
     })
     .share();
 }

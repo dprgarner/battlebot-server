@@ -39,19 +39,16 @@ function addLastTurn(update$) {
     );
 }
 
-function filterAndTag(player) {
+function addMetadata(player) {
   return incoming$ => incoming$
-    .do(x => console.log('in', player, x))
     .map(turn => _.extend({}, turn, { player }));
 }
 
-function filterAndUntag(destPlayer) {
+function filterToPlayer(destPlayer) {
   return incoming$ => incoming$
-    .do(x => console.log(x))
     .filter(({ turn }) => (
       !turn || turn.valid || turn.player === destPlayer
     ))
-    .do(x => console.log('out', destPlayer, x));
 }
 
 function playGame(connections) {
@@ -60,11 +57,16 @@ function playGame(connections) {
   const gameId = createShortHash(Math.random());
   const players = _.pluck(connections, 'botId');
 
+  console.log(
+    `A game of ${gameName} has started between ${players[0]} and ${players[1]}.`
+    + ` (ID: ${gameId})`
+  );
+
   const inA$ = wsObservable(connections[0].ws)
-    .let(filterAndTag(players[0]));
+    .let(addMetadata(players[0]));
 
   const inB$ = wsObservable(connections[1].ws)
-    .let(filterAndTag(players[1]));
+    .let(addMetadata(players[1]));
 
   const out$ = inA$
     .merge(inB$)
@@ -72,12 +74,31 @@ function playGame(connections) {
     .let(runGame(game.validator, game.reducer))
     .let(addLastTurn)
 
+  const victor$ = Rx.Observable.of(
+    inA$
+      .ignoreElements()
+      .delay(5)
+      .concat(Rx.Observable.of({ victor: players[1] })),
+    inB$
+      .ignoreElements()
+      .delay(5)
+      .concat(Rx.Observable.of(players[0])),
+    out$
+      .filter(({ state: { complete } }) => complete)
+      .map(({ state: { victor } }) => victor)
+  )
+    .mergeAll()
+    .take(1)
+    .subscribe(victor => console.log(
+      `${victor} has won a game of ${gameName}. (ID: ${gameId})`
+    ))
+
   out$
-    .let(filterAndUntag(players[0]))
+    .let(filterToPlayer(players[0]))
     .subscribe(wsObserver(connections[0].ws));
 
   out$
-    .let(filterAndUntag(players[1]))
+    .let(filterToPlayer(players[1]))
     .subscribe(wsObserver(connections[1].ws));
 }
 

@@ -30,8 +30,11 @@ function reducer({ players, board }, turn) {
   const nextPlayer = _.without(players, turn.player)[0];
   const n = board.n + turn.n;
   const complete = Math.abs(n) >= 3;
+  let victor;
+  if (n >= 3) victor = players[0];
+  if (n <= -3) victor = players[1];
 
-  return { players, nextPlayer, complete, board: { n } };
+  return { players, nextPlayer, complete, victor, board: { n } };
 }
 
 module.exports =  { createInitialState, validator, reducer };
