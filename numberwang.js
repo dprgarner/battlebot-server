@@ -18,7 +18,16 @@ function validator(state, player, turn) {
 }
 
 function createInitialState(players) {
-  return { players, nextPlayer: players[0], complete: false, count: 0, players };
+  const shuffledPlayers = (Math.random() < 0.5) ?
+    players :
+    [...players].reverse();
+
+  return {
+    players: shuffledPlayers,
+    nextPlayer: shuffledPlayers[0],
+    complete: false,
+    count: 0,
+  };
 }
 
 module.exports =  { updater, validator, createInitialState };

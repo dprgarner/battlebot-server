@@ -60,21 +60,19 @@ function filterAndUntag(player) {
   return incoming$ => incoming$
     .filter(({ to }) => to === player)
     .map(({ turn }) => turn)
-    .do((x) => console.log('out', player, x));
+    .do(x => console.log('out', player, x));
 }
 
-function playGame(sockets) {
-  const gameName = sockets[0].game;
+function playGame(connections) {
+  const gameName = connections[0].game;
   const game = games[gameName];
   const gameId = createShortHash(Math.random());
+  const players = _.pluck(connections, 'botId');
 
-  sockets = (Math.random() < 0.5) ? sockets : [...sockets].reverse();
-  const players = _.pluck(sockets, 'botId');
-
-  const inA$ = wsObservable(sockets[0].ws)
+  const inA$ = wsObservable(connections[0].ws)
     .let(filterAndTag(players[0]))
 
-  const inB$ = wsObservable(sockets[1].ws)
+  const inB$ = wsObservable(connections[1].ws)
     .let(filterAndTag(players[1]))
 
   const initialState = game.createInitialState(players);
@@ -88,11 +86,11 @@ function playGame(sockets) {
 
   out$
     .let(filterAndUntag(players[0]))
-    .subscribe(wsObserver(sockets[0].ws));
+    .subscribe(wsObserver(connections[0].ws));
 
   out$
     .let(filterAndUntag(players[1]))
-    .subscribe(wsObserver(sockets[1].ws));
+    .subscribe(wsObserver(connections[1].ws));
 }
 
 module.exports = playGame;

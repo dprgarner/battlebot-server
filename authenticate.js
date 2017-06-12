@@ -31,9 +31,9 @@ function login(message, salt) {
 
 function authenticate() {
   // This function transforms the ws$ stream into a stream where each event is
-  // an object containing the authenticated socket, the bot ID, and the
-  // associated game, and where inauthenticated sockets are closed and
-  // filtered out.
+  // a 'connection' - an object containing the authenticated socket, the bot
+  // ID, and the associated game. The stream closes and filters out
+  // inauthenticated sockets.
   return ws$ => ws$
     .flatMap(ws => {
       const fromClient$ = wsObservable(ws);
@@ -53,12 +53,12 @@ function authenticate() {
         )
         .share();
 
-      // Close invalid websockets.
+      // Close invalid sockets.
       loginId$
         .filter(x => !x)
         .subscribe(() => toClient.complete());
 
-      // Return only valid websockets.
+      // Return only valid sockets.
       return loginId$
         .filter(x => x)
         .map(({ botId, game }) => ({ ws, botId, game }))
