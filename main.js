@@ -39,5 +39,3 @@ function createGameSocketServer(opts) {
 }
 
 createGameSocketServer();
-
-module.exports = createGameServer;

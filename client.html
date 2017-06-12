@@ -98,7 +98,7 @@
   let ws = null;
 
   function playNumber(n) {
-    sendMessage(ws, { type: 'turn', n });
+    sendMessage(ws, { n });
   }
 
   function connect(botId) {

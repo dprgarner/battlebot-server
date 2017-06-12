@@ -3,20 +3,6 @@ const _ = require('underscore');
 
 /* A silly game for testing out the game transformations. */
 
-function updater(state, player, turn) {
-  // if (Math.random() < 0.1) throw new Error('bad reducing' + JSON.stringify(state));
-  const nextPlayer = _.without(state.players, player)[0];
-  const count = state.count + turn.n;
-  const complete = Math.abs(count) >= 3;
-
-  return { nextPlayer, complete, players: state.players, count };
-}
-
-function validator(state, player, turn) {
-  // if (Math.random() < 0.5) throw new Error('bad validation');
-  return player === state.nextPlayer && typeof(turn.n) === 'number';
-}
-
 function createInitialState(players) {
   const shuffledPlayers = (Math.random() < 0.5) ?
     players :
@@ -26,8 +12,22 @@ function createInitialState(players) {
     players: shuffledPlayers,
     nextPlayer: shuffledPlayers[0],
     complete: false,
-    count: 0,
+    board: { n: 0 },
   };
 }
 
-module.exports =  { updater, validator, createInitialState };
+function reducer(state, turn) {
+  // if (Math.random() < 0.1) throw new Error('bad reducing' + JSON.stringify(state));
+  const nextPlayer = _.without(state.players, turn.player)[0];
+  const n = state.board.n + turn.n;
+  const complete = Math.abs(n) >= 3;
+
+  return { players: state.players, nextPlayer, complete, board: { n } };
+}
+
+function validator(state, turn) {
+  // if (Math.random() < 0.5) throw new Error('bad validation');
+  return turn.player === state.nextPlayer && typeof(turn.n) === 'number';
+}
+
+module.exports =  { createInitialState, validator, reducer };
