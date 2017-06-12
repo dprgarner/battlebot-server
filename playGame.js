@@ -41,7 +41,7 @@ function addLastTurn(update$) {
 
 function addMetadata(player) {
   return incoming$ => incoming$
-    .map(turn => _.extend({}, turn, { player }));
+    .map(turn => _.extend({}, turn, { player, time: Date.now() }));
 }
 
 function filterToPlayer(destPlayer) {
@@ -63,13 +63,10 @@ function playGame(connections) {
   );
 
   const inA$ = wsObservable(connections[0].ws)
-    .let(addMetadata(players[0]));
-
   const inB$ = wsObservable(connections[1].ws)
-    .let(addMetadata(players[1]));
 
-  const out$ = inA$
-    .merge(inB$)
+  const out$ = inA$.let(addMetadata(players[0]))
+    .merge(inB$.let(addMetadata(players[1])))
     .startWith({ state: game.createInitialState(players) })
     .let(runGame(game.validator, game.reducer))
     .let(addLastTurn)
@@ -78,7 +75,7 @@ function playGame(connections) {
     inA$
       .ignoreElements()
       .delay(5)
-      .concat(Rx.Observable.of({ victor: players[1] })),
+      .concat(Rx.Observable.of(players[1])),
     inB$
       .ignoreElements()
       .delay(5)
@@ -89,15 +86,21 @@ function playGame(connections) {
   )
     .mergeAll()
     .take(1)
+    .delay(5)
+    .share();
+
+  victor$
     .subscribe(victor => console.log(
       `${victor} has won a game of ${gameName}. (ID: ${gameId})`
     ))
 
   out$
+    .takeUntil(victor$)
     .let(filterToPlayer(players[0]))
     .subscribe(wsObserver(connections[0].ws));
 
   out$
+    .takeUntil(victor$)
     .let(filterToPlayer(players[1]))
     .subscribe(wsObserver(connections[1].ws));
 }
