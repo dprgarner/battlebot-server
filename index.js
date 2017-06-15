@@ -61,7 +61,7 @@ app.get('/bots', (req, res) => {
       .status(err instanceof ClientError ? 400 : 500)
       .json({ error: err.message });
   });
-})
+});
 
 app.get('/bots/:game', (req, res) => {
   const game = req.params.game;
@@ -84,18 +84,19 @@ app.get('/bots/:game', (req, res) => {
         .status(err instanceof ClientError ? 400 : 500)
         .json({ error: err.message });
     });
-})
+});
 
 app.post('/bots/:game', jsonParser, (req, res, next) => {
   const name = req.body.name;
   const pass_hash = createHash(Math.random());
-  const { bot_id } = req.body;
+  const { bot_id, owner } = req.body;
   const game = req.params.game;
 
   Promise.resolve()
     .then(() => {
       if (!games[game]) throw new ClientError('Game not recognised');
       if (!bot_id) throw new ClientError('No ID set');
+      if (!owner) throw new ClientError('No owner set');
     })
     .then(() => connect(db => {
       const users = db.collection('users');
@@ -105,7 +106,13 @@ app.post('/bots/:game', jsonParser, (req, res, next) => {
         .then((count) => {
           if (count) throw new ClientError('Username already registered');
         })
-        .then(() => users.insertOne({ game, bot_id, pass_hash }))
+        .then(() => users.insertOne({
+          game,
+          bot_id,
+          pass_hash,
+          owner,
+          date_registered: new Date(),
+        }))
         .then(() => {
           console.log(`Registered ${game} bot ${bot_id}`);
           res.json({ game, bot_id, pass_hash });
