@@ -9,10 +9,7 @@ function connect(promiseGenerator) {
   return MongoClient.connect(url)
     .then((db) => {
       return promiseGenerator(db)
-        .then(res => {
-          console.log('res:', res);
-          return db.close().then(() => res)
-        })
+        .then(res => db.close().then(() => res))
         .catch((err) => db.close().then(() => { throw err; }))
     });
 }
