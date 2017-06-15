@@ -24,7 +24,7 @@ function wsObservable(ws) {
   }).share();
 }
 
-function createWebsocketStream(opts = { port: 8080 }) {
+function createWebsocketStream(opts = { port: 80 }) {
   // A stream of WebSockets.
   return Rx.Observable.create(observer => {
     console.log(`Opening a server on port ${opts.port}`);

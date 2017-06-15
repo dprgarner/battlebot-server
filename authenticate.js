@@ -1,31 +1,30 @@
 const Rx = require('rxjs');
+
+const connect = require('./db');
 const { createHash } = require('./hash');
 const { wsObserver, wsObservable } = require('./sockets');
 
-const passes = {
-  'numberwang': {
-    'A': 'pass123',
-    'B': 'pass123',
-  },
-}
-
 function login(message, salt) {
-  return new Promise((resolve, reject) => {
-    try {
-      const { bot_id, login_hash, game } = message;
-      const pass = passes[game][bot_id];
-      const expectedHash = createHash(pass + salt);
+  const { bot_id, login_hash, game } = message;
 
-      const loginValid = (expectedHash === login_hash);
-      if (loginValid) {
-        return resolve({ game, botId: bot_id });
+  return connect(db => db.collection('users').findOne({ game, bot_id }))
+    .then((res) => {
+      if (!res) {
+        console.log('Unrecognised bot');
+        return false;
       }
+      const { bot_id, pass_hash, game } = res;
+
+      const expectedHash = createHash(pass_hash + salt);
+      const loginValid = (expectedHash === login_hash);
+
+      if (loginValid) {
+        return { game, botId: bot_id };
+      }
+
       console.log(`Invalid login attempt from ${bot_id}`);
-      resolve(false);
-    } catch (e) {
-      reject(e);
-    }
-  });
+      return false;
+    });
 }
 
 function authenticate() {
