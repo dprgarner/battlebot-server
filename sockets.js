@@ -16,7 +16,14 @@ function wsObserver(ws) {
 function wsObservable(ws) {
   // An observable for incoming JSON messages from the socket.
   return Rx.Observable.create(obs => {
-    ws.on('message', (data) => obs.next(JSON.parse(data)));
+    ws.on('message', (data) => {
+      try {
+        const json = JSON.parse(data);
+        obs.next(json);
+      } catch (e) {
+        obs.error(e);
+      }
+    });
     ws.on('error', (err) => obs.error(err));
     ws.on('close', () => obs.complete());
 

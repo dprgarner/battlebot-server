@@ -13,6 +13,8 @@ const games = require('./games');
 
 const app = express();
 const jsonParser = bodyParser.json();
+const httpPort = 3000;
+const wsPort = 3001;
 
 function createGameSocketServer(opts) {
   createWebsocketStream(opts)
@@ -22,7 +24,7 @@ function createGameSocketServer(opts) {
     .subscribe(playGame);
 }
 
-createGameSocketServer({ port: 3001 });
+createGameSocketServer({ port: wsPort });
 
 class ClientError extends Error {
   constructor(message) {
@@ -33,7 +35,7 @@ class ClientError extends Error {
   }
 }
 
-app.set('port', 3000);
+app.set('port', httpPort);
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'client.html'));
@@ -115,7 +117,9 @@ app.post('/bots/:game', jsonParser, (req, res, next) => {
         }))
         .then(() => {
           console.log(`Registered ${game} bot ${bot_id}`);
-          res.json({ game, bot_id, pass_hash });
+          res
+            .status(201)
+            .json({ game, bot_id, pass_hash });
         })
     }))
     .catch(err => {
