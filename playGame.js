@@ -51,6 +51,82 @@ function filterToPlayer(destPlayer) {
     ))
 }
 
+function getVictor(connections, update$) {
+  const timeout = 500;
+  const strikes = 3;
+
+  const players = _.pluck(connections, 'botId');
+  const inA$ = wsObservable(connections[0].ws);
+  const inB$ = wsObservable(connections[1].ws);
+
+  const disconnected = 'disconnect';
+  const idiocy = "Didn't write unit tests";
+
+  return Rx.Observable.of(
+    // Game concluded normally
+    update$
+      .filter(({ state: { complete } }) => complete)
+      .map(({ state: { victor } }) => ({
+        victor,
+        reason: 'finished',
+      })),
+
+    // Player A disconnected
+    inA$
+      .ignoreElements()
+      .delay(timeout)
+      .concat(Rx.Observable.of({
+        victor: players[1],
+        reason: disconnected,
+      })),
+
+    // Player B disconnected
+    inB$
+      .ignoreElements()
+      .delay(timeout)
+      .concat(Rx.Observable.of({
+        victor: players[0],
+        reason: disconnected,
+      })),
+
+    // Both players disconnected (within timeout ms of each other)
+    inA$
+      .ignoreElements()
+      .concat(inB$.ignoreElements())
+      .concat(Rx.Observable.of({
+        victor: null,
+        reason: disconnected,
+      })),
+
+    // Player A keeps making invalid turns
+    update$
+      .do(x => console.log(x))
+      .filter(({ turn }) => turn && turn.player == players[0] && !turn.valid)
+      .take(strikes)
+      .ignoreElements()
+      .concat(Rx.Observable.of({
+        victor: players[1],
+        reason: idiocy,
+      }))
+      .delay(5),
+
+    // Player B keeps making invalid turns
+    update$
+      .filter(({ turn }) => turn && turn.player == players[1] && !turn.valid)
+      .take(strikes)
+      .ignoreElements()
+      .concat(Rx.Observable.of({
+        victor: players[0],
+        reason: idiocy,
+      }))
+      .delay(5)
+  )
+  .mergeAll()
+  .take(1)
+  .delay(5)
+  .share();
+}
+
 function playGame(connections) {
   const gameName = connections[0].game;
   const game = games[gameName];
@@ -62,47 +138,27 @@ function playGame(connections) {
     + ` (ID: ${gameId})`
   );
 
-  const inA$ = wsObservable(connections[0].ws)
-  const inB$ = wsObservable(connections[1].ws)
-
-  const out$ = inA$.let(addMetadata(players[0]))
-    .merge(inB$.let(addMetadata(players[1])))
+  const update$ = Rx.Observable.from(connections)
+    .flatMap(({ ws, botId }) => wsObservable(ws).let(addMetadata(botId)))
     .startWith({ state: game.createInitialState(players) })
     .let(runGame(game.validator, game.reducer))
-    .let(addLastTurn)
+    .let(addLastTurn);
 
-  const victor$ = Rx.Observable.of(
-    inA$
-      .ignoreElements()
-      .delay(5)
-      .concat(Rx.Observable.of(players[1])),
-    inB$
-      .ignoreElements()
-      .delay(5)
-      .concat(Rx.Observable.of(players[0])),
-    out$
-      .filter(({ state: { complete } }) => complete)
-      .map(({ state: { victor } }) => victor)
-  )
-    .mergeAll()
-    .take(1)
-    .delay(5)
-    .share();
-
+  const victor$ = getVictor(connections, update$)
   victor$
-    .subscribe(victor => console.log(
-      `${victor} has won a game of ${gameName}. (ID: ${gameId})`
-    ))
+    .subscribe(({ victor, reason }) => {
+      const text = victor ? 
+        `${victor} has won a game of ${gameName}.` :
+        `The ${gameName} game between ${players[0]} and ${players[1]} ended in a draw.`;
+      console.log(text + ` (Reason: ${reason}, Game ID: ${gameId})`);
+    })  
 
-  out$
-    .takeUntil(victor$)
-    .let(filterToPlayer(players[0]))
-    .subscribe(wsObserver(connections[0].ws));
-
-  out$
-    .takeUntil(victor$)
-    .let(filterToPlayer(players[1]))
-    .subscribe(wsObserver(connections[1].ws));
+  for (let i = 0; i < connections.length; i++) {
+    update$
+      .takeUntil(victor$)
+      .let(filterToPlayer(players[i]))
+      .subscribe(wsObserver(connections[i].ws));
+  }
 }
 
 module.exports = playGame;
