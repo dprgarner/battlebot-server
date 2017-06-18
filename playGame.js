@@ -52,15 +52,22 @@ function filterToPlayer(destPlayer) {
 }
 
 function getVictor(connections, update$) {
-  const timeout = 500;
+  const gracePeriod = 500;
   const strikes = 3;
+  const timeout = 3;
 
   const players = _.pluck(connections, 'botId');
   const inA$ = wsObservable(connections[0].ws);
   const inB$ = wsObservable(connections[1].ws);
 
-  const disconnected = 'disconnect';
-  const idiocy = "Didn't write unit tests";
+  const reasonComplete = 'complete';
+  const reasonDisconnected = 'disconnect';
+  const reasonTimeout = 'timeout';
+  const reasonIdiocy = "Didn't write unit tests";
+
+  function otherPlayer(player) {
+    return _.without(players, player)[0]
+  }
 
   return Rx.Observable.of(
     // Game concluded normally
@@ -68,45 +75,55 @@ function getVictor(connections, update$) {
       .filter(({ state: { complete } }) => complete)
       .map(({ state: { victor } }) => ({
         victor,
-        reason: 'finished',
+        reason: reasonComplete,
+      })),
+
+    // The next player fails to make a valid move within the timeout period
+    update$
+      .filter(({ turn }) => !turn || turn.valid)
+      .timeout(timeout)
+      .catch(e => Rx.Observable.empty())
+      .last()
+      .map(({ state: { nextPlayer } }) => ({
+        victor: otherPlayer(nextPlayer),
+        reason: reasonTimeout,
       })),
 
     // Player A disconnected
     inA$
       .ignoreElements()
-      .delay(timeout)
+      .delay(gracePeriod)
       .concat(Rx.Observable.of({
         victor: players[1],
-        reason: disconnected,
+        reason: reasonDisconnected,
       })),
 
     // Player B disconnected
     inB$
       .ignoreElements()
-      .delay(timeout)
+      .delay(gracePeriod)
       .concat(Rx.Observable.of({
         victor: players[0],
-        reason: disconnected,
+        reason: reasonDisconnected,
       })),
 
-    // Both players disconnected (within timeout ms of each other)
+    // Both players disconnected (within gracePeriod ms of each other)
     inA$
       .ignoreElements()
       .concat(inB$.ignoreElements())
       .concat(Rx.Observable.of({
         victor: null,
-        reason: disconnected,
+        reason: reasonDisconnected,
       })),
 
     // Player A keeps making invalid turns
     update$
-      .do(x => console.log(x))
       .filter(({ turn }) => turn && turn.player == players[0] && !turn.valid)
       .take(strikes)
       .ignoreElements()
       .concat(Rx.Observable.of({
         victor: players[1],
-        reason: idiocy,
+        reason: reasonIdiocy,
       }))
       .delay(5),
 
@@ -117,7 +134,7 @@ function getVictor(connections, update$) {
       .ignoreElements()
       .concat(Rx.Observable.of({
         victor: players[0],
-        reason: idiocy,
+        reason: reasonIdiocy,
       }))
       .delay(5)
   )
