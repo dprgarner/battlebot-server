@@ -50,15 +50,12 @@ function getVictor(connections, update$) {
   const reasonIdiocy = "Didn't write unit tests";
 
   return Rx.Observable.of(
-    // Game concluded normally
+    // Game concluded normally (or abnormally)
     update$
       .filter(({ state: { complete } }) => complete)
-      .map(({ state: { victor, error } }) => ({
-        victor,
-        reason: error ?
-          `Game crashed: ${error}` :
-          reasonComplete,
-      })),
+      .map(({ state: { victor, reason } }) => (
+        { victor, reason: reason || reasonComplete }
+      )),
 
     // One player disconnected
     ...connections.map(({ ws, botId }) => (
@@ -138,9 +135,8 @@ function playGame(connections) {
     .let(runGame(game.validator, game.reducer))
     .let(addLastTurn)
     .catch(e => {
-      console.error(e.message);
       return Rx.Observable.of({
-        state: { complete: true, victor: null, reason: `Error: ${e.message}` }
+        state: { complete: true, victor: null, reason: `Error -- ${e.message}` }
       });
     });
 
