@@ -1,6 +1,6 @@
 const _ = require('underscore');
 const Rx = require('rxjs/Rx');
-const { createShortHash } = require('./hash');
+const { createShortRandomHash } = require('./hash');
 const { wsObserver, wsObservable } = require('./sockets');
 const games = require('./games');
 
@@ -54,7 +54,7 @@ function filterToPlayer(destPlayer) {
 function playGame(connections) {
   const gameName = connections[0].game;
   const game = games[gameName];
-  const gameId = createShortHash(Math.random());
+  const gameId = createShortRandomHash();
   const players = _.pluck(connections, 'botId');
 
   console.log(

@@ -1,7 +1,7 @@
 const Rx = require('rxjs');
 
 const connect = require('./db');
-const { createHash } = require('./hash');
+const { createHash, createRandomHash } = require('./hash');
 const { wsObserver, wsObservable } = require('./sockets');
 
 function login(message, salt) {
@@ -37,7 +37,7 @@ function authenticate() {
       const fromClient$ = wsObservable(ws);
       const toClient = wsObserver(ws);
 
-      const salt = createHash(Math.random() + '');
+      const salt = createRandomHash();
       toClient.next({ salt });
 
       const loginId$ = fromClient$

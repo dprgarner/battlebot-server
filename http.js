@@ -4,7 +4,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 
 const connect = require('./db');
-const { createHash } = require('./hash');
+const { createRandomHash } = require('./hash');
 const games = require('./games');
 
 class ClientError extends Error {
@@ -22,11 +22,11 @@ function createHttpServer(port) {
 
   app.set('port', port);
 
-  app.get('/', (req, res) => {
+  app.get('/client.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'client.html'));
   });
 
-  app.get('/bots', (req, res) => {
+  app.get('/bots', (req, res, next) => {
     connect(db => db
       .collection('users')
       .aggregate([
@@ -42,15 +42,10 @@ function createHttpServer(port) {
       ]));
       res.json(json);
     })
-    .catch(err => {
-      console.error(err);
-      res
-        .status(err instanceof ClientError ? 400 : 500)
-        .json({ error: err.message });
-    });
+    .catch(next);
   });
 
-  app.get('/bots/:game', (req, res) => {
+  app.get('/bots/:game', (req, res, next) => {
     const game = req.params.game;
 
     Promise.resolve()
@@ -65,17 +60,12 @@ function createHttpServer(port) {
       .then(dbResults => {
         res.json(dbResults);
       })
-      .catch(err => {
-        console.error(err);
-        res
-          .status(err instanceof ClientError ? 400 : 500)
-          .json({ error: err.message });
-      });
+      .catch(next);
   });
 
   app.post('/bots/:game', jsonParser, (req, res, next) => {
     const name = req.body.name;
-    const pass_hash = createHash(Math.random() + '');
+    const pass_hash = createRandomHash();
     const { bot_id, owner } = req.body;
     const game = req.params.game;
 
@@ -107,12 +97,14 @@ function createHttpServer(port) {
               .json({ game, bot_id, pass_hash });
           })
       }))
-      .catch(err => {
-        console.error(err);
-        res
-          .status(err instanceof ClientError ? 400 : 500)
-          .json({ error: err.message });
-      });
+      .catch(next);
+  });
+
+  app.use((err, req, res, next) => {
+    console.error(err);
+    res
+      .status(err instanceof ClientError ? 400 : 500)
+      .json({ error: err.message });
   });
 
   return new Promise((resolve, reject) => {

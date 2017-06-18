@@ -4,9 +4,14 @@ function createHash(str) {
   return sha256().update(str).digest('hex');
 }
 
-function createShortHash(str) {
-  return createHash(str).slice(0, 8);
+function createRandomHash() {
+  return createHash((Math.random() * 1000000 + Math.random()) + '');
+}
+
+function createShortRandomHash() {
+  return createRandomHash().slice(0, 16);
 }
 
 exports.createHash = createHash;
-exports.createShortHash = createShortHash;
+exports.createRandomHash = createRandomHash;
+exports.createShortRandomHash = createShortRandomHash;
