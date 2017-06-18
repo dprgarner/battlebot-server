@@ -37,7 +37,7 @@ function authenticate() {
       const fromClient$ = wsObservable(ws);
       const toClient = wsObserver(ws);
 
-      const salt = createHash(Math.random());
+      const salt = createHash(Math.random() + '');
       toClient.next({ salt });
 
       const loginId$ = fromClient$
@@ -54,13 +54,19 @@ function authenticate() {
       // Close invalid sockets.
       loginId$
         .filter(x => !x)
-        .subscribe(() => toClient.complete());
+        .subscribe(() => {
+          toClient.next({ authentication: 'failed' });
+          toClient.complete();
+        });
 
       // Return only valid sockets.
       return loginId$
         .filter(x => x)
         .map(({ botId, game }) => ({ ws, botId, game }))
-        .do(({ botId, game }) => console.log(`The ${game} bot ${botId} has connected.`))
+        .do(({ botId, game }) => {
+          console.log(`The ${game} bot ${botId} has connected.`);
+          toClient.next({ authentication: 'OK', bot_id: botId, game });
+        })
         .share();
     })
     .share();
