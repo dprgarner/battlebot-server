@@ -22,13 +22,15 @@ function validator(state, turn) {
 function reducer({ players, board }, turn) {
   // Must return a state object with { players, nextPlayer, complete }.
 
-  // if (Math.random() < 0.1) throw new Error('bad reducing' + JSON.stringify(state));
+  // throw new Error('bad reducing');
   const nextPlayer = _.without(players, turn.player)[0];
   const n = board.n + turn.n;
-  const complete = Math.abs(n) >= 3;
+  const threshold = 10;
+
   let victor;
-  if (n >= 3) victor = players[0];
-  if (n <= -3) victor = players[1];
+  if (n >= threshold) victor = players[0];
+  if (n <= -threshold) victor = players[1];
+  const complete = !!victor;
 
   return { players, nextPlayer, complete, victor, board: { n } };
 }

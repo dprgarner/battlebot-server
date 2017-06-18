@@ -29,54 +29,38 @@ function runGame(validator, reducer) {
     .shareReplay();
 }
 
-function addLastTurn(update$) {
-  return update$
-    .takeWhile(({ state: { complete } }) => !complete)
-    .concat(
-      update$
-      .skipWhile(({ state: { complete } }) => !complete)
-      .take(1)
-    );
-}
-
-function addMetadata(player) {
-  return incoming$ => incoming$
-    .map(turn => _.extend({}, turn, { player, time: Date.now() }));
-}
-
-function filterToPlayer(destPlayer) {
-  return incoming$ => incoming$
-    .filter(({ turn }) => (
-      !turn || turn.valid || turn.player === destPlayer
-    ))
-}
-
 function getVictor(connections, update$) {
+  // Create a stream which emits a single item when a winner is decided. 
+  // The winner can be determined by the game finishing (normally or
+  // abnormally), by timeout, disconnection, or by a bot repeatedly making
+  // invalid turns.
   const gracePeriod = 500;
   const strikes = 3;
   const timeout = 3000;
 
   const players = _.pluck(connections, 'botId');
 
+  function otherPlayer(player) {
+    return _.without(players, player)[0]
+  }
+
   const reasonComplete = 'complete';
   const reasonDisconnected = 'disconnect';
   const reasonTimeout = 'timeout';
   const reasonIdiocy = "Didn't write unit tests";
 
-  function otherPlayer(player) {
-    return _.without(players, player)[0]
-  }
-
   return Rx.Observable.of(
     // Game concluded normally
     update$
       .filter(({ state: { complete } }) => complete)
-      .map(({ state: { victor } }) => ({
+      .map(({ state: { victor, error } }) => ({
         victor,
-        reason: reasonComplete,
+        reason: error ?
+          `Game crashed: ${error}` :
+          reasonComplete,
       })),
 
-    // Player disconnected
+    // One player disconnected
     ...connections.map(({ ws, botId }) => (
       wsObservable(ws)
         .ignoreElements()
@@ -99,6 +83,7 @@ function getVictor(connections, update$) {
     ...players.map((player) => (
       update$
         .filter(({ turn }) => turn && turn.player == player && !turn.valid)
+        .concat(Rx.Observable.never())
         .take(strikes)
         .ignoreElements()
         .concat(Rx.Observable.of({
@@ -123,7 +108,16 @@ function getVictor(connections, update$) {
   .mergeAll()
   .take(1)
   .delay(5)
-  .share();
+  .shareReplay();
+}
+
+function addLastTurn(update$) {
+  return update$
+    .takeWhile(({ state: { complete } }) => !complete)
+    .concat(update$
+      .skipWhile(({ state: { complete } }) => !complete)
+      .take(1)
+    );
 }
 
 function playGame(connections) {
@@ -133,15 +127,22 @@ function playGame(connections) {
   const players = _.pluck(connections, 'botId');
 
   console.log(
-    `A game of ${gameName} has started between ${players[0]} and ${players[1]}.`
-    + ` (ID: ${gameId})`
+    `${gameId}: A game of ${gameName} has started between ${players[0]} and ${players[1]}.`
   );
 
   const update$ = Rx.Observable.from(connections)
-    .flatMap(({ ws, botId }) => wsObservable(ws).let(addMetadata(botId)))
+    .flatMap(({ ws, botId }) => wsObservable(ws)
+      .map(turn => _.extend({}, turn, { player: botId, time: Date.now() }))
+    )
     .startWith({ state: game.createInitialState(players) })
     .let(runGame(game.validator, game.reducer))
-    .let(addLastTurn);
+    .let(addLastTurn)
+    .catch(e => {
+      console.error(e.message);
+      return Rx.Observable.of({
+        state: { complete: true, victor: null, reason: `Error: ${e.message}` }
+      });
+    });
 
   const victor$ = getVictor(connections, update$)
   victor$
@@ -149,15 +150,28 @@ function playGame(connections) {
       const text = victor ? 
         `${victor} has won a game of ${gameName}.` :
         `The ${gameName} game between ${players[0]} and ${players[1]} ended in a draw.`;
-      console.log(text + ` (Reason: ${reason}, Game ID: ${gameId})`);
-    })  
+      console.log(`${gameId}: ${text} (Reason: ${reason})`);
+    });
 
-  for (let i = 0; i < connections.length; i++) {
-    update$
-      .takeUntil(victor$)
-      .let(filterToPlayer(players[i]))
-      .subscribe(wsObserver(connections[i].ws));
-  }
+  const updateWithConclusion$ = update$
+    .takeUntil(victor$)
+    .concat(victor$
+      .withLatestFrom(update$, ({ victor, reason }, finalUpdate) => {
+        if (finalUpdate.state.complete) return;
+        return { state: _.extend({}, finalUpdate.state, {
+          complete: true,
+          victor,
+          reason,
+        })};
+      })
+      .filter(x => x)
+    )
+
+  connections.forEach(({ ws, botId }) => {
+    updateWithConclusion$
+      .filter(({ turn }) => (!turn || turn.valid || turn.player === botId))
+      .subscribe(wsObserver(ws));
+  })
 }
 
 module.exports = playGame;
