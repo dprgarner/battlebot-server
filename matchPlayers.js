@@ -17,7 +17,7 @@ function matchPlayers(connection$) {
       if (matchedSocket) {
         return {
           waiting: _.without(waiting, matchedSocket),
-          createGame: [matchedSocket, connection],
+          createGame: _.shuffle([matchedSocket, connection]),
         };
       }
       return { waiting: waiting.concat(connection), createGame: null };

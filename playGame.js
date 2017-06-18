@@ -54,11 +54,9 @@ function filterToPlayer(destPlayer) {
 function getVictor(connections, update$) {
   const gracePeriod = 500;
   const strikes = 3;
-  const timeout = 3;
+  const timeout = 3000;
 
   const players = _.pluck(connections, 'botId');
-  const inA$ = wsObservable(connections[0].ws);
-  const inB$ = wsObservable(connections[1].ws);
 
   const reasonComplete = 'complete';
   const reasonDisconnected = 'disconnect';
@@ -78,65 +76,49 @@ function getVictor(connections, update$) {
         reason: reasonComplete,
       })),
 
-    // The next player fails to make a valid move within the timeout period
-    update$
-      .filter(({ turn }) => !turn || turn.valid)
-      .timeout(timeout)
-      .catch(e => Rx.Observable.empty())
-      .last()
-      .map(({ state: { nextPlayer } }) => ({
-        victor: otherPlayer(nextPlayer),
-        reason: reasonTimeout,
-      })),
-
-    // Player A disconnected
-    inA$
-      .ignoreElements()
-      .delay(gracePeriod)
-      .concat(Rx.Observable.of({
-        victor: players[1],
-        reason: reasonDisconnected,
-      })),
-
-    // Player B disconnected
-    inB$
-      .ignoreElements()
-      .delay(gracePeriod)
-      .concat(Rx.Observable.of({
-        victor: players[0],
-        reason: reasonDisconnected,
-      })),
+    // Player disconnected
+    ...connections.map(({ ws, botId }) => (
+      wsObservable(ws)
+        .ignoreElements()
+        .delay(gracePeriod)
+        .concat(Rx.Observable.of({
+          victor: otherPlayer(botId),
+          reason: reasonDisconnected,
+        }))
+    )),
 
     // Both players disconnected (within gracePeriod ms of each other)
-    inA$
-      .ignoreElements()
-      .concat(inB$.ignoreElements())
+    Rx.Observable.from(connections)
+      .concatMap(({ ws }) => wsObservable(ws).ignoreElements())
       .concat(Rx.Observable.of({
         victor: null,
         reason: reasonDisconnected,
       })),
 
-    // Player A keeps making invalid turns
-    update$
-      .filter(({ turn }) => turn && turn.player == players[0] && !turn.valid)
-      .take(strikes)
-      .ignoreElements()
-      .concat(Rx.Observable.of({
-        victor: players[1],
-        reason: reasonIdiocy,
-      }))
-      .delay(5),
+    // Player repeatedly makes invalid turns
+    ...players.map((player) => (
+      update$
+        .filter(({ turn }) => turn && turn.player == player && !turn.valid)
+        .take(strikes)
+        .ignoreElements()
+        .concat(Rx.Observable.of({
+          victor: otherPlayer(player),
+          reason: reasonIdiocy,
+        }))
+        .delay(5)
+    )),
 
-    // Player B keeps making invalid turns
+    // The next player fails to make a valid move within the timeout period
     update$
-      .filter(({ turn }) => turn && turn.player == players[1] && !turn.valid)
-      .take(strikes)
-      .ignoreElements()
-      .concat(Rx.Observable.of({
-        victor: players[0],
-        reason: reasonIdiocy,
+      .filter(({ turn }) => !turn || turn.valid)
+      .timeout(timeout)
+      .concat(Rx.Observable.never())
+      .catch(e => Rx.Observable.empty())
+      .last()
+      .map(({ state: { nextPlayer } }) => ({
+        victor: otherPlayer(nextPlayer),
+        reason: reasonTimeout,
       }))
-      .delay(5)
   )
   .mergeAll()
   .take(1)

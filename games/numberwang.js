@@ -4,13 +4,9 @@ const _ = require('underscore');
 /* A silly game for testing out the game transformations. */
 
 function createInitialState(players) {
-  const shuffledPlayers = (Math.random() < 0.5) ?
-    players :
-    [...players].reverse();
-
   return {
-    players: shuffledPlayers,
-    nextPlayer: shuffledPlayers[0],
+    players,
+    nextPlayer: players[0],
     complete: false,
     board: { n: 0 },
   };

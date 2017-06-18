@@ -4,7 +4,9 @@ const WebSocket = require('ws');
 function wsObserver(ws) {
   // An observer for outgoing JSON messages to the socket.
   return {
-    next: (x) => ws.send(JSON.stringify(x)),
+    next: (x) => {
+      if (ws.OPEN === ws.readyState) ws.send(JSON.stringify(x));
+    },
     error: (err) => {
       console.error(err);
       ws.close(1002, 'ERROR')
