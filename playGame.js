@@ -1,8 +1,10 @@
 const _ = require('underscore');
+const requireDir = require('require-dir');
 const Rx = require('rxjs/Rx');
 
 const connect = require('./db');
-const games = require('./games');
+const games = requireDir('./games');
+
 const { createShortRandomHash } = require('./hash');
 const { wsObserver, wsObservable } = require('./sockets');
 
