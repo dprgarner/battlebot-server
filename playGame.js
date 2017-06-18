@@ -1,8 +1,10 @@
 const _ = require('underscore');
 const Rx = require('rxjs/Rx');
+
+const connect = require('./db');
+const games = require('./games');
 const { createShortRandomHash } = require('./hash');
 const { wsObserver, wsObservable } = require('./sockets');
-const games = require('./games');
 
 function runGame(validator, reducer) {
   // This function transforms a stream of incoming turns into a stream of updates,
@@ -123,6 +125,8 @@ function playGame(connections) {
   const gameId = createShortRandomHash();
   const players = _.pluck(connections, 'botId');
 
+  const startTime = new Date();
+
   console.log(
     `${gameId}: A game of ${gameName} has started between ${players[0]} and ${players[1]}.`
   );
@@ -140,15 +144,9 @@ function playGame(connections) {
       });
     });
 
-  const victor$ = getVictor(connections, update$)
-  victor$
-    .subscribe(({ victor, reason }) => {
-      const text = victor ? 
-        `${victor} has won a game of ${gameName}.` :
-        `The ${gameName} game between ${players[0]} and ${players[1]} ended in a draw.`;
-      console.log(`${gameId}: ${text} (Reason: ${reason})`);
-    });
+  const victor$ = getVictor(connections, update$);
 
+  // Create a final update of the game if the game ends in an exceptional way
   const updateWithConclusion$ = update$
     .takeUntil(victor$)
     .concat(victor$
@@ -163,6 +161,44 @@ function playGame(connections) {
       .filter(x => x)
     )
 
+  // Save completed game to database
+  Rx.Observable.zip(
+    updateWithConclusion$
+      .filter(update => update.turn && update.turn.valid)
+      .reduce((acc, { turn }) => {
+        const parsedTurn = _.omit(turn, 'valid');
+        parsedTurn.time = new Date(parsedTurn.time);
+        return acc.concat(parsedTurn)
+      }, []),
+
+    updateWithConclusion$.last(),
+
+    (turns, finalState) => _.extend(
+      {},
+      _.omit(finalState.state, 'complete', 'nextPlayer'),
+      { _id: gameId, turns, startTime }
+    )
+  )
+  .subscribe(gameRecord => {
+    const text = gameRecord.victor ? 
+      `${gameRecord.victor} has won a game of ${gameName}.` :
+      `The ${gameName} game between ${players[0]} and ${players[1]} ended in a draw.`;
+    console.log(`${gameId}: ${text} (Reason: ${gameRecord.reason})`);
+
+    // TODO parse gameRecord more carefully for MongoDB, i.e replace date
+    // numbers with Date objects
+
+    connect(db => db.collection('games').insertOne(gameRecord))
+      .then((res) => {
+        console.log(`${gameId}: Game saved to database`);
+      })
+      .catch((err) => {
+        console.error(`${gameId}: Could not log game to database`);
+        console.error(err);
+      })
+  });
+
+  // Dispatch relevant updates to the connected websockets
   connections.forEach(({ ws, botId }) => {
     updateWithConclusion$
       .filter(({ turn }) => (!turn || turn.valid || turn.player === botId))

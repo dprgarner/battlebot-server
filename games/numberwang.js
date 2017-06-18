@@ -31,8 +31,9 @@ function reducer({ players, board }, turn) {
   if (n >= threshold) victor = players[0];
   if (n <= -threshold) victor = players[1];
   const complete = !!victor;
+  const reason = complete ? 'complete' : undefined;
 
-  return { players, nextPlayer, complete, victor, board: { n } };
+  return { players, nextPlayer, complete, victor, reason, board: { n } };
 }
 
 module.exports =  { createInitialState, validator, reducer };
