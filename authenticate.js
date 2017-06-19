@@ -7,7 +7,7 @@ const { wsObserver, wsObservable } = require('./sockets');
 function login(message, salt) {
   const { bot_id, login_hash, game } = message;
 
-  return connect(db => db.collection('users').findOne({ game, bot_id }))
+  return connect(db => db.collection('bots').findOne({ game, bot_id }))
     .then((res) => {
       if (!res) {
         console.log('Unrecognised bot');

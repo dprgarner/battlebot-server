@@ -178,7 +178,7 @@ function playGame(connections) {
     (turns, finalState) => _.extend(
       {},
       _.omit(finalState.state, 'complete', 'nextPlayer'),
-      { _id: gameId, turns, startTime }
+      { _id: gameId, turns, startTime, game: gameName }
     )
   )
   .subscribe(gameRecord => {
