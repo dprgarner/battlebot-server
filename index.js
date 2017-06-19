@@ -4,8 +4,8 @@ const playGame = require('./playGame');
 const { createWebsocketStream } = require('./sockets');
 const createHttpServer = require('./http');
 
-const httpPort = 3000;
-const wsPort = 3001;
+const httpPort = process.env.HTTP_PORT;  // 3000?
+const wsPort = process.env.WS_PORT;  // 3001?
 
 function createGameSocketServer(opts) {
   createWebsocketStream(opts)
