@@ -109,9 +109,9 @@ function createHttpServer(port) {
   });
 
   return new Promise((resolve, reject) => {
-    app.listen(app.get('port'), (err) => {
+    const server = app.listen(app.get('port'), (err) => {
       if (err) return reject(err);
-      resolve(app);
+      resolve({ app, server });
     });
   });
 }

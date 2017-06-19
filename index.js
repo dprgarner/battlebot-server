@@ -4,8 +4,8 @@ const playGame = require('./playGame');
 const { createWebsocketStream } = require('./sockets');
 const createHttpServer = require('./http');
 
-const httpPort = process.env.HTTP_PORT;  // 3000?
-const wsPort = process.env.WS_PORT;  // 3001?
+const port = process.env.PORT;
+// const port = 3000;
 
 function createGameSocketServer(opts) {
   createWebsocketStream(opts)
@@ -15,8 +15,9 @@ function createGameSocketServer(opts) {
     .subscribe(playGame);
 }
 
-createGameSocketServer({ port: wsPort });
-createHttpServer(httpPort)
-  .then((app) => {
+
+const server = createHttpServer(port)
+  .then(({ app, server }) => {
     console.log('Express server listening on port', app.get('port'));
+    createGameSocketServer({ server });
   });

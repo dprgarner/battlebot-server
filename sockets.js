@@ -36,7 +36,7 @@ function wsObservable(ws) {
 function createWebsocketStream(opts) {
   // A stream of WebSockets.
   return Rx.Observable.create(observer => {
-    console.log(`Websocket server listening on port ${opts.port}`);
+    console.log(`Starting WebSocket server...`);
     const wss = new WebSocket.Server(opts);
 
     wss.on('connection', (ws) => {
