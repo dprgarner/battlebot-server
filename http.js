@@ -31,7 +31,6 @@ function createHttpServer(port) {
     connect(db => db
       .collection('users')
       .aggregate([
-        { $project: { _id: 0 } },
         { $group: { _id: "$game", bots: { $push: "$$ROOT" } } }
       ])
       .toArray()
