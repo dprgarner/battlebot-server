@@ -67,7 +67,7 @@ function createHttpServer(port) {
   });
 
   app.get('/bots/:gameName', (req, res, next) => {
-    const gameName = req.params;
+    const gameName = req.params.gameName;
 
     Promise.resolve()
       .then(() => {
