@@ -31,7 +31,7 @@ function createHttpServer(port) {
     connect(db => db
       .collection('users')
       .aggregate([
-        { $project: { _id: 0, pass_hash: 0 } },
+        { $project: { _id: 0 } },
         { $group: { _id: "$game", bots: { $push: "$$ROOT" } } }
       ])
       .toArray()
@@ -39,7 +39,7 @@ function createHttpServer(port) {
     .then(dbResults => {
       const json = _.object(dbResults.map(game => [
         game._id,
-        _.map(game.bots, bot => _.omit(bot, 'game')),
+        _.map(game.bots, bot => _.omit(bot, 'game', 'pass_hash')),
       ]));
       res.json(json);
     })
