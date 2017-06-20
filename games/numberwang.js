@@ -1,7 +1,5 @@
-const Rx = require('rxjs');
-const _ = require('underscore');
-
 /* A silly game for testing out the game transformations. */
+const _ = require('underscore');
 
 function createInitialState(players) {
   return {

@@ -8,7 +8,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha tests/*",
+    "watchtest": "nodemon -x \"mocha tests/*\""
   },
   "author": "David Garner",
   "license": "ISC",
@@ -24,5 +25,10 @@
     "rxjs": "^5.4.0",
     "underscore": "^1.8.3",
     "ws": "^3.0.0"
+  },
+  "devDependencies": {
+    "chai": "^4.0.2",
+    "mocha": "^3.4.2",
+    "nodemon": "^1.11.0"
   }
 }
