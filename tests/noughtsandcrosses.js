@@ -71,6 +71,14 @@ describe('Noughts and Crosses', () => {
       expect(isValid).to.be.false;
     });
 
+    it('rejects the move if the player is a nested mark', () => {
+      const isValid = noughtsAndCrosses.validator(
+        midGameState,
+        { space: [2, 0], mark: ['O'], player: 'botB' }
+      );
+      expect(isValid).to.be.false;
+    });
+
     it('rejects the move if the space is not a grid space', () => {
       [
         null,

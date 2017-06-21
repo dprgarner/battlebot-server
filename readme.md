@@ -16,5 +16,6 @@ TODO
 - ~~3 second timeout? (Game-specific?)~~
 - ~~Log the games to the database~~
 - ~~Set it all up on Heroku or something~~
-- Implement Noughts and Crosses
+- ~~Implement Noughts and Crosses~~
+- Log bot disconnects
 - Write tests, lol

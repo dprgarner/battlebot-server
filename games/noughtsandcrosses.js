@@ -20,6 +20,7 @@ function createInitialState(players) {
 function validator(state, turn) {
   if (turn.player !== state.nextPlayer) return false;
 
+  if (turn.mark !== 'X' && turn.mark !== 'O') return false;
   if (state.marks[turn.mark] !== turn.player) return false;
 
   if (!turn.space || !_.isArray(turn.space) || turn.space.length !== 2) {
