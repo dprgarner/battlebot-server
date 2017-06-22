@@ -4,6 +4,10 @@ This is a JavaScript server for AI battles! The idea is that client bots connect
 
 Currently being hosted on Heroku: https://blunderdome-server.herokuapp.com/
 
+Server code here: https://github.com/dprgarner/battlebot-server
+
+A boilerplate Python Client here: https://github.com/dprgarner/battlebot-client-py
+
 ## Overview
 
 Before playing games, a new bot must first be registered with the server, which involves making a POST request to an API identifying the bot and (optionally) its owner, and saving the login credentials returned by the request. A registered bot is associated to a single type of game.
