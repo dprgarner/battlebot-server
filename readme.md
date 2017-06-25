@@ -148,4 +148,4 @@ including the last valid turn:
 ## TODO
 
 - Log when a bot disconnects
-- Write tests, lol
+- Actually write some tests
