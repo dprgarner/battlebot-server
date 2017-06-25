@@ -66,6 +66,10 @@ function createHttpServer(port) {
     ));
   });
 
+  app.get('/favicon.ico', function (req, res) {
+    res.sendFile(path.resolve(__dirname, 'favicon.ico'));
+  });
+
   app.get('/bots/:gameName', (req, res, next) => {
     const gameName = req.params.gameName;
 
