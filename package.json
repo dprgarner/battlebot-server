@@ -11,6 +11,10 @@
     "test": "jest",
     "watchtest": "jest --watch"
   },
+  "jest": {
+    "collectCoverage": true,
+    "collectCoverageFrom": ["*.js", "games/*.js"]
+  },
   "author": "David Garner",
   "license": "ISC",
   "dependencies": {
