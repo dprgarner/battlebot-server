@@ -34,8 +34,8 @@ function createHttpServer(port) {
   const readmeHtml = `
   <html>
     <head>
-      <style>
       <title>Battlebots!</title>
+      <style>
       .markdown-body {
         box-sizing: border-box;
         min-width: 200px;
