@@ -9,7 +9,7 @@ function wsObserver(ws) {
     },
     error: (err) => {
       console.error(err);
-      ws.close(1002, 'ERROR')
+      ws.close(1002, 'ERROR');
     },
     complete: () => ws.close(),
   };
