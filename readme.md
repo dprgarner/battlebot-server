@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/dprgarner/battlebot-server.svg?branch=master)](https://travis-ci.org/dprgarner/battlebot-server)
+
 # Battlebot server
 
 This is a server for AI battles! The idea is that client bots connect to the server via WebSockets and play each other in turn-based abstract strategy games, with the server managing and validating the games and recording the results.
