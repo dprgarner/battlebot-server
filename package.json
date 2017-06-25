@@ -12,10 +12,7 @@
     "watchtest": "jest --watch"
   },
   "jest": {
-    "collectCoverage": true,
-    "collectCoverageFrom": [
-      "src/**/*.js"
-    ]
+    "collectCoverage": true
   },
   "author": "David Garner",
   "license": "ISC",
