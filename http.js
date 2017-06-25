@@ -35,6 +35,7 @@ function createHttpServer(port) {
   <html>
     <head>
       <style>
+      <title>Battlebots!</title>
       .markdown-body {
         box-sizing: border-box;
         min-width: 200px;
