@@ -152,7 +152,6 @@ function createHttpServer(port) {
     .catch(next);
   });
 
-
   app.use((err, req, res, next) => {
     console.error(err);
     res

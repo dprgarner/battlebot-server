@@ -1,5 +1,4 @@
-const { expect } = require('chai');
-const noughtsAndCrosses = require('../games/noughtsandcrosses');
+const noughtsAndCrosses = require('./noughtsandcrosses');
 
 const midGameState = {
   players: ['botA', 'botB'],
@@ -12,7 +11,7 @@ const midGameState = {
   ],
   marks: {
     X: 'botA',
-    O: 'botB', 
+    O: 'botB',
   },
 };
 
@@ -36,14 +35,14 @@ describe('Noughts and Crosses', () => {
     const initialState = noughtsAndCrosses.createInitialState(
       ['botA', 'botB']
     );
-    expect(initialState.board).to.deep.equal([
+    expect(initialState.board).toEqual([
       ['', '', ''],
       ['', '', ''],
       ['', '', ''],
     ]);
-    expect(initialState.nextPlayer).to.equal('botA');
-    expect(initialState.players).to.deep.equal(['botA', 'botB']);
-    expect(initialState.marks).to.deep.equal({ X: 'botA', O: 'botB' });
+    expect(initialState.nextPlayer).toEqual('botA');
+    expect(initialState.players).toEqual(['botA', 'botB']);
+    expect(initialState.marks).toEqual({ X: 'botA', O: 'botB' });
   });
 
   describe('validator', () => {
@@ -52,7 +51,7 @@ describe('Noughts and Crosses', () => {
         midGameState,
         { space: [2, 0], mark: 'O', player: 'botB' }
       );
-      expect(isValid).to.be.true;
+      expect(isValid).toBeTruthy();
     });
 
     it('rejects the move if it is not a player\'s turn', () => {
@@ -60,7 +59,7 @@ describe('Noughts and Crosses', () => {
         midGameState,
         { space: [2, 0], mark: 'X', player: 'botA' }
       );
-      expect(isValid).to.be.false;
+      expect(isValid).toBeFalsy();
     });
 
     it('rejects the move if the player is using the wrong mark', () => {
@@ -68,7 +67,7 @@ describe('Noughts and Crosses', () => {
         midGameState,
         { space: [2, 0], mark: 'X', player: 'botB' }
       );
-      expect(isValid).to.be.false;
+      expect(isValid).toBeFalsy();
     });
 
     it('rejects the move if the player is a nested mark', () => {
@@ -76,7 +75,7 @@ describe('Noughts and Crosses', () => {
         midGameState,
         { space: [2, 0], mark: ['O'], player: 'botB' }
       );
-      expect(isValid).to.be.false;
+      expect(isValid).toBeFalsy();
     });
 
     it('rejects the move if the space is not a grid space', () => {
@@ -92,7 +91,7 @@ describe('Noughts and Crosses', () => {
           midGameState,
           { space, mark: 'O', player: 'botB' }
         );
-        expect(isValid).to.be.false;
+        expect(isValid).toBeFalsy();
       });
     });
 
@@ -106,7 +105,7 @@ describe('Noughts and Crosses', () => {
           midGameState,
           { space, mark: 'O', player: 'botB' }
         );
-        expect(isValid).to.be.false;
+        expect(isValid).toBeFalsy();
       });
     });
   });
@@ -118,7 +117,7 @@ describe('Noughts and Crosses', () => {
         { space: [2, 0], mark: 'O', player: 'botB' }
       );
 
-      expect(newState.board).to.deep.equal([
+      expect(newState.board).toEqual([
         ['', '', 'X'],
         ['', 'X', ''],
         ['O', 'O', ''],
@@ -130,8 +129,8 @@ describe('Noughts and Crosses', () => {
         midGameState,
         { space: [2, 0], mark: 'O', player: 'botB' }
       );
-      expect(newState.players).to.deep.equal(midGameState.players);
-      expect(newState.nextPlayer).to.equal('botA');
+      expect(newState.players).toEqual(midGameState.players);
+      expect(newState.nextPlayer).toEqual('botA');
     });
 
     it('sets complete to false', () => {
@@ -139,9 +138,9 @@ describe('Noughts and Crosses', () => {
         midGameState,
         { space: [2, 0], mark: 'O', player: 'botB' }
       );
-      expect(newState.complete).to.be.false;
-      expect(newState.victor).to.not.be.ok;
-      expect(newState.reason).to.not.be.ok;
+      expect(newState.complete).toBeFalsy();
+      expect(newState.victor).toBeFalsy();
+      expect(newState.reason).toBeFalsy();
     });
 
     it('sets complete to true if a bot wins', () => {
@@ -152,9 +151,9 @@ describe('Noughts and Crosses', () => {
         ),
         { space: [2, 0], mark: 'X', player: 'botA' }
       );
-      expect(newState.complete).to.be.true;
-      expect(newState.victor).to.equal('botA');
-      expect(newState.reason).to.equal('complete');
+      expect(newState.complete).toBeTruthy();
+      expect(newState.victor).toEqual('botA');
+      expect(newState.reason).toEqual('complete');
     });
 
     it('sets complete to true when it is a draw', () => {
@@ -162,9 +161,9 @@ describe('Noughts and Crosses', () => {
         endGameState,
         { space: [0, 1], mark: 'X', player: 'botA' }
       );
-      expect(newState.complete).to.be.true;
-      expect(newState.victor).to.equal(null);
-      expect(newState.reason).to.equal('complete');
+      expect(newState.complete).toBeTruthy();
+      expect(newState.victor).toEqual(null);
+      expect(newState.reason).toEqual('complete');
     });
   });
 
@@ -174,25 +173,25 @@ describe('Noughts and Crosses', () => {
         ['', '', 'X'],
         ['', 'X', ''],
         ['X', 'O', 'O'],
-      ])).to.deep.equal('X')
+      ])).toEqual('X')
 
       expect(noughtsAndCrosses.getVictor([
         ['X', '', 'X'],
         ['', 'X', ''],
         ['O', 'O', 'O'],
-      ])).to.deep.equal('O')
+      ])).toEqual('O')
 
       expect(noughtsAndCrosses.getVictor([
         ['', 'X', 'O'],
         ['', 'X', ''],
         ['O', 'X', 'O'],
-      ])).to.deep.equal('X')
+      ])).toEqual('X')
 
       expect(noughtsAndCrosses.getVictor([
         ['', 'X', 'O'],
         ['', 'X', 'O'],
         ['X', '', 'O'],
-      ])).to.deep.equal('O')
+      ])).toEqual('O')
     });
 
     it('detects a complete board', () => {
@@ -200,7 +199,7 @@ describe('Noughts and Crosses', () => {
         ['X', 'X', 'O'],
         ['O', 'O', 'X'],
         ['X', 'O', 'O'],
-      ])).to.deep.equal(-1)
+      ])).toEqual(-1)
     });
   });
 });
