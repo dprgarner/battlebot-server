@@ -56,13 +56,13 @@ Once the game ends, the server will attempt to send a final update to both bots 
 
 ## Codebase
 
-The server is implemented in JavaScript with [RxJS 5](https://github.com/ReactiveX/rxjs), an implementation of the [Reactive Extensions](http://reactivex.io/) design pattern/framework. The HTTP site is written with [Express](https://expressjs.com/).
+The WebSocket server is implemented in JavaScript with [RxJS 5](https://github.com/ReactiveX/rxjs), an implementation of the [Reactive Extensions](http://reactivex.io/) design pattern/framework. The HTTP site is written with [Express](https://expressjs.com/).
 
 The server saves registered bots and completed games to a MongoDB database.
 
-To start the server, start up a MongoDB server, and run `index.js` with the port and MongoDB URI in the env variables:
+To start the server, start up a MongoDB server, and run `npm start` with the port and MongoDB URI in the env variables:
 ```
-MONGODB_URI=mongodb://localhost:27017/battlebots PORT=3000 node index.js
+MONGODB_URI=mongodb://localhost:27017/battlebots PORT=3000 npm start
 ```
 
 ### Creating Games
@@ -158,4 +158,5 @@ docker-compose up
 ## TODO
 
 - Log when a bot disconnects
-- Actually write some tests
+- Fix the coverage reporter
+- Keep writing them tests

@@ -11,6 +11,9 @@
     "test": "jest",
     "watchtest": "jest --watch"
   },
+  "jest": {
+    "collectCoverage": true
+  },
   "author": "David Garner",
   "license": "ISC",
   "dependencies": {
@@ -19,11 +22,15 @@
     "express": "^4.15.3",
     "github-markdown-css": "^2.8.0",
     "hash.js": "^1.0.3",
-    "jest": "^20.0.4",
     "marked": "^0.3.6",
     "mongodb": "^2.2.28",
+    "require-all": "^2.2.0",
     "rxjs": "^5.4.0",
     "underscore": "^1.8.3",
     "ws": "^3.0.0"
+  },
+  "devDependencies": {
+    "jest": "^20.0.4",
+    "codeclimate-test-reporter": "^0.5.0"
   }
 }
