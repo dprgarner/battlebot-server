@@ -27,7 +27,7 @@ function createHttpServer(port) {
 
   // Serve the readme
   const readmeTxt = fs.readFileSync(
-    path.resolve(__dirname, 'readme.md'), 'utf8'
+    path.resolve(__dirname, '..', 'readme.md'), 'utf8'
   );
 
   const readmeHtml = `
@@ -60,6 +60,7 @@ function createHttpServer(port) {
   app.get('/theme.css', function (req, res) {
     res.sendFile(path.resolve(
       __dirname,
+      '..',
       'node_modules',
       'github-markdown-css',
       'github-markdown.css'
@@ -67,7 +68,7 @@ function createHttpServer(port) {
   });
 
   app.get('/favicon.ico', function (req, res) {
-    res.sendFile(path.resolve(__dirname, 'favicon.ico'));
+    res.sendFile(path.resolve(__dirname, '..', 'favicon.ico'));
   });
 
   app.get('/bots/:gameName', (req, res, next) => {

@@ -7,7 +7,7 @@
   "description": "A server for AI battles!",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node src/index.js",
     "test": "jest",
     "watchtest": "jest --watch"
   },
