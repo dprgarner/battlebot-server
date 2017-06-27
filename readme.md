@@ -147,6 +147,14 @@ including the last valid turn:
 }
 ```
 
+## Development
+
+Download Docker and Docker Compose. Build and start the servers with:
+
+```bash
+docker-compose up
+```
+
 ## TODO
 
 - Log when a bot disconnects

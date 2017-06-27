@@ -1,0 +1,31 @@
+version: '2'
+
+services:
+  battlebot:
+    build: .
+    ports:
+      - 3000:3000
+    volumes:
+      - ./src:/app/src
+    environment:
+      - MONGODB_URI=mongodb://db:27017/battlebots
+    links:
+      - db:db
+    depends_on:
+      - db
+
+  nginx:
+    build: ./nginx
+    links:
+      - battlebot:battlebot
+    depends_on:
+      - battlebot
+    ports:
+      - 80:80
+
+  db:
+    image: mongo:3.4
+    ports:
+      - 27017:27017
+    volumes:
+      - ./db:/data/db
