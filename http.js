@@ -4,12 +4,11 @@ const path = require('path');
 const _ = require('underscore');
 const bodyParser = require('body-parser');
 const express = require('express');
-const requireDir = require('require-dir');
 const marked = require('marked');
 
 const connect = require('./db');
 const { createRandomHash } = require('./hash');
-const games = requireDir('./games');
+const games = require('./games');
 
 class ClientError extends Error {
   constructor(message) {
