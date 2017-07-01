@@ -73,3 +73,4 @@ function authenticate() {
 }
 
 module.exports = authenticate;
+module.exports.login = login;
