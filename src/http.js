@@ -136,6 +136,7 @@ function createHttpServer(port) {
       .collection('games')
       .find({ game: req.params.gameName }, { turns: 0 })
       .sort({ startTime: -1 })
+      .limit(30)
       .toArray()
     )
     .then(dbResults => {
