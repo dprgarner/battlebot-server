@@ -20,6 +20,7 @@
   "dependencies": {
     "bluebird": "^3.5.0",
     "body-parser": "^1.17.2",
+    "clone": "^2.1.1",
     "express": "^4.15.3",
     "github-markdown-css": "^2.8.0",
     "hash.js": "^1.0.3",

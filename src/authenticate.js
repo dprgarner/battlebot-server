@@ -1,3 +1,4 @@
+const _ = require('underscore');
 const Rx = require('rxjs');
 
 const connect = require('./db');
@@ -5,7 +6,7 @@ const { createHash, createRandomHash } = require('./hash');
 const { wsObserver, wsObservable } = require('./sockets');
 
 function login(message, salt) {
-  const { bot_id, login_hash, game } = message;
+  const { bot_id, login_hash, game, contest } = message;
 
   return connect(db => db.collection('bots').findOne({ game, bot_id }))
     .then((res) => {
@@ -19,7 +20,7 @@ function login(message, salt) {
       const loginValid = (expectedHash === login_hash);
 
       if (loginValid) {
-        return { game, botId: bot_id };
+        return { botId: bot_id, game, contest };
       }
 
       console.log(`Invalid login attempt from ${bot_id}`);
@@ -62,10 +63,15 @@ function authenticate() {
       // Return only valid sockets.
       return loginId$
         .filter(x => x)
-        .map(({ botId, game }) => ({ ws, botId, game }))
-        .do(({ botId, game }) => {
+        .map(connection => _.extend({ ws }, connection))
+        .do(({ botId, game, contest }) => {
           console.log(`The ${game} bot ${botId} has connected.`);
-          toClient.next({ authentication: 'OK', bot_id: botId, game });
+          toClient.next(_.pick({
+            authentication: 'OK',
+            bot_id: botId,
+            game,
+            contest,
+          }, _.identity));
         })
         .share();
     })

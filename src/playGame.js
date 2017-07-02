@@ -42,7 +42,7 @@ function addLastTurn(update$) {
     );
 }
 
-function playGame(connections) {
+function playGame({ connections, contest }) {
   const gameName = connections[0].game;
   const game = games[gameName];
   const gameId = createShortRandomHash();
@@ -96,11 +96,11 @@ function playGame(connections) {
 
     updateWithConclusion$.last(),
 
-    (turns, finalState) => _.extend(
+    (turns, finalState) => _.pick(_.extend(
       {},
       _.omit(finalState.state, 'complete', 'nextPlayer'),
-      { _id: gameId, turns, startTime, game: gameName }
-    )
+      { _id: gameId, turns, startTime, game: gameName, contest }
+    ), _.identity)
   )
   .subscribe(gameRecord => {
     const text = gameRecord.victor ? 
