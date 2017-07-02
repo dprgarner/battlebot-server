@@ -44,7 +44,7 @@ function authenticate() {
       const loginId$ = fromClient$
         .take(1)
         .switchMap(message => Rx.Observable.fromPromise(login(message, salt)))
-        .timeout(1000)
+        .timeout(10000)
         .catch((e) => 
           Rx.Observable
             .of(false)

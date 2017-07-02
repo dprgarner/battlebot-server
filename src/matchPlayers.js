@@ -8,6 +8,10 @@ const MAX_GAMES = 5;
 function matchPlayers(connection$) {
   // Creates a stream of matched pairs of connected players. A new game should
   // be started when this stream emits an item.
+
+  // TODO read the starting contest state from the database and concat the
+  // connection stream on to this
+
   return connection$
     .startWith({ waiting: [], contests: {}, newGame: null })
     .scan(({ waiting: prevWaiting, contests: prevContests }, connection) => {
