@@ -155,6 +155,58 @@ function createHttpServer(port) {
     .catch(next);
   });
 
+  // This might need to behave differently if the number of games becomes
+  // large.
+  app.get('/games/:gameName/contest/:contestName', (req, res, next) => {
+    connect(db => db
+      .collection('games')
+      .find({
+        game: req.params.gameName,
+        contest: req.params.contestName,
+      }, { players: 1, victor: 1 })
+      .sort({ startTime: -1 })
+      .toArray()
+    )
+    .then(dbResults => {
+      const bots = {};
+      dbResults.forEach(game => {
+        game.players.forEach(player => {
+          if (!bots[player]) bots[player] = {
+            wins: 0,
+            losses: 0,
+            draws: 0,
+          };
+          if (game.victor === player) {
+            bots[player].wins += 1;
+          } else if (!game.victor) {
+            bots[player].draws += 1;
+          } else {
+            bots[player].losses += 1;
+          }
+        });
+      });
+      let sortedBots = _.map(bots, bot => _.extend(
+        { score: 3 * bot.wins + bot.draws }, bot
+      ));
+      sortedBots.sort((bot1, bot2) => {
+        if (bot1.score > bot2.score) return -1;
+        if (bot1.score < bot2.score) return 1;
+
+        if (bot1.wins > bot2.wins) return -1;
+        if (bot1.wins < bot2.wins) return 1;
+
+        if (bot1.losses > bot2.losses) return 1;
+        if (bot1.losses < bot2.losses) return -1;
+
+        return 0;
+      });
+
+      const response = { bots: sortedBots, games: dbResults }
+      res.json(response);
+    })
+    .catch(next);
+  });
+
   app.use((err, req, res, next) => {
     console.error(err);
     res
