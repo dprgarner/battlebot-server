@@ -158,7 +158,7 @@ function createHttpServer(port) {
 
   // This might need to behave differently if the number of games becomes
   // large.
-  app.get('/games/:gameName/contest/:contestName', (req, res, next) => {
+  app.get('/games/:gameName/contests/:contestName', (req, res, next) => {
     connect(db => db
       .collection('games')
       .find({
@@ -173,6 +173,7 @@ function createHttpServer(port) {
       dbResults.forEach(game => {
         game.players.forEach(player => {
           if (!bots[player]) bots[player] = {
+            bot_id: player,
             wins: 0,
             losses: 0,
             draws: 0,
