@@ -96,11 +96,11 @@ function playGame({ connections, contest }) {
 
     updateWithConclusion$.last(),
 
-    (turns, finalState) => _.pick(_.extend(
-      {},
+    (turns, finalState) => _.extend(
+      _.pick({ contest }, _.identity),
       _.omit(finalState.state, 'complete', 'nextPlayer'),
-      { _id: gameId, turns, startTime, game: gameName, contest }
-    ), _.identity)
+      { _id: gameId, game: gameName, turns, startTime }
+    )
   )
   .subscribe(gameRecord => {
     const text = gameRecord.victor ? 
