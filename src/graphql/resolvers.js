@@ -23,16 +23,17 @@ const resolvers = {
   },
 
   GameType: {
-    name: game => game,
+    name: _.identity,
     games: (game, _, { allGames }) => allGames.load(game),
     bots: (game, _, { allBots }) => allBots.load(game),
   },
 
-  Game: _.extend({
-    __resolveType: ({ game }) => ({
-      'noughtsandcrosses': 'NoughtsAndCrosses',
-    }[game]),
-  }, baseGameResolver),
+  Game: {
+    __resolveType({ game }) {
+      if (game === 'noughtsandcrosses') return 'NoughtsAndCrosses';
+      return null;
+    },
+  },
 
   NoughtsAndCrosses: baseGameResolver,
 

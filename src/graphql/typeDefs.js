@@ -26,24 +26,17 @@ const typeDefs = `
     dateRegistered: String
   }
 
-  # A played game.
-  interface Game {
-    id: String!
-    gameType: GameType!
-    players: [Bot]
-    victor: Bot
-    reason: String!
-    contest: String
-  }
+  union Game = NoughtsAndCrosses
 
   # A played game of Noughts and Crosses.
-  type NoughtsAndCrosses implements Game {
+  type NoughtsAndCrosses {
     id: String!
     gameType: GameType!
     players: [Bot]
     victor: Bot
+
+    # The reason that the game ended.
     reason: String!
-    contest: String
 
     # The final layout of the board. The outer array is an array of 
     # rows, the inner array is an array of columns.
