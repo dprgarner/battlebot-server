@@ -1,28 +1,40 @@
+type Query {
+  gameTypes: [GameType]
+  gameType(name: String!): GameType
+}
+
+# An input type for performing a query on a collection of games.
+input GameInput {
+  # The maximum number of results to return.
+  limit: Int
+
+  # Return games with this victor. Accepts "null" for draws.
+  victor: String
+
+  # Return games in this contest.
+  contest: String
+
+  # Return games played by any of these bots (specified by their IDs.)
+  anyPlayers: [String]
+
+  # Return games played by these bots (specified by their IDs.)
+  players: [String]
+}
+
 # The type of the game.
 type GameType {
   # The name of the game. Lower-case.
   name: String!
 
   # A list of played games.
-  games(
-    # The maximum number of results to return.
-    limit: Int
-
-    # Return games with this victor. Accepts "null" for draws.
-    victor: String
-
-    # Return games in this contest.
-    contest: String
-
-    # Return games played by any of these bots (specified by their IDs.)
-    anyPlayers: [String]
-
-    # Return games played by these bots (specified by their IDs.)
-    players: [String]
-  ): [Game]
+  games(filters: GameInput): [Game]
 
   # A list of the bots registered for this game.
   bots(owner: String): [Bot]
+
+  contest(name: String!): Contest
+
+  contests: [Contest]
 }
 
 type Bot {
@@ -36,6 +48,40 @@ type Bot {
   owner: String!
 
   dateRegistered: String
+}
+
+type Contest {
+  # The name of the contest.
+  name: String!
+
+  # The game type of the contest.
+  gameType: GameType!
+
+  games(filters: GameInput): [Game]
+
+  rankings(
+    # The way to rank the scores. 
+    # The default method "ambitious" assigns 3 points for a win and 1 for a 
+    # draw, which favours bots which prioritise winning.
+    # The method "punitive" assigns 3 points for a win and 2 for a draw,
+    # which favours bots which prioritise avoiding losing.
+    # The method "balanced" assigns 2 points for a win and 1 for a draw,
+    # which favours winning and avoiding losing equally.
+    method: String
+  ): [ContestRanking]
+}
+
+type ContestRanking {
+  bot: Bot!
+  wins: Int!
+  draws: Int!
+  losses: Int!
+
+  # The number of games played.
+  played: Int!
+
+  # The score in the current ranking method.
+  score: Int!
 }
 
 union Game = NoughtsAndCrosses
@@ -88,9 +134,4 @@ type NoughtsAndCrossesTurn {
 
   # The bot that made the move.
   player: Bot!
-}
-
-type Query {
-  gameTypes: [GameType]
-  gameType(name: String!): GameType
 }

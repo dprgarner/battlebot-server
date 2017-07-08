@@ -73,6 +73,23 @@ function GamesLoader() {
   );
 }
 
+function ContestsLoader() {
+  return new DataLoader(games => {
+    return Promise.all(
+      games.map(game =>
+        connect(db => db
+          .collection('games')
+          .distinct('contest', { game })
+        )
+        .then(contests => contests.map(
+          contest => ({ game, contest })
+        ))
+      )
+    )},
+    { cacheKeyFn: stringify }
+  );
+}
+
 module.exports = () => ({
   Bot: BotLoader(),
 
@@ -80,4 +97,6 @@ module.exports = () => ({
   // wrong... but I guess this stops the server from getting DDoS'ed.
   Bots: BotsLoader(),
   Games: GamesLoader(),
+
+  Contests: ContestsLoader(),
 });
