@@ -5,9 +5,11 @@ const baseGameResolver = {
   id: ({ _id }) => _id,
   gameType: ({ game }) => game,
   players: ({ game, players }, _, { Bot }) => (
-    Bot[game].loadMany(players)
+    Bot.loadMany(players.map(bot_id => ({ game, bot_id })))
   ),
-  victor: ({ game, victor }, _, { Bot }) => victor && Bot[game].load(victor),
+  victor: ({ game, victor }, _, { Bot }) => (
+    victor && Bot.load({ game, bot_id: victor })
+  ),
 };
 
 const resolvers = {
@@ -23,9 +25,9 @@ const resolvers = {
   },
 
   GameType: {
-    name: _.identity,
-    games: (game, _, { allGames }) => allGames.load(game),
-    bots: (game, _, { allBots }) => allBots.load(game),
+    name: game => game,
+    games: (game, args, { Games }) => Games.load(_.extend({ game }, args)),
+    bots: (game, args, { Bots }) => Bots.load(_.extend({ game }, args)),
   },
 
   Game: {
@@ -38,12 +40,18 @@ const resolvers = {
   NoughtsAndCrosses: baseGameResolver,
 
   NoughtsAndCrossesMarks: {
-    X: (marks, _, { Bot }) => Bot.noughtsandcrosses.load(marks.X),
-    O: (marks, _, { Bot }) => Bot.noughtsandcrosses.load(marks.O),
+    X: (marks, _, { Bot }) => Bot.load(
+      { game: 'noughtsandcrosses', bot_id: marks.X }
+    ),
+    O: (marks, _, { Bot }) => Bot.load(
+      { game: 'noughtsandcrosses', bot_id: marks.O }
+    ),
   },
 
   NoughtsAndCrossesTurn: {
-    player: ({ player }, _, { Bot }) => Bot.noughtsandcrosses.load(player),
+    player: ({ player }, _, { Bot }) => Bot.load(
+      { game: 'noughtsandcrosses', bot_id: player }
+    ),
   },
 };
 

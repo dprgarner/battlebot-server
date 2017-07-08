@@ -10,7 +10,7 @@ const typeDefs = `
     games: [Game]
 
     # A list of the bots registered for this game.
-    bots: [Bot]
+    bots(owner: String): [Bot]
   }
 
   type Bot {
@@ -64,7 +64,8 @@ const typeDefs = `
   }
 
   type NoughtsAndCrossesTurn {
-    # The position of the move, in the form [<row>, <col>], starting at 0.
+    # The position of the move, in the form [<row>, <col>],
+    # where 0 <= <row>, <col> <= 2.
     space: [Int]!
 
     # The mark played (X or O).

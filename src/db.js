@@ -10,7 +10,7 @@ function connect(promiseGenerator) {
     .then((db) => {
       return promiseGenerator(db)
         .then(res => db.close().then(() => res))
-        .catch((err) => db.close().then(() => { throw err; }))
+        .catch(err => db.close().then(() => { console.error(err); throw err; }))
     });
 }
 

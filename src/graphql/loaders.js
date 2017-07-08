@@ -1,61 +1,59 @@
 const _ = require('underscore');
 const DataLoader = require('dataloader');
+const stringify = require('json-stable-stringify');
 
 const connect = require('../db');
 const { gameTypes } = require('./typeDefs');
 
-function botLoader(game) {
-  return new DataLoader(ids =>
-    connect(db => db
-      .collection('bots')
-      .find({ game, bot_id: { $in: ids } }, { _id: 0, pass_hash: 0 })
-      .toArray()
-    )
-    .then(unorderedJson => ids.map(
-      bot_id => _.find(unorderedJson, { bot_id })
-    ))
+
+function BotLoader() {
+  return new DataLoader(botQueries => {
+    return Promise.all(
+      botQueries.map(botQuery =>
+        connect(db => db
+          .collection('bots')
+          .findOne(botQuery, { _id: 0, pass_hash: 0 })
+        )
+      )
+    )},
+    { cacheKeyFn: stringify }
   );
 }
 
-function gameLoader(gameType) {
-  return new DataLoader(ids =>
-    connect(db => db
-      .collection('games')
-      .find({ game: gameType, _id: { $in: ids } })
-      .toArray()
-    )
-    .then(unorderedJson => ids.map(
-      _id => _.find(unorderedJson, { _id })
-    ))
+function BotsLoader() {
+  return new DataLoader(botQueries => {
+    return Promise.all(
+      botQueries.map(botQuery =>
+        connect(db => db
+          .collection('bots')
+          .find(botQuery, { _id: 0, pass_hash: 0 })
+          .toArray()
+        )
+      )
+    )},
+    { cacheKeyFn: stringify }
+  );
+}
+
+function GamesLoader() {
+  return new DataLoader(gameQueries => {
+      return Promise.all(gameQueries.map(gameQuery =>
+        connect(db => db
+          .collection('games')
+          .find(gameQuery)
+          .toArray()
+        )
+      ));
+    },
+    { cacheKeyFn: stringify }
   );
 }
 
 module.exports = () => ({
-  Bot: _.object(gameTypes.map(game => [game, botLoader(game)])),
-
-  Game: _.object(gameTypes.map(game => [game, gameLoader(game)])),
+  Bot: BotLoader(),
 
   // If these are being called more than once, then you're probably doing it
   // wrong... but I guess this stops the server from getting DDoS'ed.
-  allBots: new DataLoader(games =>
-    Promise.all(games.map(game =>
-      connect(db => db
-        .collection('bots')
-        .find({ game }, { _id: 0, pass_hash: 0 })
-        .toArray()
-      )
-    )),
-    { batch: false }
-  ),
-
-  allGames: new DataLoader(games =>
-    Promise.all(games.map(game =>
-      connect(db => db
-        .collection('games')
-        .find({ game })
-        .toArray()
-      )
-    )),
-    { batch: false }
-  ),
+  Bots: BotsLoader(),
+  Games: GamesLoader(),
 });
