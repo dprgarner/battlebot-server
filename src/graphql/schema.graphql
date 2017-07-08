@@ -1,24 +1,8 @@
+# The root-level query.
 type Query {
   gameTypes: [GameType]
+
   gameType(id: ID!): GameType
-}
-
-# An input type for performing a query on a collection of games.
-input GameInput {
-  # The maximum number of results to return.
-  limit: Int
-
-  # Filter to games with this victor. Accepts "null" for draws.
-  victor: ID
-
-  # Filter to games in this contest.
-  contest: ID
-
-  # Filter to games played by any of these bots (specified by their IDs.)
-  anyPlayers: [ID]
-
-  # Filter to games played by these bots (specified by their IDs.)
-  players: [ID]
 }
 
 # The type of the game.
@@ -26,18 +10,18 @@ type GameType {
   # The name of the game. Lower-case.
   id: ID!
 
+  # A list of the bots registered for this game.
+  bots(owner: String): [Bot]
+
+  contests: [Contest]
+
+  contest(id: ID!): Contest
+
   # A list of played games.
   games(filters: GameInput): [Game]
 
   # A single game, by ID.
   game(id: ID!): Game
-
-  # A list of the bots registered for this game.
-  bots(owner: String): [Bot]
-
-  contest(id: ID!): Contest
-
-  contests: [Contest]
 }
 
 type Bot {
@@ -78,8 +62,11 @@ type Contest {
 
 type ContestRanking {
   bot: Bot!
+
   wins: Int!
+
   draws: Int!
+
   losses: Int!
 
   # The number of games played.
@@ -89,13 +76,34 @@ type ContestRanking {
   score: Int!
 }
 
+# An input type for performing a query on a collection of games.
+input GameInput {
+  # The maximum number of results to return.
+  limit: Int
+
+  # Filter to games with this victor. Accepts "null" for draws.
+  victor: ID
+
+  # Filter to games in this contest.
+  contest: ID
+
+  # Filter to games played by any of these bots (specified by their IDs.)
+  anyPlayers: [ID]
+
+  # Filter to games played by these bots (specified by their IDs.)
+  players: [ID]
+}
+
 union Game = NoughtsAndCrosses
 
 # A completed game of Noughts and Crosses.
 type NoughtsAndCrosses {
   id: ID!
+
   gameType: GameType!
+
   players: [Bot]!
+
   victor: Bot
 
   # The contest that this game was played in, if any.

@@ -9,7 +9,7 @@ const resolvers = require('./resolvers');
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 
-module.exports = graphqlHTTP(() => {
+module.exports = graphqlHTTP((_req, _res) => {
   const context = _.extend({}, loaders());
 
   return { schema, context, graphiql: true };
