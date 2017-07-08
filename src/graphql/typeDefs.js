@@ -11,11 +11,17 @@ const typeDefs = `
       # The maximum number of results to return.
       limit: Int
 
-      # Return only games with this victor. Accepts "null" for draws.
+      # Return games with this victor. Accepts "null" for draws.
       victor: String
 
-      # Return only games in this contest.
+      # Return games in this contest.
       contest: String
+
+      # Return games played by any of these bots (specified by their IDs.)
+      anyPlayers: [String]
+
+      # Return games played by these bots (specified by their IDs.)
+      players: [String]
     ): [Game]
 
     # A list of the bots registered for this game.

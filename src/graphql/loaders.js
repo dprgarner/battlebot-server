@@ -38,6 +38,22 @@ function BotsLoader() {
 function GamesLoader() {
   return new DataLoader(gameQueries => Promise.all(
     gameQueries.map(gameQuery => {
+      gameQuery = _.extend({}, gameQuery); // Shallow-copy.
+
+      if (gameQuery.players) {
+        gameQuery.$and = _.map(gameQuery.players, player => (
+          { players: player }
+        ));
+        delete gameQuery.onlyPlayers;
+      }
+
+      if (gameQuery.anyPlayers) {
+        gameQuery.$or = _.map(gameQuery.anyPlayers, player => (
+          { players: player }
+        ));
+        delete gameQuery.anyPlayers;
+      }
+
       if (gameQuery.limit) return connect(db => db
         .collection('games')
         .find(_.omit(gameQuery, 'limit'))
