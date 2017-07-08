@@ -5,7 +5,7 @@ const baseGameResolver = {
   id: ({ _id }) => _id,
   gameType: ({ game }) => game,
   players: ({ game, players }, _, { Bot }) => (
-    players.map(player => Bot[game].load(player))
+    Bot[game].loadMany(players)
   ),
   victor: ({ game, victor }, _, { Bot }) => victor && Bot[game].load(victor),
 };

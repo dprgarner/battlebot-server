@@ -17,8 +17,23 @@ function botLoader(game) {
   );
 }
 
-module.exports = {
+function gameLoader(gameType) {
+  return new DataLoader(ids =>
+    connect(db => db
+      .collection('games')
+      .find({ game: gameType, _id: { $in: ids } })
+      .toArray()
+    )
+    .then(unorderedJson => ids.map(
+      _id => _.find(unorderedJson, { _id })
+    ))
+  );
+}
+
+module.exports = () => ({
   Bot: _.object(gameTypes.map(game => [game, botLoader(game)])),
+
+  Game: _.object(gameTypes.map(game => [game, gameLoader(game)])),
 
   // If these are being called more than once, then you're probably doing it
   // wrong... but I guess this stops the server from getting DDoS'ed.
@@ -43,4 +58,4 @@ module.exports = {
     )),
     { batch: false }
   ),
-};
+});
