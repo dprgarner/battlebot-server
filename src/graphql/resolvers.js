@@ -16,7 +16,7 @@ const baseGameResolver = {
 const resolvers = {
   Query: {
     gameTypes: () => gameTypes,
-    gameType: (_, { name }) => gameTypes.includes(name) ? name : null,
+    gameType: (_, { id }) => gameTypes.includes(id) ? id : null,
   },
 
   Bot: {
@@ -26,12 +26,15 @@ const resolvers = {
   },
 
   GameType: {
-    name: game => game,
+    id: game => game,
     games: (game, { filters }, { Games }) => (
       Games.load(_.extend({ game }, filters))
     ),
+    game: (game, { id }, { Games }) => (
+      Games.load(_.extend({ game, _id: id })).then(games => games && games[0])
+    ),
     bots: (game, args, { Bots }) => Bots.load(_.extend({ game }, args)),
-    contest: (game, { name }) => ({ game, contest: name }),
+    contest: (game, { id }) => ({ game, contest: id }),
     contests: (game, args, { Contests }) => Contests.load(game),
   },
 

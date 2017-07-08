@@ -44,7 +44,7 @@ function balanced(bots) {
 
 module.exports = {
   Contest: {
-    name: ({ contest }) => contest,
+    id: ({ contest }) => contest,
     gameType: ({ game }) => game,
     games: ({ contest, game }, { filters }, { Games }) => (
       Games.load(_.extend({ contest, game }, _.omit(filters, 'contest')))

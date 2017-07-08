@@ -1,6 +1,6 @@
 type Query {
   gameTypes: [GameType]
-  gameType(name: String!): GameType
+  gameType(id: ID!): GameType
 }
 
 # An input type for performing a query on a collection of games.
@@ -8,38 +8,41 @@ input GameInput {
   # The maximum number of results to return.
   limit: Int
 
-  # Return games with this victor. Accepts "null" for draws.
-  victor: String
+  # Filter to games with this victor. Accepts "null" for draws.
+  victor: ID
 
-  # Return games in this contest.
-  contest: String
+  # Filter to games in this contest.
+  contest: ID
 
-  # Return games played by any of these bots (specified by their IDs.)
-  anyPlayers: [String]
+  # Filter to games played by any of these bots (specified by their IDs.)
+  anyPlayers: [ID]
 
-  # Return games played by these bots (specified by their IDs.)
-  players: [String]
+  # Filter to games played by these bots (specified by their IDs.)
+  players: [ID]
 }
 
 # The type of the game.
 type GameType {
   # The name of the game. Lower-case.
-  name: String!
+  id: ID!
 
   # A list of played games.
   games(filters: GameInput): [Game]
 
+  # A single game, by ID.
+  game(id: ID!): Game
+
   # A list of the bots registered for this game.
   bots(owner: String): [Bot]
 
-  contest(name: String!): Contest
+  contest(id: ID!): Contest
 
   contests: [Contest]
 }
 
 type Bot {
   # The name of the bot.
-  id: String!
+  id: ID!
 
   # The game type that this bot is registered for.
   gameType: GameType!
@@ -52,7 +55,7 @@ type Bot {
 
 type Contest {
   # The name of the contest.
-  name: String!
+  id: ID!
 
   # The game type of the contest.
   gameType: GameType!
@@ -88,15 +91,15 @@ type ContestRanking {
 
 union Game = NoughtsAndCrosses
 
-# A played game of Noughts and Crosses.
+# A completed game of Noughts and Crosses.
 type NoughtsAndCrosses {
-  id: String!
+  id: ID!
   gameType: GameType!
   players: [Bot]!
   victor: Bot
 
   # The contest that this game was played in, if any.
-  contest: String
+  contest: ID
 
   # The reason that the game ended.
   reason: String!
