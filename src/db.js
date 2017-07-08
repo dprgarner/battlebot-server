@@ -1,7 +1,7 @@
 const Promise = require('bluebird')
 const MongoClient = Promise.promisifyAll(require('mongodb').MongoClient);
 
-const url = process.env.MONGODB_URI || 'mongodb://localhost:27017/battlebots';
+const url = process.env.MONGODB_URI || 'mongodb://localhost:27017/battlebots2';
 
 function connect(promiseGenerator) {
   // Handle database connection and disconnection, throwing any errors after
