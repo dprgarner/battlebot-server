@@ -5,10 +5,9 @@ const _ = require('underscore');
 const bodyParser = require('body-parser');
 const express = require('express');
 const marked = require('marked');
-const graphqlHTTP = require('express-graphql');
 
 const connect = require('./db');
-const schema = require('./graphql');
+const graphQLEndpoint = require('./graphql');
 const { createRandomHash } = require('./hash');
 const games = require('./games');
 
@@ -211,7 +210,7 @@ function createHttpServer(port) {
     .catch(next);
   });
 
-  app.use('/graphql', graphqlHTTP({ schema, graphiql: true }));
+  app.use('/graphql', graphQLEndpoint);
 
   app.use((err, req, res, next) => {
     console.error(err);
