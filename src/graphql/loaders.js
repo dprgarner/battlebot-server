@@ -5,17 +5,39 @@ const stringify = require('json-stable-stringify');
 const connect = require('../db');
 const { gameTypes } = require('./typeDefs');
 
-
 function BotLoader() {
-  return new DataLoader(botQueries => {
-    return Promise.all(
-      botQueries.map(botQuery =>
-        connect(db => db
-          .collection('bots')
-          .findOne(botQuery, { _id: 0, pass_hash: 0 })
-        )
+  // Expects queries of the form { game, bot_id }.
+  return new DataLoader(
+    botQueries => {
+      const botsByGame = _.chain(botQueries)
+        .groupBy('game')
+        .map((bots, game) => [game, _.pluck(bots, 'bot_id')])
+        .object()
+        .value();
+
+      return Promise.all(
+        _.map(botsByGame, (bot_ids, game) => (
+          connect(db => db
+            .collection('bots')
+            .find({ game, bot_id: { $in: bot_ids } }, { _id: 0, pass_hash: 0 })
+            .toArray()
+          )
+        ))
       )
-    )},
+      .then(gameGroupedBots => {
+        const resolvedBotsByGame = _.chain(gameGroupedBots)
+          .map((bots) => [
+            bots[0].game,
+            _.object(_.map(bots, bot => [bot.bot_id, bot])),
+          ])
+          .object()
+          .value();
+
+        return botQueries.map(
+          ({ bot_id, game }) => resolvedBotsByGame[game][bot_id]
+        );
+      });
+    },
     { cacheKeyFn: stringify }
   );
 }
