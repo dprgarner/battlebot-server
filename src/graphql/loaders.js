@@ -44,7 +44,7 @@ function GamesLoader() {
         gameQuery.$and = _.map(gameQuery.players, player => (
           { players: player }
         ));
-        delete gameQuery.onlyPlayers;
+        delete gameQuery.players;
       }
 
       if (gameQuery.anyPlayers) {

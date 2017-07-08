@@ -59,6 +59,8 @@ type Contest {
 
   games(filters: GameInput): [Game]
 
+  # The ranking of the bots in this contest. Accepts an argument
+  # for how to score the bots.
   rankings(
     # The way to rank the scores. 
     # The default method "ambitious" assigns 3 points for a win and 1 for a 

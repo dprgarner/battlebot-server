@@ -57,6 +57,7 @@ module.exports = {
           game.players.forEach(player => {
             if (!bots[player]) bots[player] = {
               game: game.game,
+              contest,
               bot_id: player,
               wins: 0,
               losses: 0,
@@ -87,5 +88,13 @@ module.exports = {
 
   ContestRanking: {
     bot: ({ bot_id, game }, _, { Bot }) => Bot.load({ game, bot_id }),
+
+    played: ({ bot_id, contest, game }, _args, { Games }) => (
+      Games.load({ contest, game }).then(
+        gameDocuments => gameDocuments.filter(
+          game => game.players.includes(bot_id)
+        ).length
+      )
+    ),
   },
 };
