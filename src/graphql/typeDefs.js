@@ -7,7 +7,16 @@ const typeDefs = `
     name: String!
 
     # A list of played games.
-    games: [Game]
+    games(
+      # The maximum number of results to return.
+      limit: Int
+
+      # Return only games with this victor. Accepts "null" for draws.
+      victor: String
+
+      # Return only games in this contest.
+      contest: String
+    ): [Game]
 
     # A list of the bots registered for this game.
     bots(owner: String): [Bot]
@@ -32,21 +41,21 @@ const typeDefs = `
   type NoughtsAndCrosses {
     id: String!
     gameType: GameType!
-    players: [Bot]
+    players: [Bot]!
     victor: Bot
+
+    # The contest that this game was played in, if any.
+    contest: String
 
     # The reason that the game ended.
     reason: String!
 
     # The final layout of the board. The outer array is an array of 
     # rows, the inner array is an array of columns.
-    board: [[String]]
+    board: [[String]]!
 
     # The time that the game started.
     startTime: String!
-
-    # The contest that this game was played in, if any.
-    contest: String!
   
     # Which bot played X and which bot played O.
     marks: NoughtsAndCrossesMarks!

@@ -36,15 +36,23 @@ function BotsLoader() {
 }
 
 function GamesLoader() {
-  return new DataLoader(gameQueries => {
-      return Promise.all(gameQueries.map(gameQuery =>
-        connect(db => db
-          .collection('games')
-          .find(gameQuery)
-          .toArray()
-        )
-      ));
-    },
+  return new DataLoader(gameQueries => Promise.all(
+    gameQueries.map(gameQuery => {
+      if (gameQuery.limit) return connect(db => db
+        .collection('games')
+        .find(_.omit(gameQuery, 'limit'))
+        .sort({ startTime: -1 })
+        .limit(gameQuery.limit)
+        .toArray()
+      );
+
+      return connect(db => db
+        .collection('games')
+        .find(gameQuery)
+        .sort({ startTime: -1 })
+        .toArray()
+      );
+    })),
     { cacheKeyFn: stringify }
   );
 }
