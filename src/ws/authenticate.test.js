@@ -13,7 +13,7 @@ const mockDbData = {
   game: 'numberwang',
 };
 
-jest.mock('./db', () => jest.fn(() => Promise.resolve(mockDbData)));
+jest.mock('../db', () => jest.fn(() => Promise.resolve(mockDbData)));
 
 describe('login', () => {
   beforeEach(() => {

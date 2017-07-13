@@ -7,7 +7,7 @@
   "description": "A server for AI battles!",
   "main": "index.js",
   "scripts": {
-    "start": "babel src --out-dir build --copy-files --source-maps inline && node build/index.js",
+    "start": "babel src --out-dir build --ignore test.js --copy-files --source-maps inline && node build/index.js",
     "test": "jest",
     "watchtest": "jest --watch",
     "coverage": "opn coverage/lcov-report/index.html",
@@ -17,7 +17,8 @@
     "collectCoverage": true,
     "collectCoverageFrom": [
       "src/**/*.js"
-    ]
+    ],
+    "testPathIgnorePatterns": ["<rootDir>/build/", "<rootDir>/node_modules/"]
   },
   "author": "David Garner",
   "license": "ISC",
