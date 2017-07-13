@@ -3,7 +3,6 @@ const DataLoader = require('dataloader');
 const stringify = require('json-stable-stringify');
 
 const connect = require('../db');
-const { gameTypes } = require('./typeDefs');
 
 function BotLoader() {
   // Expects queries of the form { game, bot_id }.
@@ -116,7 +115,8 @@ module.exports = () => ({
   Bot: BotLoader(),
 
   // If these are being called more than once, then you're probably doing it
-  // wrong... but I guess this stops the server from getting DDoS'ed.
+  // wrong... but I guess this stops a client from accidentally hammering the
+  // database.
   Bots: BotsLoader(),
   Games: GamesLoader(),
 

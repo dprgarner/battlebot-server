@@ -1,6 +1,7 @@
 const _ = require('underscore');
-const { gameTypes } = require('./typeDefs');
 const contestResolvers = require('./contestResolvers');
+
+const gameTypes = ['noughtsandcrosses'];
 
 const baseGameResolver = {
   id: ({ _id }) => _id,
