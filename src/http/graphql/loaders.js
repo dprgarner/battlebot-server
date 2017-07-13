@@ -2,7 +2,7 @@ import _ from 'underscore';
 import DataLoader from 'dataloader';
 import stringify from 'json-stable-stringify';
 
-import connect from '../db';
+import connect from '../../db';
 
 function BotLoader() {
   // Expects queries of the form { game, bot_id }.

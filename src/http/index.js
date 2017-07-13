@@ -1,7 +1,7 @@
 import express from 'express';
 
+import addApi from './api';
 import addStaticRoutes from './static';
-import addApi from './static';
 
 class ClientError extends Error {
   constructor(message) {
