@@ -1,11 +1,10 @@
 import _ from 'underscore';
 import Rx from 'rxjs/Rx';
 
-import connect from './db';
-import games from './games';
+import connect from '../db';
+import { createShortRandomHash } from '../hash';
+import games from '../games';
 import getVictor from './getVictor';
-
-import { createShortRandomHash } from './hash';
 import { wsObserver, wsObservable } from './sockets';
 
 function runGame(validator, reducer) {

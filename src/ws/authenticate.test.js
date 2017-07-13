@@ -1,7 +1,7 @@
 import Rx from 'rxjs';
 
 import authenticate, { login } from './authenticate';
-import db from './db';
+import db from '../db';
 
 const asdfHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
 const saltHash = '20f4868d91c9c0c3eef3b32c1a6f839794c522f25411efc9cbad6dd99e17123a';

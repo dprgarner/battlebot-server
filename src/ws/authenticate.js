@@ -1,8 +1,8 @@
 import _ from 'underscore';
 import Rx from 'rxjs';
 
-import connect from './db';
-import { createHash, createRandomHash } from './hash';
+import connect from '../db';
+import { createHash, createRandomHash } from '../hash';
 import { wsObserver, wsObservable } from './sockets';
 
 export function login(message, salt) {
