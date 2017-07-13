@@ -10,7 +10,8 @@
     "start": "node src/index.js",
     "test": "jest",
     "watchtest": "jest --watch",
-    "coverage": "opn coverage/lcov-report/index.html"
+    "servecoverage": "opn coverage/lcov-report/index.html",
+    "coverage": "codecov"
   },
   "jest": {
     "collectCoverage": true
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "codeclimate-test-reporter": "^0.5.0",
+    "codecov": "^2.2.0",
     "jest": "^20.0.4",
     "nodemon": "^1.11.0",
     "opn-cli": "^3.1.0"
