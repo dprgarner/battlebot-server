@@ -10,11 +10,12 @@
     "start": "node src/index.js",
     "test": "jest",
     "watchtest": "jest --watch",
-    "servecoverage": "opn coverage/lcov-report/index.html",
-    "coverage": "codecov"
+    "coverage": "opn coverage/lcov-report/index.html",
+    "codecov": "codecov"
   },
   "jest": {
-    "collectCoverage": true
+    "collectCoverage": true,
+    "collectCoverageFrom": ["src/**/*.js"]
   },
   "author": "David Garner",
   "license": "ISC",

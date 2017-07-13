@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/dprgarner/battlebot-server.svg?branch=master)](https://travis-ci.org/dprgarner/battlebot-server)
+[![Build Status](https://travis-ci.org/dprgarner/battlebot-server.svg?branch=master)](https://travis-ci.org/dprgarner/battlebot-server)[![codecov](https://codecov.io/gh/dprgarner/battlebot-server/branch/master/graph/badge.svg)](https://codecov.io/gh/dprgarner/battlebot-server)
 
 # Battlebot server
 
