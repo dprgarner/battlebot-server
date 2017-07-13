@@ -7,7 +7,7 @@
   "description": "A server for AI battles!",
   "main": "index.js",
   "scripts": {
-    "start": "babel src --out-dir build --copy-files && node build/index.js",
+    "start": "babel src --out-dir build --copy-files --source-maps inline && node build/index.js",
     "test": "jest",
     "watchtest": "jest --watch",
     "coverage": "opn coverage/lcov-report/index.html",
@@ -41,6 +41,7 @@
     "mongodb": "^2.2.28",
     "require-all": "^2.2.0",
     "rxjs": "^5.4.0",
+    "source-map-support": "^0.4.15",
     "underscore": "^1.8.3",
     "ws": "^3.0.0"
   },

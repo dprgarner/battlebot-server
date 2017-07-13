@@ -1,3 +1,6 @@
+import { install } from 'source-map-support';
+install();
+
 import authenticate from './authenticate';
 import matchPlayers from './matchPlayers';
 import playGame from './playGame';
