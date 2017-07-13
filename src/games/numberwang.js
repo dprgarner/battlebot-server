@@ -1,7 +1,7 @@
 /* A silly game for testing out the game transformations. */
-const _ = require('underscore');
+import _ from 'underscore';
 
-function createInitialState(players) {
+export function createInitialState(players) {
   return {
     players,
     nextPlayer: players[0],
@@ -10,14 +10,14 @@ function createInitialState(players) {
   };
 }
 
-function validator(state, turn) {
+export function validator(state, turn) {
   // if (Math.random() < 0.5) throw new Error('bad validation');
   if (turn.player !== state.nextPlayer) return false;
 
   return typeof(turn.n) === 'number';
 }
 
-function reducer({ players, board }, turn) {
+export function reducer({ players, board }, turn) {
   // Must return a state object with { players, nextPlayer, complete }.
 
   // throw new Error('bad reducing');
@@ -33,5 +33,3 @@ function reducer({ players, board }, turn) {
 
   return { players, nextPlayer, complete, victor, reason, board: { n } };
 }
-
-module.exports =  { createInitialState, validator, reducer };

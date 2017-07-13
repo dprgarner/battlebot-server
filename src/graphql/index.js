@@ -1,20 +1,20 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
-const _ = require('underscore');
-const DataLoader = require('dataloader');
-const graphqlHTTP = require('express-graphql');
-const { makeExecutableSchema } = require('graphql-tools');
+import _ from 'underscore';
+import DataLoader from 'dataloader';
+import graphqlHTTP from 'express-graphql';
+import { makeExecutableSchema } from 'graphql-tools';
 
-const loaders = require('./loaders');
-const resolvers = require('./resolvers');
+import loaders from './loaders';
+import resolvers from './resolvers';
 
 const typeDefs = fs.readFileSync(
   path.join(__dirname, 'schema.graphql'), 'utf8'
 );
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 
-module.exports = graphqlHTTP((_req, _res) => {
+export default graphqlHTTP((_req, _res) => {
   const context = _.extend({}, loaders());
 
   return { schema, context, graphiql: true };

@@ -1,4 +1,4 @@
-const noughtsAndCrosses = require('./noughtsandcrosses');
+import * as noughtsAndCrosses from './noughtsandcrosses';
 
 const midGameState = {
   players: ['botA', 'botB'],

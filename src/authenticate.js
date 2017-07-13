@@ -1,11 +1,11 @@
-const _ = require('underscore');
-const Rx = require('rxjs');
+import _ from 'underscore';
+import Rx from 'rxjs';
 
-const connect = require('./db');
-const { createHash, createRandomHash } = require('./hash');
-const { wsObserver, wsObservable } = require('./sockets');
+import connect from './db';
+import { createHash, createRandomHash } from './hash';
+import { wsObserver, wsObservable } from './sockets';
 
-function login(message, salt) {
+export function login(message, salt) {
   const { bot_id, login_hash, game, contest } = message;
 
   return connect(db => db.collection('bots').findOne({ game, bot_id }))
@@ -28,7 +28,7 @@ function login(message, salt) {
     });
 }
 
-function authenticate() {
+export default function authenticate() {
   // This function transforms the ws$ stream into a stream where each event is
   // a 'connection' - an object containing the authenticated socket, the bot
   // ID, and the associated game. The stream closes and filters out
@@ -77,6 +77,3 @@ function authenticate() {
     })
     .share();
 }
-
-module.exports = authenticate;
-module.exports.login = login;

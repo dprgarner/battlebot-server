@@ -1,4 +1,4 @@
-const connect = require('./db');
+import connect from './db';
 
 const mockDb = { close: jest.fn(() => Promise.resolve(true)) };
 

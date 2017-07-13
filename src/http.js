@@ -1,15 +1,15 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
-const _ = require('underscore');
-const bodyParser = require('body-parser');
-const express = require('express');
-const marked = require('marked');
+import _ from 'underscore';
+import bodyParser from 'body-parser';
+import express from 'express';
+import marked from 'marked';
 
-const connect = require('./db');
-const graphQLEndpoint = require('./graphql');
-const { createRandomHash } = require('./hash');
-const games = require('./games');
+import connect from './db';
+import graphQLEndpoint from './graphql';
+import { createRandomHash } from './hash';
+import games from './games';
 
 class ClientError extends Error {
   constructor(message) {
@@ -20,7 +20,7 @@ class ClientError extends Error {
   }
 }
 
-function createHttpServer(port) {
+export default function createHttpServer(port) {
   const app = express();
   const jsonParser = bodyParser.json();
 
@@ -176,5 +176,3 @@ function createHttpServer(port) {
     });
   });
 }
-
-module.exports = createHttpServer;

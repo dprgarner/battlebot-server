@@ -1,4 +1,4 @@
-const _ = require('underscore');
+import _ from 'underscore';
 
 function sortScore(botsToSort) {
   botsToSort.sort((bot1, bot2) => {
@@ -42,7 +42,7 @@ function balanced(bots) {
   return sortedBots;
 }
 
-module.exports = {
+export default {
   Contest: {
     id: ({ contest }) => contest,
     gameType: ({ game }) => game,

@@ -1,8 +1,8 @@
-const authenticate = require('./authenticate');
-const matchPlayers = require('./matchPlayers');
-const playGame = require('./playGame');
-const { createWebsocketStream } = require('./sockets');
-const createHttpServer = require('./http');
+import authenticate from './authenticate';
+import matchPlayers from './matchPlayers';
+import playGame from './playGame';
+import { createWebsocketStream } from './sockets';
+import createHttpServer from './http';
 
 const port = process.env.PORT || 3000;
 

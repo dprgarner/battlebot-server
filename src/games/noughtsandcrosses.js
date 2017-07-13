@@ -1,6 +1,6 @@
-const _ = require('underscore');
+import _ from 'underscore';
 
-function createInitialState(players) {
+export function createInitialState(players) {
   return {
     players,
     board: [
@@ -17,7 +17,7 @@ function createInitialState(players) {
   };
 }
 
-function validator(state, turn) {
+export function validator(state, turn) {
   if (turn.player !== state.nextPlayer) return false;
 
   if (turn.mark !== 'X' && turn.mark !== 'O') return false;
@@ -34,7 +34,7 @@ function validator(state, turn) {
   return true;
 }
 
-function getVictor(board) {
+export function getVictor(board) {
   for (let mark of ['X', 'O']) {
     if (
       (mark === board[0][0] && mark === board[0][1] && mark === board[0][2]) ||
@@ -50,7 +50,7 @@ function getVictor(board) {
   if (_.all(_.flatten(board))) return -1;
 }
 
-function reducer({ players, board, marks }, turn) {
+export function reducer({ players, board, marks }, turn) {
   // Must return a state object with { players, nextPlayer, complete }.
   const nextPlayer = _.without(players, turn.player)[0];
 
@@ -82,5 +82,3 @@ function reducer({ players, board, marks }, turn) {
     reason,
   };
 }
-
-module.exports = { createInitialState, validator, reducer, getVictor };

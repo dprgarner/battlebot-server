@@ -1,11 +1,11 @@
-const _ = require('underscore');
-const clone = require('clone');
-const Rx = require('rxjs');
-const WebSocket = require('ws');
+import _ from 'underscore';
+import clone from 'clone';
+import Rx from 'rxjs';
+import WebSocket from 'ws';
 
 const MAX_GAMES = 5;
 
-function matchPlayers(connection$) {
+export default function matchPlayers(connection$) {
   // Creates a stream of matched pairs of connected players. A new game should
   // be started when this stream emits an item.
 
@@ -65,5 +65,3 @@ function matchPlayers(connection$) {
     .filter(({ newGame }) => newGame)
     .map(({ newGame }) => newGame);
 }
-
-module.exports = matchPlayers;

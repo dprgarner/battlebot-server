@@ -1,6 +1,6 @@
-const requireAll = require('require-all');
+import requireAll from 'require-all';
 
-module.exports = requireAll({
+export default requireAll({
   dirname: __dirname,
   filter: (filename) => (
     filename != 'index.js' &&

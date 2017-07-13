@@ -1,7 +1,7 @@
-const Rx = require('rxjs');
+import Rx from 'rxjs';
 
-const authenticate = require('./authenticate');
-const db = require('./db');
+import authenticate, { login } from './authenticate';
+import db from './db';
 
 const asdfHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
 const saltHash = '20f4868d91c9c0c3eef3b32c1a6f839794c522f25411efc9cbad6dd99e17123a';
@@ -23,7 +23,7 @@ describe('login', () => {
   it('queries the database for the bot', async () => {
     expect(db.mock.calls).toHaveLength(0);
 
-    const loginResult = await authenticate.login({
+    const loginResult = await login({
       bot_id: 'asdf',
       login_hash: loginHash,
       game: 'numberwang',
@@ -43,7 +43,7 @@ describe('login', () => {
   it('logs in a bot when the hash is correct', async () => {
     expect(db.mock.calls).toHaveLength(0);
 
-    const loginResult = await authenticate.login({
+    const loginResult = await login({
       bot_id: 'asdf',
       login_hash: loginHash,
       game: 'numberwang',
@@ -58,7 +58,7 @@ describe('login', () => {
 
   it('returns false if the login hash is incorrect', async () => {
     expect(db.mock.calls).toHaveLength(0);
-    const loginResult = await authenticate.login({
+    const loginResult = await login({
       bot_id: 'asdf',
       login_hash: 'wronghash',
       game: 'numberwang',
@@ -72,7 +72,7 @@ describe('login', () => {
     db.mockImplementation(() => Promise.resolve());
     expect(db.mock.calls).toHaveLength(0);
 
-    const loginResult = await authenticate.login({
+    const loginResult = await login({
       bot_id: 'wrongbot',
       login_hash: loginHash,
       game: 'numberwang',

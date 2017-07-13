@@ -1,5 +1,5 @@
-const _ = require('underscore');
-const contestResolvers = require('./contestResolvers');
+import _ from 'underscore';
+import contestResolvers from './contestResolvers';
 
 const gameTypes = ['noughtsandcrosses'];
 
@@ -29,10 +29,10 @@ const resolvers = {
   GameType: {
     id: game => game,
     games: (game, { filters }, { Games }) => (
-      Games.load(_.extend({ game }, filters))
+      Games.load({ game, ...filters})
     ),
     game: (game, { id }, { Games }) => (
-      Games.load(_.extend({ game, _id: id })).then(games => games && games[0])
+      Games.load({ game, _id: id }).then(games => games && games[0])
     ),
     bots: (game, args, { Bots }) => Bots.load(_.extend({ game }, args)),
     contest: (game, { id }) => ({ game, contest: id }),
@@ -64,6 +64,4 @@ const resolvers = {
   },
 };
 
-_.extend(resolvers, contestResolvers);
-
-module.exports = resolvers;
+export default {...resolvers, ...contestResolvers};

@@ -1,12 +1,12 @@
-const _ = require('underscore');
-const Rx = require('rxjs/Rx');
+import _ from 'underscore';
+import Rx from 'rxjs/Rx';
 
-const connect = require('./db');
-const games = require('./games');
-const getVictor = require('./getVictor');
+import connect from './db';
+import games from './games';
+import getVictor from './getVictor';
 
-const { createShortRandomHash } = require('./hash');
-const { wsObserver, wsObservable } = require('./sockets');
+import { createShortRandomHash } from './hash';
+import { wsObserver, wsObservable } from './sockets';
 
 function runGame(validator, reducer) {
   // This function transforms a stream of incoming turns into a stream of updates,
@@ -42,7 +42,7 @@ function addLastTurn(update$) {
     );
 }
 
-function playGame({ connections, contest }) {
+export default function playGame({ connections, contest }) {
   const gameName = connections[0].game;
   const game = games[gameName];
   const gameId = createShortRandomHash();
@@ -128,5 +128,3 @@ function playGame({ connections, contest }) {
       .subscribe(wsObserver(ws));
   })
 }
-
-module.exports = playGame;

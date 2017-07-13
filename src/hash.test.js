@@ -1,4 +1,4 @@
-const hash = require('./hash');
+import * as hash from './hash';
 
 describe('hash', () => {
   it('creates a hashed version of a string', () => {

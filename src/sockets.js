@@ -1,7 +1,7 @@
-const Rx = require('rxjs');
-const WebSocket = require('ws');
+import Rx from 'rxjs';
+import WebSocket from 'ws';
 
-function wsObserver(ws) {
+export function wsObserver(ws) {
   // An observer for outgoing JSON messages to the socket.
   return {
     next: (x) => {
@@ -15,7 +15,7 @@ function wsObserver(ws) {
   };
 }
 
-function wsObservable(ws) {
+export function wsObservable(ws) {
   // An observable for incoming JSON messages from the socket.
   return Rx.Observable.create(obs => {
     ws.on('message', (data) => {
@@ -33,7 +33,7 @@ function wsObservable(ws) {
   }).share();
 }
 
-function createWebsocketStream(opts) {
+export function createWebsocketStream(opts) {
   // A stream of WebSockets.
   return Rx.Observable.create(observer => {
     console.log(`Starting WebSocket server...`);
@@ -49,7 +49,3 @@ function createWebsocketStream(opts) {
     });
   }).share();
 }
-
-exports.wsObserver = wsObserver;
-exports.wsObservable = wsObservable;
-exports.createWebsocketStream = createWebsocketStream;

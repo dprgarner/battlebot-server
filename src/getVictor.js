@@ -1,9 +1,9 @@
-const _ = require('underscore');
-const Rx = require('rxjs/Rx');
+import _ from 'underscore';
+import Rx from 'rxjs/Rx';
 
-const { wsObservable } = require('./sockets');
+import { wsObservable } from './sockets';
 
-function getVictor(connections, update$) {
+export default function getVictor(connections, update$) {
   // Create a stream which emits a single item when a winner is decided. 
   // The winner can be determined by the game finishing (normally or
   // abnormally), by timeout, disconnection, or by a bot repeatedly making
@@ -81,5 +81,3 @@ function getVictor(connections, update$) {
   .delay(5)
   .shareReplay();
 }
-
-module.exports = getVictor;

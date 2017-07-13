@@ -1,17 +1,13 @@
-const { sha256 } = require('hash.js');
+import { sha256 } from 'hash.js';
 
-function createHash(str) {
+export function createHash(str) {
   return sha256().update(str).digest('hex');
 }
 
-function createRandomHash() {
+export function createRandomHash() {
   return createHash((Math.random() * 1000000 + Math.random()) + '');
 }
 
-function createShortRandomHash() {
+export function createShortRandomHash() {
   return createRandomHash().slice(0, 16);
 }
-
-exports.createHash = createHash;
-exports.createRandomHash = createRandomHash;
-exports.createShortRandomHash = createShortRandomHash;

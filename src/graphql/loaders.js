@@ -1,8 +1,8 @@
-const _ = require('underscore');
-const DataLoader = require('dataloader');
-const stringify = require('json-stable-stringify');
+import _ from 'underscore';
+import DataLoader from 'dataloader';
+import stringify from 'json-stable-stringify';
 
-const connect = require('../db');
+import connect from '../db';
 
 function BotLoader() {
   // Expects queries of the form { game, bot_id }.
@@ -111,7 +111,7 @@ function ContestsLoader() {
   );
 }
 
-module.exports = () => ({
+export default () => ({
   Bot: BotLoader(),
 
   // If these are being called more than once, then you're probably doing it
