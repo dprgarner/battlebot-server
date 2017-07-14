@@ -2,7 +2,7 @@
   "name": "battlebot-server",
   "version": "0.1.0",
   "engines": {
-    "node": "7.10.0"
+    "node": "7.10.1"
   },
   "description": "A server for AI battles!",
   "main": "index.js",
