@@ -3,6 +3,7 @@ import connect from '../db';
 import { createRandomHash } from '../hash';
 import games from '../games';
 import graphQLEndpoint from './graphql';
+import { ClientError } from './error';
 
 export default function addApi(app) {
   const jsonParser = bodyParser.json();

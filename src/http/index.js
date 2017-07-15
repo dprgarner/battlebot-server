@@ -1,16 +1,7 @@
 import express from 'express';
-
+import { ClientError } from './error';
 import addApi from './api';
 import addStaticRoutes from './static';
-
-class ClientError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'ClientError';
-    this.message = message;
-    this.stack = (new Error()).stack;
-  }
-}
 
 export default function createHttpServer(port) {
   const app = express();
