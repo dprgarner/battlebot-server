@@ -11,4 +11,4 @@ RUN npm install -q
 ADD . /app
 
 EXPOSE 3000
-CMD ["node", "/app/src/index.js"]
+CMD ["npm", "start"]
