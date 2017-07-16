@@ -26,13 +26,13 @@ export function makeDbDriver() {
     outgoing$ = Rx.Observable.from(outgoing$);
 
     const incoming$ = outgoing$
-      .map((dbRequestGenerator) => {
+      .map((request) => {
         const response$ = Rx.Observable.fromPromise(
-          connect(dbRequestGenerator)
+          connect(request.gen)
         );
         // For convenience: attach the original request generator onto the
         // output stream.
-        response$.request = dbRequestGenerator;
+        response$.request = request;
         return response$;
       })
       .share();

@@ -2,7 +2,6 @@ import Rx from 'rxjs';
 import { run } from '@cycle/rxjs-run';
 
 import makeWsDriver, { OPEN, CLOSE, OUTGOING }  from './sockets';
-
 import { makeDbDriver } from '../db';
 
 function main(sources) {
@@ -23,19 +22,21 @@ function main(sources) {
 
   const dbRequest$ = inc$
     .filter(({ type }) => type === OPEN)
-    .map(({ socketId }) => db => db
-      .collection('spam')
-      .insertOne({ socketId })
-    )
+    .map(({ socketId }) => ({
+      socketId,
+      gen: db => db
+        .collection('spam')
+        .insertOne({ socketId }),
+    }))
     .merge(
-      Rx.Observable.of(db => db.collection('spam').find({}).toArray())
+      Rx.Observable.of({ gen: db => db.collection('spam').find({}).toArray() })
         .delay(10)
     )
     .share();  // Required for response$.request === request
 
   const dbResponse$ = dbRequest$
     .map(request => sources.db
-      .first(response$ => response$.request === request)
+      .first(response$ => response$.request.gen === request.gen)
       .mergeAll()
       .map(response => response.result || response)
     )
