@@ -7,11 +7,19 @@ import { Authenticate } from './authenticate';
 
 function main(sources) {
   const wsIn$ = sources.ws;
-  const sockets$ = sources.ws.sockets$;
   const timer = Rx.Observable.interval(1000);
 
+  const authenticate = Authenticate({ db: sources.db, ws: sources.ws });
+  const sockets$ = authenticate.sockets
+    .startWith({})
+    .scan((sockets, { type, socketId, data }) => {
+      if (type === 'add') sockets[socketId] = data;
+      if (type === 'remove') delete sockets[socketId];
+      return { ...sockets };
+    })
+
   const tickOut$ = timer.withLatestFrom(sockets$, (time, sockets) => {
-    const socket$ = Rx.Observable.from(sockets);
+    const socket$ = Rx.Observable.from(Object.keys(sockets));
 
     if (time % 10 === 0) {
       return socket$.map(socketId => ({ type: CLOSE, socketId }));
@@ -21,11 +29,8 @@ function main(sources) {
   })
   .switch();
 
-  const authenticate = Authenticate({ db: sources.db, ws: sources.ws });
-  authenticate.sockets.subscribe(x => console.log(x));
-
   const wsOut$ = Rx.Observable.merge(
-    // tickOut$,
+    tickOut$,
     authenticate.ws,
   );
 

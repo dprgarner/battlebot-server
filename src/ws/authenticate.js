@@ -107,7 +107,7 @@ export function Authenticate(sources) {
   const add$ = isloginValid$
     .filter(({ loginValid }) => loginValid)
     .map(({ socketId, bot_id, game, contest }) => ({
-      type: 'ADD',
+      type: 'add',
       socketId,
       data: { bot_id, game, contest },
     }))
@@ -120,7 +120,7 @@ export function Authenticate(sources) {
       .first(({ type, socketId }) => (
         (type === CLOSE || type === ERROR) && add.socketId === socketId
       ))
-      .map(({ socketId }) => ({ type: 'REMOVE', socketId }))
+      .map(({ socketId }) => ({ type: 'remove', socketId }))
     )
   );
 
