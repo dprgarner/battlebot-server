@@ -3,7 +3,7 @@ import { run } from '@cycle/rxjs-run';
 
 import makeWsDriver, { CLOSE, OUTGOING }  from './sockets';
 import { makeDbDriver } from '../db';
-import { Authenticate } from './authenticate';
+import { Authenticate, ADD, REMOVE } from './authenticate';
 
 function main(sources) {
   const wsIn$ = sources.ws;
@@ -13,10 +13,12 @@ function main(sources) {
   const sockets$ = authenticate.sockets
     .startWith({})
     .scan((sockets, { type, socketId, data }) => {
-      if (type === 'add') sockets[socketId] = data;
-      if (type === 'remove') delete sockets[socketId];
+      if (type === ADD) sockets[socketId] = data;
+      if (type === REMOVE) delete sockets[socketId];
       return { ...sockets };
-    })
+    });
+
+  sockets$.subscribe(x => console.log(Object.keys(x)));
 
   const tickOut$ = timer.withLatestFrom(sockets$, (time, sockets) => {
     const socket$ = Rx.Observable.from(Object.keys(sockets));

@@ -12,6 +12,10 @@ import {
   OUTGOING,
 } from './sockets';
 
+export const ADD = 'add';
+export const REMOVE = 'remove';
+const DB_AUTHENTICATE = 'authenticate';
+
 export function Authenticate(sources) {
   const TIMEOUT = 10000;
 
@@ -32,7 +36,7 @@ export function Authenticate(sources) {
     .flatMap(({ socketId, payload: { salt } }) => sources.ws
       .first(({ type, socketId: id }) => type === INCOMING && socketId === id )
       .map(({ socketId, payload: { game, bot_id, login_hash, contest } }) => ({
-        type: 'authenticate',
+        type: DB_AUTHENTICATE,
         socketId,
         salt,
         login_hash,
@@ -70,7 +74,7 @@ export function Authenticate(sources) {
 
         sources.db
           .filter(({ request: { type, socketId: id } }) => (
-            type === 'authenticate' && socketId === id
+            type === DB_AUTHENTICATE && socketId === id
           ))
           .flatMap(response$ => response$.map(validateBot(response$.request))),
       )
@@ -107,7 +111,7 @@ export function Authenticate(sources) {
   const add$ = isloginValid$
     .filter(({ loginValid }) => loginValid)
     .map(({ socketId, bot_id, game, contest }) => ({
-      type: 'add',
+      type: ADD,
       socketId,
       data: { bot_id, game, contest },
     }))
@@ -120,7 +124,7 @@ export function Authenticate(sources) {
       .first(({ type, socketId }) => (
         (type === CLOSE || type === ERROR) && add.socketId === socketId
       ))
-      .map(({ socketId }) => ({ type: 'remove', socketId }))
+      .map(({ socketId }) => ({ type: REMOVE, socketId }))
     )
   );
 
