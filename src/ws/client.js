@@ -7,7 +7,13 @@ const ws = new WebSocket('ws://localhost:3000', {
 ws.on('open', () => {
   console.log('ws openend');
 
-  setTimeout(() => ws.send('{"lol": "gg"}'), 1000);
+  setTimeout(() => ws.send(JSON.stringify(
+    {
+      "game": "noughtsandcrosses",
+      "login_hash": "moo.",
+      "bot_id": "BotOne",
+    }
+  )), 1000);
 });
 
 ws.on('message', (data) => {
