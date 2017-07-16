@@ -46,20 +46,15 @@ export function Authenticate(sources) {
     );
 
   function validateBot(request) {
-    return botData => {
-      const { socketId, salt, login_hash, contest } = request;
-      if (!botData) return { socketId, loginValid: false };
+    const { socketId, salt, login_hash, contest } = request;
 
-      const expectedHash = createHash(botData.pass_hash + salt);
-      // const loginValid = (expectedHash === botData.login_hash);
-      const loginValid = true;
-      return {
-        socketId,
-        loginValid,
-        contest,
-        game: botData.game,
-        bot_id: botData.bot_id,
-      };
+    return response => {
+      if (!response) return { socketId, loginValid: false };
+      const { bot_id, game, pass_hash } = response;
+
+      const expectedHash = createHash(pass_hash + salt);
+      const loginValid = expectedHash === login_hash;
+      return { socketId, loginValid, contest, game, bot_id };
     };
   }
 
@@ -68,9 +63,10 @@ export function Authenticate(sources) {
   // The login is valid if the input login_hash is equal to the hashed value
   // of (pass_hash + salt).
   const isloginValid$ = wsSalt$
-    .flatMap(({ socketId }) => Rx.Observable.merge(
+    .flatMap(({ socketId }) => Rx.Observable
+      .merge(
         Rx.Observable.timer(TIMEOUT)
-          .map(() => ({ socketId, loginValid: false})),
+          .map(() => ({ socketId, loginValid: false })),
 
         sources.db
           .filter(({ request: { type, socketId: id } }) => (
@@ -114,9 +110,9 @@ export function Authenticate(sources) {
       type: ADD,
       socketId,
       data: { bot_id, game, contest },
-    }))
+    }));
 
-  // Emit a "Remove authenticated socket" events when a connected socket
+  // Emit a "Remove authenticated socket" events when an authenticated socket
   // disconnects.
   const authenticated$ = add$.flatMap(add => Rx.Observable
     .of(add)
@@ -134,10 +130,6 @@ export function Authenticate(sources) {
     wsConfirm$,
   );
 
-  const db = Rx.Observable.merge(
-    dbLookupBot$,
-  );
-
-  const sinks = { sockets: authenticated$, ws, db }
+  const sinks = { ws, db: dbLookupBot$, sockets: authenticated$ }
   return sinks;
 }
