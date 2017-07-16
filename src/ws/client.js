@@ -17,3 +17,7 @@ ws.on('message', (data) => {
 ws.on('close', () => {
   console.log('ws close');
 });
+
+ws.on('error', (err) => {
+  console.error(err);
+});
