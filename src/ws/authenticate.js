@@ -91,19 +91,22 @@ export function Authenticate(sources) {
   TODO:
     - Reject on time out
     - Some kind of error handling
-    - No random effects: createRandomHash should be a source.
   */
-  const salt$ = sources.ws
+
+  // When a websocket connects, the server sends a "salt" message.
+  const wsSalt$ = sources.ws
     .filter(({ type }) => type === OPEN)
     .map(({ socketId }) => ({
       type: OUTGOING,
       socketId,
-      // TODO zip with sources.randomHash$ for purity
       payload: { salt: createRandomHash() },
     }))
+    // Creating Random Hashes is impure, so this stream should be shared.
     .share();
 
-  const dbLookupBot$ = salt$
+  // When the server receives the login message from the client, a database
+  // request is made to find the details of the requested bot.
+  const dbLookupBot$ = wsSalt$
     .flatMap(({ socketId, payload: { salt } }) => sources.ws
       .first(({ type, socketId: id }) => type === INCOMING && socketId === id )
       .map(({ socketId, payload: { game, bot_id, login_hash, contest } }) => ({
@@ -116,6 +119,8 @@ export function Authenticate(sources) {
       }))
     );
 
+  // The login is valid if the input login_hash is equal to the hashed value
+  // of (pass_hash + salt).
   const isloginValid$ = sources.db
     .filter(response$ => response$.request.type === 'AUTHENTICATE')
     .flatMap(response$ => response$
@@ -136,14 +141,17 @@ export function Authenticate(sources) {
       })
     );
 
-  const rejection$ = isloginValid$
+  // A rejection message is sent to clients which fail to authenticate,
+  // and then the connection is closed.
+  const wsRejection$ = isloginValid$
     .filter(({ loginValid }) => !loginValid)
     .flatMap(({ socketId }) => Rx.Observable.from([
       { type: OUTGOING, socketId, payload: { authentication: 'failed' } },
       { type: CLOSE, socketId },
     ]));
 
-  const confirm$ = isloginValid$
+  // A confirmation message is sent to successfully-connected clients.
+  const wsConfirm$ = isloginValid$
     .filter(({ loginValid }) => loginValid)
     .map(({ socketId, game, bot_id, contest }) => ({
       type: OUTGOING,
@@ -156,32 +164,32 @@ export function Authenticate(sources) {
       },
     }));
 
-  const authenticated$ = Rx.Observable.merge(
+  // This component sinks a stream of connect and disconnect events for
+  // authenticated bots.
+  const authenticate$ = Rx.Observable.merge(
     isloginValid$
       .filter(({ loginValid }) => loginValid)
-      .map((data) => ({ type: 'ADD', ...data })),
+      .map(({ socketId, bot_id, game, contest }) => ({
+        type: 'ADD',
+        socketId,
+        data: { bot_id, game, contest },
+      })),
 
     sources.ws
       .filter(({ type }) => type === CLOSE || type === ERROR)
       .map(({ socketId }) => ({ type: 'REMOVE', socketId })),
-  )
-    .startWith({})
-    .scan((sockets, { type, socketId, bot_id, game, contest }) => {
-      if (type === 'ADD') sockets[socketId] = { bot_id, game, contest };
-      if (type === 'REMOVE') delete sockets[socketId];
-      return {...sockets};
-    });
+  );
 
   const ws = Rx.Observable.merge(
-    salt$,
-    rejection$,
-    confirm$,
+    wsSalt$,
+    wsRejection$,
+    wsConfirm$,
   );
 
   const db = Rx.Observable.merge(
     dbLookupBot$,
   )
 
-  const sinks = { sockets: authenticated$, ws, db }
+  const sinks = { sockets: authenticate$, ws, db }
   return sinks;
 }
