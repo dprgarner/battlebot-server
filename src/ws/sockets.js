@@ -38,7 +38,10 @@ export function wsObservable(ws) {
         obs.error(e);
       }
     });
-    ws.on('error', (err) => obs.error(err));
+    ws.on('error', (err) => {
+      console.error(err);
+      obs.error(err);
+    });
     ws.on('close', () => obs.complete());
 
     return () => obs.complete();
@@ -80,9 +83,12 @@ function createWsUpdate$(socketId, ws, outgoing$) {
     .map(payload => ({ type: INCOMING, socketId, payload }))
     .startWith({ type: OPEN, socketId })
     .concat(Rx.Observable.of({ type: CLOSE, socketId }))
-    .catch(error => Rx.Observable.of(
-      { type: ERROR, socketId, payload: { error }}
-    ));
+    .catch(error => {
+      console.error(error);
+      return Rx.Observable.of(
+        { type: ERROR, socketId, payload: { error: error.toString() }}
+      )
+    });
 }
 
 function getOpenSockets$(update$) {
