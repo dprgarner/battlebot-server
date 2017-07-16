@@ -23,20 +23,25 @@ function main(sources) {
   const dbRequest$ = inc$
     .filter(({ type }) => type === OPEN)
     .map(({ socketId }) => ({
+      type: 'socketConnect',
       socketId,
       gen: db => db
         .collection('spam')
         .insertOne({ socketId }),
     }))
     .merge(
-      Rx.Observable.of({ gen: db => db.collection('spam').find({}).toArray() })
-        .delay(10)
-    )
-    .share();  // Required for response$.request === request
+      Rx.Observable.of({
+        type: 'init',
+        gen: db => db.collection('spam').find({}).toArray(),
+      })
+    );
 
   const dbResponse$ = dbRequest$
     .map(request => sources.db
-      .first(response$ => response$.request.gen === request.gen)
+      .first(response$ => {
+        if (request.type === 'init') return response$.request.type === 'init';
+        return response$.request.socketId === request.socketId
+      })
       .mergeAll()
       .map(response => response.result || response)
     )
