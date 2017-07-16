@@ -45,13 +45,30 @@ export function wsObservable(ws) {
   }).share();
 }
 
+export function createWebsocketStream(opts) {
+  // A stream of WebSockets.
+  return Rx.Observable.create(observer => {
+    console.log(`Starting WebSocket server...`);
+    const wss = new WebSocket.Server(opts);
+
+    wss.on('connection', (ws) => {
+      observer.next(ws);
+    });
+
+    return () => wss.close(err => {
+      if (err) console.error(err);
+      console.log('Server Closed');
+    });
+  }).share();
+}
+
+// Cycle.js stuff
+
 function createWsUpdate$(socketId, ws, outgoing$) {
   // Handles websocket-specific listeners, tagging and untagging instructions
   // to send and receive messages to the client and closing the connection.
   outgoing$
-    .takeUntil(outgoing$.filter(
-      ({ type }) => type === CLOSE || type === ERROR
-    ))
+    .takeWhile(({ type }) => type !== CLOSE && type !== ERROR)
     .filter(({ type }) => type === OUTGOING)
     .map(({ payload }) => payload)
     .subscribe(wsObserver(ws));
@@ -83,23 +100,6 @@ function getOpenSockets$(update$) {
     .map(sockets => Object.keys(sockets));
 }
 
-export function createWebsocketStream(opts) {
-  // A stream of WebSockets.
-  return Rx.Observable.create(observer => {
-    console.log(`Starting WebSocket server...`);
-    const wss = new WebSocket.Server(opts);
-
-    wss.on('connection', (ws) => {
-      observer.next(ws);
-    });
-
-    return () => wss.close(err => {
-      if (err) console.error(err);
-      console.log('Server Closed');
-    });
-  }).share();
-}
-
 export default function makeWsDriver(opts) {
   // A Cycle.js driver for a WebSocket server.
   const ws$ = createWebsocketStream(opts);
@@ -108,7 +108,7 @@ export default function makeWsDriver(opts) {
     // Convert CycleJS xstream into an RxJS stream.
     outgoing$ = Rx.Observable.from(outgoing$);
 
-    // Must have .share as the flatMap contains some unabashed side-effects.
+    // Must have .share() as the flatMap contains some unabashed side-effects.
     const incoming$ = adapt(
       ws$.flatMap(ws => {
         const socketId = createRandomHash();
@@ -123,7 +123,6 @@ export default function makeWsDriver(opts) {
     // For convenience: a stream which emits an array of all open sockets
     // whenever a socket opens or closes.
     incoming$.sockets$ = getOpenSockets$(incoming$);
-
     return incoming$;
   }
 
