@@ -16,7 +16,7 @@ export const ADD = 'add';
 export const REMOVE = 'remove';
 const DB_AUTHENTICATE = 'authenticate';
 
-export function Authenticate(sources) {
+export function Authenticater(sources) {
   const TIMEOUT = 10000;
 
   // When a websocket connects, the server sends a "salt" message.
@@ -72,7 +72,10 @@ export function Authenticate(sources) {
           .filter(({ request: { type, socketId: id } }) => (
             type === DB_AUTHENTICATE && socketId === id
           ))
-          .flatMap(response$ => response$.map(validateBot(response$.request))),
+          .flatMap(response$ => response$
+            .map(validateBot(response$.request))
+            .catch(() => Rx.Observable.of({ socketId, loginValid: false }))
+          ),
       )
       .first()
     )
@@ -114,15 +117,17 @@ export function Authenticate(sources) {
 
   // Emit a "Remove authenticated socket" events when an authenticated socket
   // disconnects.
-  const authenticated$ = add$.flatMap(add => Rx.Observable
-    .of(add)
-    .concat(sources.ws
-      .first(({ type, socketId }) => (
-        (type === CLOSE || type === ERROR) && add.socketId === socketId
-      ))
-      .map(({ socketId }) => ({ type: REMOVE, socketId }))
-    )
-  );
+  const authenticated$ = add$.flatMap(add => (
+    Rx.Observable
+      .of(add)
+      .concat(
+        sources.ws
+          .first(({ type, socketId }) => (
+            (type === CLOSE || type === ERROR) && add.socketId === socketId
+          ))
+          .mapTo({ ...add, type: REMOVE })
+      )
+  ));
 
   const ws = Rx.Observable.merge(
     wsSalt$,

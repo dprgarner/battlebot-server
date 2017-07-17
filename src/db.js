@@ -39,7 +39,11 @@ export function makeDbDriver() {
 
     // Guarantees that outgoing database operations will be performed,
     // regardless of whether the responses are being listened to.
-    incoming$.subscribe();
+    incoming$.subscribe({ error: e => {
+      // Fail hard
+      console.error(e);
+      process.exit(1);
+    } });
 
     return adapt(incoming$);
   }

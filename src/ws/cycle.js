@@ -3,13 +3,14 @@ import { run } from '@cycle/rxjs-run';
 
 import makeWsDriver, { CLOSE, OUTGOING }  from './sockets';
 import { makeDbDriver } from '../db';
-import { Authenticate, ADD, REMOVE } from './authenticate';
+import { Authenticater, ADD, REMOVE } from './authenticate';
+import { Matcher } from './matchPlayers';
 
 function main(sources) {
   const wsIn$ = sources.ws;
   const timer = Rx.Observable.interval(1000);
 
-  const authenticate = Authenticate({ db: sources.db, ws: sources.ws });
+  const authenticate = Authenticater({ db: sources.db, ws: sources.ws });
   const sockets$ = authenticate.sockets
     .startWith({})
     .scan((sockets, { type, socketId, data }) => {
@@ -18,7 +19,10 @@ function main(sources) {
       return { ...sockets };
     });
 
-  sockets$.subscribe(x => console.log(Object.keys(x)));
+  const matcher = Matcher({
+    sockets: authenticate.sockets,
+    props: Rx.Observable.of({ gamesEachWay: 10 }),
+  });
 
   const tickOut$ = timer.withLatestFrom(sockets$, (time, sockets) => {
     const socket$ = Rx.Observable.from(Object.keys(sockets));
@@ -41,8 +45,10 @@ function main(sources) {
   );
 
   const log = Rx.Observable.merge(
-    wsIn$.map(x => 'in:  ' + JSON.stringify(x)),
-    wsOut$.map(x => 'out: ' + JSON.stringify(x)),
+    // wsIn$.map(x => 'in:  ' + JSON.stringify(x)),
+    // wsOut$.map(x => 'out: ' + JSON.stringify(x)),
+    // sockets$.map(x => Object.keys(x)),
+    matcher.createGame,
     // dbRequest$,
   );
   const sinks = { log, ws: wsOut$, db: dbRequest$ };

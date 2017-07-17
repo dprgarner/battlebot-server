@@ -124,8 +124,11 @@ export default function makeWsDriver(opts) {
         const update$ = createWsUpdate$(socketId, ws, wsOutgoing$);
         return update$;
       })
+      // Fail hard
+      .catch(e => { console.error(e); process.exit(1); })
       .share()
     );
+
     // For convenience: a stream which emits an array of all open sockets
     // whenever a socket opens or closes.
     incoming$.sockets$ = getOpenSockets$(incoming$);
