@@ -16,7 +16,7 @@ export const ADD = 'add';
 export const REMOVE = 'remove';
 const DB_AUTHENTICATE = 'authenticate';
 
-export function Authenticater(sources) {
+export default function Authenticater(sources) {
   const TIMEOUT = 10000;
 
   // When a websocket connects, the server sends a "salt" message.

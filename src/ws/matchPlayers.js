@@ -183,8 +183,6 @@ export default function matchPlayers(connection$) {
           contest[matchedSocket.botId][connection.botId] = (
             (contest[matchedSocket.botId][connection.botId] || 0) + 1
           );
-
-          console.log(contest);
         }
         return {
           waiting: _.without(waiting, matchedSocket),
