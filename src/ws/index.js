@@ -2,9 +2,9 @@ import Rx from 'rxjs';
 import { run } from '@cycle/rxjs-run';
 import Collection from '@cycle/collection';
 
-import Authenticater, { ADD, REMOVE } from './authenticate';
+import Authenticater, { ADD, REMOVE } from './Authenticater';
 import makeWsDriver, { CLOSE }  from './sockets';
-import { Matcher } from './matchPlayers';
+import Matcher from './Matcher';
 import { makeDbDriver } from '../db';
 
 import Game from './Game';
@@ -40,20 +40,15 @@ function main(sources) {
   const wsOut$ = Rx.Observable.merge(
     authenticate.ws,
     Collection.merge(game$, game => game.ws),
-    completedGames$.flatMap(({ sockets }) => 
-      Rx.Observable.from(sockets).map(({ socketId }) => 
-        ({ type: CLOSE, socketId })
-      )
-    )
-  ).do(x => console.log(x));
+  );
 
   const dbRequest$ = Rx.Observable.merge(
     authenticate.db,
+    Collection.merge(game$, game => game.db),
   );
 
   const log = Rx.Observable.merge(
     matcher.createGame,
-    completedGames$,
   );
   const sinks = { log, ws: wsOut$, db: dbRequest$ };
   return sinks;

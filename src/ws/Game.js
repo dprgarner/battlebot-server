@@ -6,6 +6,8 @@ import games from '../games';
 import makeWsDriver, { CLOSE, INCOMING, OUTGOING }  from './sockets';
 import { createShortRandomHash } from '../hash';
 
+const DB_SAVEGAME = 'savegame';
+
 function runGame(validator, reducer) {
   // This function transforms a stream of incoming turns into a stream of updates,
   // validating the turns and updating the state of the game.
@@ -47,11 +49,34 @@ function addLastTurn(update$) {
     );
 }
 
+function saveToDatabase(finalUpdate$) {
+  return finalUpdate$.map(gameRecord => {
+    const text = gameRecord.victor ? 
+      `${gameRecord.victor} has won a game of ${gameRecord.game}.` :
+      `The ${gameRecord.game} game between ${gameRecord.players[0]}`
+      + ` and ${gameRecord.players[1]} ended in a draw.`;
+    console.log(`${gameRecord._id}: ${text} (Reason: ${gameRecord.reason})`);
+
+    return {
+      type: DB_SAVEGAME,
+      gen: db => db.collection('games').insertOne(gameRecord)
+        .then((res) => {
+          console.log(`${gameRecord._id}: Game saved to database`);
+        })
+        .catch((err) => {
+          console.error(`${gameRecord._id}: Could not log game to database`);
+          console.error(err);
+        }),
+    };
+  })
+}
+
 export default function Game(sources) {
   const props = sources.props;
 
   const gameId = createShortRandomHash();
   const gameName = props.game;
+  const contest = props.contest;
   const game = games[gameName];
   const gameReducer = runGame(game.validator, game.reducer);
 
@@ -75,21 +100,63 @@ export default function Game(sources) {
       )
       .startWith({ state: game.createInitialState(botIds) })
   );
+  const update$ = gameUpdate.update;
+
+  const victor$ = Victor({ props, ws: sources.ws, game: update$ }).victor
+
+  // Create a final update of the game if the game ends in an exceptional way
+  const updateWithConclusion$ = update$
+    .takeUntil(victor$)
+    .concat(victor$
+      .withLatestFrom(update$, ({ victor, reason }, finalUpdate) => {
+        if (finalUpdate.state.complete) return;
+        return { state: _.extend({}, finalUpdate.state, {
+          complete: true,
+          victor,
+          reason,
+        })};
+      })
+      .filter(x => x)
+    );
+
+  const finalUpdate$ = Rx.Observable.zip(
+    updateWithConclusion$
+      .filter(update => update.turn && update.turn.valid)
+      .reduce((acc, { turn }) => {
+        const parsedTurn = _.omit(turn, 'valid');
+        parsedTurn.time = new Date(parsedTurn.time);
+        return acc.concat(parsedTurn)
+      }, []),
+
+    updateWithConclusion$.last(),
+
+    (turns, finalState) => _.extend(
+      _.pick({ contest }, _.identity),
+      _.omit(finalState.state, 'complete', 'nextPlayer'),
+      { _id: gameId, game: gameName, turns, startTime }
+    )
+  );
+
+  // Save completed game to database
+  const dbUpdate$ = saveToDatabase(finalUpdate$);
 
   const wsUpdate$ = Rx.Observable.from(props.sockets)
-    .flatMap(({ bot_id, socketId }) => gameUpdate.update
+    .flatMap(({ bot_id, socketId }) => updateWithConclusion$
       .filter(({ turn }) => (!turn || turn.valid || turn.player === bot_id))
       .map(payload => ({ type: OUTGOING, socketId, payload }))
     );
 
-  const victor$ = Victor({ props, ws: sources.ws, game: gameUpdate.update }).victor
-    .do(x => console.log('!!!',x));
+  const wsClose$ = dbUpdate$.ignoreElements()
+    .delay(10)
+    .concat(Rx.Observable.from(props.sockets)
+      .map(({ socketId }) => ({ type: CLOSE, socketId }))
+    );
 
   return {
-    complete: victor$
-      .ignoreElements()
-      .concat(Rx.Observable.of(props)),
+    complete: wsClose$.delay(1),
 
-    ws: wsUpdate$,
+    ws: Rx.Observable.merge(wsUpdate$, wsClose$),
+
+    db: dbUpdate$,
   };
 }
