@@ -1,7 +1,7 @@
 import _ from 'underscore';
 import Rx from 'rxjs';
 
-// import getVictor from './getVictor';
+import Victor from './Victor';
 import games from '../games';
 import makeWsDriver, { CLOSE, INCOMING, OUTGOING }  from './sockets';
 import { createShortRandomHash } from '../hash';
@@ -13,8 +13,8 @@ function runGame(validator, reducer) {
   // The 'reducer' can in general be non-deterministic (make random calls),
   // so every scan must be evaluated EXACTLY once, regardless of the
   // subscriptions. (Hence the shareReplay.)
-  return ({ incoming }) => {
-    const update$ = incoming.scan(({ state: oldState }, turn) => {
+  return incoming$ => {
+    const update$ = incoming$.scan(({ state: oldState }, turn) => {
       let valid = false;
       let state = oldState;
       let log = null;
@@ -32,8 +32,8 @@ function runGame(validator, reducer) {
     .shareReplay();
 
     return {
-      update: turn$.map(({ state, turn }) => ({ state, turn })),
-      log: turn$.map(({ log }) => log).filter(msg => msg),
+      update: update$.map(({ state, turn }) => ({ state, turn })),
+      log: update$.map(({ log }) => log).filter(msg => msg),
     };
   };
 }
@@ -48,40 +48,48 @@ function addLastTurn(update$) {
 }
 
 export default function Game(sources) {
-  const props$ = sources.props.first();
+  const props = sources.props;
 
+  const gameId = createShortRandomHash();
+  const gameName = props.game;
+  const game = games[gameName];
+  const gameReducer = runGame(game.validator, game.reducer);
 
-  const tick$ = Rx.Observable.interval(1000);
+  const botIds = _.pluck(props.sockets, 'bot_id');
+  const socketIds = _.pluck(props.sockets, 'socketId');
+  const startTime = new Date();
 
+  console.log(
+    `${gameId}: A game of ${gameName} has started between ${botIds[0]} and ${botIds[1]}.`
+  );
 
+  const gameUpdate = runGame(game.validator, game.reducer)(
+    Rx.Observable.from(props.sockets)
+      .flatMap(({ socketId, bot_id }) =>
+        sources.ws.filter(({ type, socketId: id }) => (
+          type === INCOMING && socketId === id
+        ))
+        .map(({ payload }) => (
+          {...payload, player: bot_id, time: Date.now() }
+        ))
+      )
+      .startWith({ state: game.createInitialState(botIds) })
+  );
 
+  const wsUpdate$ = Rx.Observable.from(props.sockets)
+    .flatMap(({ bot_id, socketId }) => gameUpdate.update
+      .filter(({ turn }) => (!turn || turn.valid || turn.player === bot_id))
+      .map(payload => ({ type: OUTGOING, socketId, payload }))
+    );
+
+  const victor$ = Victor({ props, ws: sources.ws, game: gameUpdate.update }).victor
+    .do(x => console.log('!!!',x));
 
   return {
-    complete: props$.switchMap(props =>
-      sources.ws.filter(({ type, socketId }) => (
-        type === INCOMING && socketId === props.sockets[0].socketId
-      ))
-      .take(3)
+    complete: victor$
       .ignoreElements()
-      .concat(Rx.Observable.of(props))
-    ),
+      .concat(Rx.Observable.of(props)),
 
-    ws: props$.switchMap(props => {
-      const game = props.game;
-      const [player1, player2] = props.sockets;
-
-      return tick$.flatMap(i => Rx.Observable.from([
-        {
-          type: OUTGOING,
-          socketId: player1.socketId,
-          payload: { tick: i },
-        },
-        {
-          type: OUTGOING,
-          socketId: player2.socketId,
-          payload: { tick: i },
-        },
-      ]))
-    }),
+    ws: wsUpdate$,
   };
 }

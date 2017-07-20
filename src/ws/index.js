@@ -30,7 +30,9 @@ function main(sources) {
   const game$ = Collection(
     Game,
     sources,
-    matcher.createGame.map(data => ({ props: Rx.Observable.of(data) })),
+    matcher.createGame
+      .delay(100) // To 'guarantee' the auth confirmation arrives first
+      .map(data => ({ props: data })),
     game => game.complete,
   );
   const completedGames$ = Collection.merge(game$, game => game.complete);
