@@ -163,5 +163,21 @@ docker-compose up
 ## TODO
 
 - Log when a bot disconnects
-- Fix the coverage reporter
 - Keep writing them tests
+
+CycleJS port:
+- Figure out why twice as many contest games are played
+- Extract logging (or just console.log everything, is it that important? :/)
+- Test it all out as thoroughly as you can
+- Put in logging in case things go wrong? Nah.
+- Try writing a test.
+
+- Replace players with bots?
+- Replace nextPlayer with waitingFor
+
+Next game:
+- Create an out-stream for spectator updates
+- Simple spectator stream page (dump JSON for now)
+-- Maybe try GraphQL subscriptions and Apollo because it's hip and trendy
+-- Closed information updates
+-- Start with Rock-Paper-Scissors Xtreem
