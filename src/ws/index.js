@@ -1,10 +1,47 @@
 import Rx from 'rxjs';
 import { run } from '@cycle/rxjs-run';
+import Collection from '@cycle/collection';
 
 import Authenticater, { ADD, REMOVE } from './authenticate';
-import makeWsDriver, { CLOSE, OUTGOING }  from './sockets';
+import makeWsDriver, { CLOSE, INCOMING, OUTGOING }  from './sockets';
 import { Matcher } from './matchPlayers';
 import { makeDbDriver } from '../db';
+// import { adapt } from '@cycle/run/lib/adapt';
+
+function Game(sources) {
+  const props$ = sources.props;
+
+  const tick$ = Rx.Observable.interval(1000);
+
+  return {
+    complete: props$.switchMap(props =>
+      sources.ws.filter(({ type, socketId }) => (
+        type === INCOMING && socketId === props.sockets[0].socketId
+      ))
+      .take(3)
+      .ignoreElements()
+      .concat(Rx.Observable.of(props))
+    ),
+
+    ws: props$.switchMap(props => {
+      const game = props.game;
+      const [player1, player2] = props.sockets;
+
+      return tick$.flatMap(i => Rx.Observable.from([
+        {
+          type: OUTGOING,
+          socketId: player1.socketId,
+          payload: { tick: i },
+        },
+        {
+          type: OUTGOING,
+          socketId: player2.socketId,
+          payload: { tick: i },
+        },
+      ]))
+    }),
+  };
+}
 
 function main(sources) {
   const wsIn$ = sources.ws;
@@ -24,32 +61,31 @@ function main(sources) {
     props: Rx.Observable.of({ gamesEachWay: 10 }),
   });
 
-  const tickOut$ = timer.withLatestFrom(sockets$, (time, sockets) => {
-    const socket$ = Rx.Observable.from(Object.keys(sockets));
-
-    if (time % 10 === 0) {
-      return socket$.map(socketId => ({ type: CLOSE, socketId }));
-    }
-    return socket$
-      .map(socketId => ({ type: OUTGOING, socketId, payload: { time } }))
-  })
-  .switch();
+  const game$ = Collection(
+    Game,
+    sources,
+    matcher.createGame.map(data => ({ props: Rx.Observable.of(data) })),
+    game => game.complete,
+  );
+  const completedGames$ = Collection.merge(game$, game => game.complete);
 
   const wsOut$ = Rx.Observable.merge(
-    // tickOut$,
     authenticate.ws,
-  );
+    Collection.merge(game$, game => game.ws),
+    completedGames$.flatMap(({ sockets }) => 
+      Rx.Observable.from(sockets).map(({ socketId }) => 
+        ({ type: CLOSE, socketId })
+      )
+    )
+  ).do(x => console.log(x));
 
   const dbRequest$ = Rx.Observable.merge(
     authenticate.db,
   );
 
   const log = Rx.Observable.merge(
-    // wsIn$.map(x => 'in:  ' + JSON.stringify(x)),
-    // wsOut$.map(x => 'out: ' + JSON.stringify(x)),
-    // sockets$.map(x => Object.keys(x)),
     matcher.createGame,
-    // dbRequest$,
+    completedGames$,
   );
   const sinks = { log, ws: wsOut$, db: dbRequest$ };
   return sinks;
