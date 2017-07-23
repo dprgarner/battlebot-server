@@ -4,7 +4,6 @@ import Rx from 'rxjs';
 import WebSocket from 'ws';
 
 import { REMOVE } from './authenticate';
-const MAX_GAMES = 5;
 
 export default function Matcher(sources) {
   const addRemoveSocket$ = sources.sockets;
@@ -128,6 +127,8 @@ function MatcherByContest(sources) {
         played[firstBot.bot_id][secondBot.bot_id] = (
           (played[firstBot.bot_id][secondBot.bot_id] || 0) + 1
         );
+        console.log(played);
+
         return { waiting, played, newGame: {
           game,
           contest,

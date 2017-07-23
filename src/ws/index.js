@@ -2,7 +2,7 @@ import Rx from 'rxjs';
 import { run } from '@cycle/rxjs-run';
 import Collection from '@cycle/collection';
 
-import Authenticater, { ADD, REMOVE } from './Authenticater';
+import Authenticator, { ADD, REMOVE } from './Authenticator';
 import makeWsDriver, { CLOSE }  from './sockets';
 import Matcher from './Matcher';
 import { makeDbDriver } from '../db';
@@ -13,7 +13,7 @@ function main(sources) {
   const wsIn$ = sources.ws;
   const timer = Rx.Observable.interval(1000);
 
-  const authenticate = Authenticater({ db: sources.db, ws: sources.ws });
+  const authenticate = Authenticator({ db: sources.db, ws: sources.ws });
   const sockets$ = authenticate.sockets
     .startWith({})
     .scan((sockets, { type, socketId, data }) => {
@@ -24,14 +24,14 @@ function main(sources) {
 
   const matcher = Matcher({
     sockets: authenticate.sockets,
-    props: Rx.Observable.of({ gamesEachWay: 10 }),
+    props: Rx.Observable.of({ gamesEachWay: 5 }),
   });
 
   const game$ = Collection(
     Game,
     sources,
     matcher.createGame
-      .delay(100) // To 'guarantee' the auth confirmation arrives first
+      .delay(100)  // To 'guarantee' the auth confirmation arrives first
       .map(data => ({ props: data })),
     game => game.complete,
   );
@@ -48,7 +48,7 @@ function main(sources) {
   );
 
   const log = Rx.Observable.merge(
-    matcher.createGame,
+    Collection.merge(game$, game => game.log),
   );
   const sinks = { log, ws: wsOut$, db: dbRequest$ };
   return sinks;

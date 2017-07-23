@@ -51,11 +51,11 @@ function addLastTurn(update$) {
 
 function saveToDatabase(finalUpdate$) {
   return finalUpdate$.map(gameRecord => {
-    const text = gameRecord.victor ? 
-      `${gameRecord.victor} has won a game of ${gameRecord.game}.` :
-      `The ${gameRecord.game} game between ${gameRecord.players[0]}`
-      + ` and ${gameRecord.players[1]} ended in a draw.`;
-    console.log(`${gameRecord._id}: ${text} (Reason: ${gameRecord.reason})`);
+    // const text = gameRecord.victor ? 
+    //   `${gameRecord.victor} has won a game of ${gameRecord.game}.` :
+    //   `The ${gameRecord.game} game between ${gameRecord.players[0]}`
+    //   + ` and ${gameRecord.players[1]} ended in a draw.`;
+    // console.log(`${gameRecord._id}: ${text} (Reason: ${gameRecord.reason})`);
 
     return {
       type: DB_SAVEGAME,
@@ -77,18 +77,19 @@ export default function Game(sources) {
   const gameId = createShortRandomHash();
   const gameName = props.game;
   const contest = props.contest;
-  const game = games[gameName];
-  const gameReducer = runGame(game.validator, game.reducer);
-
-  const botIds = _.pluck(props.sockets, 'bot_id');
-  const socketIds = _.pluck(props.sockets, 'socketId');
-  const startTime = new Date();
-
-  console.log(
-    `${gameId}: A game of ${gameName} has started between ${botIds[0]} and ${botIds[1]}.`
+  const gameReducer = runGame(
+    games[gameName].validator, games[gameName].reducer
   );
 
-  const gameUpdate = runGame(game.validator, game.reducer)(
+  const botIds = _.pluck(props.sockets, 'bot_id');
+  const startTime = new Date();
+
+  const logGameStart$ = Rx.Observable.of(
+    `${gameId}: ` +
+    `A game of ${gameName} has started between ${botIds[0]} and ${botIds[1]}.`
+  );
+
+  const game = gameReducer(
     Rx.Observable.from(props.sockets)
       .flatMap(({ socketId, bot_id }) =>
         sources.ws.filter(({ type, socketId: id }) => (
@@ -98,11 +99,10 @@ export default function Game(sources) {
           {...payload, player: bot_id, time: Date.now() }
         ))
       )
-      .startWith({ state: game.createInitialState(botIds) })
+      .startWith({ state: games[gameName].createInitialState(botIds) })
   );
-  const update$ = gameUpdate.update;
-
-  const victor$ = Victor({ props, ws: sources.ws, game: update$ }).victor
+  const update$ = game.update;
+  const victor$ = Victor({ props, ws: sources.ws, update: update$ }).victor;
 
   // Create a final update of the game if the game ends in an exceptional way
   const updateWithConclusion$ = update$
@@ -110,16 +110,20 @@ export default function Game(sources) {
     .concat(victor$
       .withLatestFrom(update$, ({ victor, reason }, finalUpdate) => {
         if (finalUpdate.state.complete) return;
-        return { state: _.extend({}, finalUpdate.state, {
-          complete: true,
-          victor,
-          reason,
-        })};
+        return {
+          state: {
+            ...finalUpdate.state,
+            complete: true,
+            victor,
+            reason,
+          },
+        };
       })
       .filter(x => x)
     );
 
-  const finalUpdate$ = Rx.Observable.zip(
+  // Save completed game to database
+  const finalState$ = Rx.Observable.zip(
     updateWithConclusion$
       .filter(update => update.turn && update.turn.valid)
       .reduce((acc, { turn }) => {
@@ -136,9 +140,14 @@ export default function Game(sources) {
       { _id: gameId, game: gameName, turns, startTime }
     )
   );
+  const dbUpdate$ = saveToDatabase(finalState$);
 
-  // Save completed game to database
-  const dbUpdate$ = saveToDatabase(finalUpdate$);
+  const logGameEnd$ = finalState$.map(({ _id, victor, game, players, reason }) => {
+    const text = victor ?
+      `${victor} has won a game of ${game}.` :
+      `The ${game} game between ${players[0]} and ${players[1]} ended in a draw.`;
+    return `${_id}: ${text} (Reason: ${reason})`;
+  });
 
   const wsUpdate$ = Rx.Observable.from(props.sockets)
     .flatMap(({ bot_id, socketId }) => updateWithConclusion$
@@ -146,7 +155,7 @@ export default function Game(sources) {
       .map(payload => ({ type: OUTGOING, socketId, payload }))
     );
 
-  const wsClose$ = dbUpdate$.ignoreElements()
+  const wsClose$ = finalState$.ignoreElements()
     .delay(10)
     .concat(Rx.Observable.from(props.sockets)
       .map(({ socketId }) => ({ type: CLOSE, socketId }))
@@ -158,5 +167,10 @@ export default function Game(sources) {
     ws: Rx.Observable.merge(wsUpdate$, wsClose$),
 
     db: dbUpdate$,
+
+    log: Rx.Observable.concat(
+      logGameStart$,
+      logGameEnd$,
+    ),
   };
 }

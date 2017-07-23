@@ -166,7 +166,6 @@ docker-compose up
 - Keep writing them tests
 
 CycleJS port:
-- Figure out why twice as many contest games are played
 - Extract logging (or just console.log everything, is it that important? :/)
 - Test it all out as thoroughly as you can
 - Put in logging in case things go wrong? Nah.

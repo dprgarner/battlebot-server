@@ -16,12 +16,12 @@ export default function Victor(sources) {
   const gracePeriod = 500;
   const strikes = 3;
   const timeout = 1000;
+  const { sockets } = sources.props;
 
-  const props = sources.props;
-  const update$ = sources.game;
+  const update$ = sources.update;
 
   function otherBot(botId) {
-    return _.without(_.pluck(props.sockets, 'bot_id'), botId)[0];
+    return _.without(_.pluck(sockets, 'bot_id'), botId)[0];
   }
 
   const victor$ = Rx.Observable.of(
@@ -33,7 +33,7 @@ export default function Victor(sources) {
       )),
 
     // One bot disconnected
-    ...props.sockets
+    ...sockets
       .map(({ socketId, bot_id }) =>
         sources.ws.filter(({ type, socketId: id }) => (
           (type === ERROR || type === CLOSE) && socketId === id
@@ -46,7 +46,7 @@ export default function Victor(sources) {
       ),
 
     // Both players disconnected (within gracePeriod ms of each other)
-    Rx.Observable.from(props.sockets)
+    Rx.Observable.from(sockets)
       .concatMap(({ socketId }) => 
         sources.ws.first(({ type, socketId: id }) => (
           (type === ERROR || type === CLOSE) && socketId === id
@@ -59,7 +59,7 @@ export default function Victor(sources) {
       })),
 
     // Player repeatedly makes invalid turns
-    ...props.sockets.map(({ bot_id }) => (
+    ...sockets.map(({ bot_id }) => (
       update$
         .filter(({ turn }) => turn && turn.player == bot_id && !turn.valid)
         .concat(Rx.Observable.never())
