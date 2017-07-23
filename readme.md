@@ -162,15 +162,10 @@ docker-compose up
 
 ## TODO
 
-- Log when a bot disconnects
 - Keep writing them tests
 
 CycleJS port:
-- Extract logging (or just console.log everything, is it that important? :/)
-- Test it all out as thoroughly as you can
-- Put in logging in case things go wrong? Nah.
 - Try writing a test.
-
 - Replace players with bots?
 - Replace nextPlayer with waitingFor
 
@@ -179,4 +174,6 @@ Next game:
 - Simple spectator stream page (dump JSON for now)
 -- Maybe try GraphQL subscriptions and Apollo because it's hip and trendy
 -- Closed information updates
--- Start with Rock-Paper-Scissors Xtreem
+- Start with Rock-Paper-Scissors
+- How can Victor allow for a more forgiving pattern?
+-- Perhaps Victor patterns should be game-specific.
