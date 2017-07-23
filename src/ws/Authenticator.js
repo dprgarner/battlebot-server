@@ -135,6 +135,10 @@ export default function Authenticator(sources) {
     wsConfirm$,
   );
 
-  const sinks = { ws, db: dbLookupBot$, sockets: authenticated$ }
+  const log = authenticated$.map(({ type, data: { bot_id, game }}) =>
+    `The ${game} bot ${bot_id} has ${type === ADD ? 'connected' : 'disconnected'}.`
+  );
+
+  const sinks = { ws, db: dbLookupBot$, sockets: authenticated$, log }
   return sinks;
 }

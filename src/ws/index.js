@@ -24,7 +24,7 @@ function main(sources) {
 
   const matcher = Matcher({
     sockets: authenticate.sockets,
-    props: Rx.Observable.of({ gamesEachWay: 5 }),
+    props: { gamesEachWay: 5 },
   });
 
   const game$ = Collection(
@@ -48,6 +48,7 @@ function main(sources) {
   );
 
   const log = Rx.Observable.merge(
+    authenticate.log,
     Collection.merge(game$, game => game.log),
   );
   const sinks = { log, ws: wsOut$, db: dbRequest$ };

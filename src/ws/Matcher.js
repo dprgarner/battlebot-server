@@ -81,63 +81,61 @@ function MatcherWithoutContest(sources) {
 
 function MatcherByContest(sources) {
   const addRemoveSocket$ = sources.sockets;
-  const props$ = sources.props;
+  const { gamesEachWay } = sources.props;
 
-  const createGame$ = props$.switchMap(({ gamesEachWay }) =>
-    addRemoveSocket$
-      .startWith({ waiting: [], played: {}, newGame: null })
-      .scan(({ waiting, played }, { type, socketId, data }) => {
-        if (type === REMOVE) {
-          const index = waiting.findIndex(x => x.socketId === socketId);
-          if (index !== -1) waiting.splice(index, 1);
-          return { waiting, played, newGame: null };
-        }
+  const createGame$ = addRemoveSocket$
+    .startWith({ waiting: [], played: {}, newGame: null })
+    .scan(({ waiting, played }, { type, socketId, data }) => {
+      if (type === REMOVE) {
+        const index = waiting.findIndex(x => x.socketId === socketId);
+        if (index !== -1) waiting.splice(index, 1);
+        return { waiting, played, newGame: null };
+      }
 
-        const { bot_id, game, contest } = data;
-        if (!played[bot_id]) played[bot_id] = {};
+      const { bot_id, game, contest } = data;
+      if (!played[bot_id]) played[bot_id] = {};
 
-        const match = _.find(waiting, waitingSocket => {
-          if (waitingSocket.bot_id === bot_id) return false;
-          const gamesPlayedFirst = played[bot_id][waitingSocket.bot_id] || 0;
-          const gamesPlayedSecond = played[waitingSocket.bot_id][bot_id] || 0;
-          return (
-            gamesPlayedFirst < gamesEachWay || gamesPlayedSecond < gamesEachWay
-          );
-        });
-
-        if (!match) {
-          waiting.push({ socketId, bot_id });
-          return { waiting, played, newGame: null };
-        }
-
-        // Found a match
-        waiting.splice(waiting.indexOf(match), 1);
-
-        let firstBot, secondBot;
-        if ((played[match.bot_id][bot_id] || 0) < gamesEachWay) {
-          firstBot = match;
-          secondBot = { socketId, bot_id };
-        } else {
-          firstBot = { socketId, bot_id };
-          secondBot = match;
-        }
-
-        // The first bot to connect goes first, unless that bot has gone first
-        // (gamesEachWay) times.
-        played[firstBot.bot_id][secondBot.bot_id] = (
-          (played[firstBot.bot_id][secondBot.bot_id] || 0) + 1
+      const match = _.find(waiting, waitingSocket => {
+        if (waitingSocket.bot_id === bot_id) return false;
+        const gamesPlayedFirst = played[bot_id][waitingSocket.bot_id] || 0;
+        const gamesPlayedSecond = played[waitingSocket.bot_id][bot_id] || 0;
+        return (
+          gamesPlayedFirst < gamesEachWay || gamesPlayedSecond < gamesEachWay
         );
-        console.log(played);
+      });
 
-        return { waiting, played, newGame: {
-          game,
-          contest,
-          sockets: [firstBot, secondBot],
-        }};
-      })
-      .filter(({ newGame }) => newGame)
-      .map(({ newGame }) => newGame)
-  )
+      if (!match) {
+        waiting.push({ socketId, bot_id });
+        return { waiting, played, newGame: null };
+      }
+
+      // Found a match
+      waiting.splice(waiting.indexOf(match), 1);
+
+      let firstBot, secondBot;
+      if ((played[match.bot_id][bot_id] || 0) < gamesEachWay) {
+        firstBot = match;
+        secondBot = { socketId, bot_id };
+      } else {
+        firstBot = { socketId, bot_id };
+        secondBot = match;
+      }
+
+      // The first bot to connect goes first, unless that bot has gone first
+      // (gamesEachWay) times.
+      played[firstBot.bot_id][secondBot.bot_id] = (
+        (played[firstBot.bot_id][secondBot.bot_id] || 0) + 1
+      );
+      console.log(played);
+
+      return { waiting, played, newGame: {
+        game,
+        contest,
+        sockets: [firstBot, secondBot],
+      }};
+    })
+    .filter(({ newGame }) => newGame)
+    .map(({ newGame }) => newGame);
 
   return createGame$;
 }

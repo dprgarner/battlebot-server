@@ -50,25 +50,11 @@ function addLastTurn(update$) {
 }
 
 function saveToDatabase(finalUpdate$) {
-  return finalUpdate$.map(gameRecord => {
-    // const text = gameRecord.victor ? 
-    //   `${gameRecord.victor} has won a game of ${gameRecord.game}.` :
-    //   `The ${gameRecord.game} game between ${gameRecord.players[0]}`
-    //   + ` and ${gameRecord.players[1]} ended in a draw.`;
-    // console.log(`${gameRecord._id}: ${text} (Reason: ${gameRecord.reason})`);
-
-    return {
-      type: DB_SAVEGAME,
-      gen: db => db.collection('games').insertOne(gameRecord)
-        .then((res) => {
-          console.log(`${gameRecord._id}: Game saved to database`);
-        })
-        .catch((err) => {
-          console.error(`${gameRecord._id}: Could not log game to database`);
-          console.error(err);
-        }),
-    };
-  })
+  return finalUpdate$.map(gameRecord => ({
+    type: DB_SAVEGAME,
+    id: gameRecord._id,
+    gen: db => db.collection('games').insertOne(gameRecord),
+  }))
 }
 
 export default function Game(sources) {
@@ -142,6 +128,21 @@ export default function Game(sources) {
   );
   const dbUpdate$ = saveToDatabase(finalState$);
 
+  const logDbSuccess$ = sources.db
+    .first(({ request: { type, id } }) => (
+      type === DB_SAVEGAME && gameId === id
+    ))
+    .flatMap(response$ => response$
+      .ignoreElements()
+      .concat(Rx.Observable.of(`${response$.request.id}: Game saved to database`))
+      .catch((err) => {
+        return Rx.Observable.from([
+          `${response$.request.id}: Could not save game to database`,
+          `${response$.request.id}: ${err.message}`,
+        ])
+      })
+    );
+
   const logGameEnd$ = finalState$.map(({ _id, victor, game, players, reason }) => {
     const text = victor ?
       `${victor} has won a game of ${game}.` :
@@ -162,15 +163,20 @@ export default function Game(sources) {
     );
 
   return {
-    complete: wsClose$.delay(1),
+    complete: Rx.Observable.merge(
+      wsClose$,
+      logDbSuccess$,
+    )
+    .ignoreElements(),
 
     ws: Rx.Observable.merge(wsUpdate$, wsClose$),
 
     db: dbUpdate$,
 
-    log: Rx.Observable.concat(
+    log: Rx.Observable.merge(
       logGameStart$,
       logGameEnd$,
+      logDbSuccess$,
     ),
   };
 }
