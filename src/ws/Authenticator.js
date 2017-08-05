@@ -32,10 +32,10 @@ export default function Authenticator(sources) {
 
   // When the server receives the login message from the client, a database
   // request is made to find the details of the requested bot.
-  const dbLookupBot$ = wsSalt$
-    .flatMap(({ socketId, payload: { salt } }) => sources.ws
+  const dbLookupBot$ = wsSalt$.flatMap(({ socketId, payload: { salt } }) => 
+    sources.ws
       .first(({ type, socketId: id }) => type === INCOMING && socketId === id )
-      .map(({ socketId, payload: { game, bot_id, login_hash, contest } }) => ({
+      .map(({ payload: { game, bot_id, login_hash, contest } }) => ({
         type: DB_AUTHENTICATE,
         socketId,
         salt,
@@ -45,9 +45,7 @@ export default function Authenticator(sources) {
       }))
     );
 
-  function validateBot(request) {
-    const { socketId, salt, login_hash, contest } = request;
-
+  function validateBot({ socketId, salt, login_hash, contest }) {
     return response => {
       if (!response) return { socketId, loginValid: false };
       const { bot_id, game, pass_hash } = response;
@@ -95,16 +93,11 @@ export default function Authenticator(sources) {
     .map(({ socketId, game, bot_id, contest }) => ({
       type: OUTGOING,
       socketId,
-      payload: {
-        authentication: 'OK',
-        bot_id,
-        game,
-        contest,
-      },
+      payload: {authentication: 'OK', bot_id, game, contest },
     }));
 
-  // This component sinks a stream of connect and disconnect events for
-  // authenticated bots.
+  // The output "sink" of this component is a stream of add/remove
+  // authenticated socket events.
 
   // "Add authenticated socket" events.
   const add$ = isloginValid$
@@ -117,17 +110,15 @@ export default function Authenticator(sources) {
 
   // Emit a "Remove authenticated socket" events when an authenticated socket
   // disconnects.
-  const authenticated$ = add$.flatMap(add => (
-    Rx.Observable
-      .of(add)
-      .concat(
-        sources.ws
-          .first(({ type, socketId }) => (
-            (type === CLOSE || type === ERROR) && add.socketId === socketId
-          ))
-          .mapTo({ ...add, type: REMOVE })
-      )
-  ));
+  const authenticated$ = add$.flatMap(add =>
+    Rx.Observable.of(add).concat(
+      sources.ws
+        .first(({ type, socketId }) => (
+          (type === CLOSE || type === ERROR) && add.socketId === socketId
+        ))
+        .mapTo({ ...add, type: REMOVE })
+    )
+  );
 
   const ws = Rx.Observable.merge(
     wsSalt$,
@@ -139,6 +130,6 @@ export default function Authenticator(sources) {
     `The ${game} bot ${bot_id} has ${type === ADD ? 'connected' : 'disconnected'}.`
   );
 
-  const sinks = { ws, db: dbLookupBot$, sockets: authenticated$, log }
+  const sinks = { ws, db: dbLookupBot$, log, sockets: authenticated$ }
   return sinks;
 }

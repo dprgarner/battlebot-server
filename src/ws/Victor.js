@@ -47,7 +47,7 @@ export default function Victor(sources) {
 
     // Both players disconnected (within gracePeriod ms of each other)
     Rx.Observable.from(sockets)
-      .concatMap(({ socketId }) => 
+      .concatMap(({ socketId }) =>
         sources.ws.first(({ type, socketId: id }) => (
           (type === ERROR || type === CLOSE) && socketId === id
         ))

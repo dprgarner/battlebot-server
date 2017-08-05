@@ -5,43 +5,6 @@ import WebSocket from 'ws';
 
 import { REMOVE } from './authenticate';
 
-export default function Matcher(sources) {
-  const addRemoveSocket$ = sources.sockets;
-  const createGame$ = addRemoveSocket$
-    .groupBy(addRemoveSocket => addRemoveSocket.data.game)
-    .flatMap(groupedByGame$ => MatcherByGame({
-      sockets: groupedByGame$,
-      props: sources.props,
-    }));
-
-  return { createGame: createGame$ };
-}
-
-function MatcherByGame(sources) {
-  const addRemoveSocket$ = sources.sockets;
-
-  // Games which are not contests
-  const matchedUncontestGame$ = MatcherWithoutContest({
-    sockets: addRemoveSocket$.filter(
-      addRemoveSocket => !addRemoveSocket.data.contest
-    ),
-  });
-
-  // Contest games grouped by contest
-  const matchedContestGame$ = addRemoveSocket$
-    .filter(addRemoveSocket => addRemoveSocket.data.contest)
-    .groupBy(addRemoveSocket => addRemoveSocket.data.contest)
-    .flatMap(groupedByContest$ => MatcherByContest({
-      sockets: groupedByContest$,
-      props: sources.props,
-    }));
-
-  return Rx.Observable.merge(
-    matchedUncontestGame$,
-    matchedContestGame$,
-  );
-}
-
 function MatcherWithoutContest(sources) {
   const addRemoveSocket$ = sources.sockets;
   const createGame$ = addRemoveSocket$
@@ -54,9 +17,9 @@ function MatcherWithoutContest(sources) {
       }
 
       // type === ADD
-      const match = _.find(waiting, waitingSocket => {
-        return (waitingSocket.bot_id !== bot_id);
-      });
+      const match = _.find(waiting, waitingSocket =>
+        waitingSocket.bot_id !== bot_id
+      );
 
       if (!match) {
         waiting.push({ socketId, bot_id });
@@ -138,4 +101,41 @@ function MatcherByContest(sources) {
     .map(({ newGame }) => newGame);
 
   return createGame$;
+}
+
+function MatcherByGame(sources) {
+  const addRemoveSocket$ = sources.sockets;
+
+  // Games which are not contests
+  const matchedUncontestGame$ = MatcherWithoutContest({
+    sockets: addRemoveSocket$.filter(
+      addRemoveSocket => !addRemoveSocket.data.contest
+    ),
+  });
+
+  // Contest games grouped by contest
+  const matchedContestGame$ = addRemoveSocket$
+    .filter(addRemoveSocket => addRemoveSocket.data.contest)
+    .groupBy(addRemoveSocket => addRemoveSocket.data.contest)
+    .flatMap(groupedByContest$ => MatcherByContest({
+      sockets: groupedByContest$,
+      props: sources.props,
+    }));
+
+  return Rx.Observable.merge(
+    matchedUncontestGame$,
+    matchedContestGame$,
+  );
+}
+
+export default function Matcher(sources) {
+  const addRemoveSocket$ = sources.sockets;
+  const createGame$ = addRemoveSocket$
+    .groupBy(addRemoveSocket => addRemoveSocket.data.game)
+    .flatMap(groupedByGame$ => MatcherByGame({
+      sockets: groupedByGame$,
+      props: sources.props,
+    }));
+
+  return { createGame: createGame$ };
 }
