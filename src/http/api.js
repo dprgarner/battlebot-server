@@ -9,36 +9,36 @@ export default function addApi(app) {
 
   app.post('/bots/:gameName', jsonParser, (req, res, next) => {
     const name = req.body.name;
-    const pass_hash = createRandomHash();
-    const { bot_id, owner } = req.body;
+    const password = createRandomHash();
+    const { bot, owner } = req.body;
     const gameName = req.params.gameName;
 
     Promise.resolve()
       .then(() => {
         if (!games[gameName]) throw new ClientError('Game not recognised');
-        if (!bot_id) throw new ClientError('No ID set');
+        if (!bot) throw new ClientError('No ID set');
         if (!owner) throw new ClientError('No owner set');
       })
       .then(() => connect(db => {
         const bots = db.collection('bots');
 
         return bots
-          .count({ bot_id })
+          .count({ _id: bot })
           .then((count) => {
             if (count) throw new ClientError('Bot already registered with that name');
           })
           .then(() => bots.insertOne({
             game: gameName,
-            bot_id,
-            pass_hash,
+            name: bot,
+            password,
             owner,
-            date_registered: new Date(),
+            dateRegistered: new Date(),
           }))
           .then(() => {
-            console.log(`Registered ${gameName} bot ${bot_id}`);
+            console.log(`Registered ${gameName} bot ${bot}`);
             res
               .status(201)
-              .json({ game: gameName, bot_id, pass_hash });
+              .json({ game: gameName, bot, password });
           })
       }))
       .catch(next);

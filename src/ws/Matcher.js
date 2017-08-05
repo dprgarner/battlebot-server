@@ -9,7 +9,7 @@ function MatcherWithoutContest(sources) {
   const addRemoveSocket$ = sources.sockets;
   const createGame$ = addRemoveSocket$
     .startWith({ waiting: [], newGame: null })
-    .scan(({ waiting }, { type, socketId, data: { bot_id, game } }) => {
+    .scan(({ waiting }, { type, socketId, data: { bot, game } }) => {
       if (type === REMOVE) {
         const index = waiting.findIndex(x => x.socketId === socketId);
         if (index !== -1) waiting.splice(index, 1);
@@ -18,11 +18,11 @@ function MatcherWithoutContest(sources) {
 
       // type === ADD
       const match = _.find(waiting, waitingSocket =>
-        waitingSocket.bot_id !== bot_id
+        waitingSocket.bot !== bot
       );
 
       if (!match) {
-        waiting.push({ socketId, bot_id });
+        waiting.push({ socketId, bot });
         return { waiting, newGame: null };
       }
 
@@ -31,8 +31,8 @@ function MatcherWithoutContest(sources) {
       return { waiting, newGame: {
         game,
         sockets: [
-          { socketId: match.socketId, bot_id: match.bot_id },
-          { socketId, bot_id },
+          { socketId: match.socketId, bot: match.bot },
+          { socketId, bot },
         ]
       }};
     })
@@ -55,20 +55,20 @@ function MatcherByContest(sources) {
         return { waiting, played, newGame: null };
       }
 
-      const { bot_id, game, contest } = data;
-      if (!played[bot_id]) played[bot_id] = {};
+      const { bot, game, contest } = data;
+      if (!played[bot]) played[bot] = {};
 
       const match = _.find(waiting, waitingSocket => {
-        if (waitingSocket.bot_id === bot_id) return false;
-        const gamesPlayedFirst = played[bot_id][waitingSocket.bot_id] || 0;
-        const gamesPlayedSecond = played[waitingSocket.bot_id][bot_id] || 0;
+        if (waitingSocket.bot === bot) return false;
+        const gamesPlayedFirst = played[bot][waitingSocket.bot] || 0;
+        const gamesPlayedSecond = played[waitingSocket.bot][bot] || 0;
         return (
           gamesPlayedFirst < gamesEachWay || gamesPlayedSecond < gamesEachWay
         );
       });
 
       if (!match) {
-        waiting.push({ socketId, bot_id });
+        waiting.push({ socketId, bot });
         return { waiting, played, newGame: null };
       }
 
@@ -76,18 +76,18 @@ function MatcherByContest(sources) {
       waiting.splice(waiting.indexOf(match), 1);
 
       let firstBot, secondBot;
-      if ((played[match.bot_id][bot_id] || 0) < gamesEachWay) {
+      if ((played[match.bot][bot] || 0) < gamesEachWay) {
         firstBot = match;
-        secondBot = { socketId, bot_id };
+        secondBot = { socketId, bot };
       } else {
-        firstBot = { socketId, bot_id };
+        firstBot = { socketId, bot };
         secondBot = match;
       }
 
       // The first bot to connect goes first, unless that bot has gone first
       // (gamesEachWay) times.
-      played[firstBot.bot_id][secondBot.bot_id] = (
-        (played[firstBot.bot_id][secondBot.bot_id] || 0) + 1
+      played[firstBot.bot][secondBot.bot] = (
+        (played[firstBot.bot][secondBot.bot] || 0) + 1
       );
       console.log(played);
 

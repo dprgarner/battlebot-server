@@ -19,48 +19,26 @@ const DB_AUTHENTICATE = 'authenticate';
 export default function Authenticator(sources) {
   const TIMEOUT = 10000;
 
-  // When a websocket connects, the server sends a "salt" message.
-  const wsSalt$ = sources.ws
+  // When a websocket connects and sends a login message, a database request
+  // is made to find the details of the requested bot.
+  const dbLookupBot$ = sources.ws
     .filter(({ type }) => type === OPEN)
-    .map(({ socketId }) => ({
-      type: OUTGOING,
-      socketId,
-      payload: { salt: createRandomHash() },
-    }))
-    // Creating Random Hashes is impure, so this stream should be shared.
-    .share();
-
-  // When the server receives the login message from the client, a database
-  // request is made to find the details of the requested bot.
-  const dbLookupBot$ = wsSalt$.flatMap(({ socketId, payload: { salt } }) => 
-    sources.ws
-      .first(({ type, socketId: id }) => type === INCOMING && socketId === id )
-      .map(({ payload: { game, bot_id, login_hash, contest } }) => ({
+    .flatMap(({ socketId }) => sources.ws
+      .first(({ type, socketId: id }) => type === INCOMING && socketId === id)
+      .map(({ payload: { game, bot, password, contest }}) => ({
         type: DB_AUTHENTICATE,
         socketId,
-        salt,
-        login_hash,
+        game,
+        bot,
         contest,
-        gen: db => db.collection('bots').findOne({ game, bot_id }),
+        gen: db => db.collection('bots').findOne({ game, name: bot, password }),
       }))
     );
 
-  function validateBot({ socketId, salt, login_hash, contest }) {
-    return response => {
-      if (!response) return { socketId, loginValid: false };
-      const { bot_id, game, pass_hash } = response;
-
-      const expectedHash = createHash(pass_hash + salt);
-      const loginValid = expectedHash === login_hash;
-      return { socketId, loginValid, contest, game, bot_id };
-    };
-  }
-
   // If the client does not send an authenticate message in the timeout period,
-  // then the login is rejected.
-  // The login is valid if the input login_hash is equal to the hashed value
-  // of (pass_hash + salt).
-  const isloginValid$ = wsSalt$
+  // or if the bot is not found with the input hash, then the login is rejected.
+  const isloginValid$ = sources.ws
+    .filter(({ type }) => type === OPEN)
     .flatMap(({ socketId }) => Rx.Observable
       .merge(
         Rx.Observable.timer(TIMEOUT)
@@ -71,12 +49,17 @@ export default function Authenticator(sources) {
             type === DB_AUTHENTICATE && socketId === id
           ))
           .flatMap(response$ => response$
-            .map(validateBot(response$.request))
+            .map(response => {
+              if (!response) return { socketId, loginValid: false };
+              const { bot, game, contest } = response$.request;
+
+              return { socketId, loginValid: true, bot, game, contest }
+            })
             .catch(() => Rx.Observable.of({ socketId, loginValid: false }))
           ),
       )
       .first()
-    )
+    );
 
   // A rejection message is sent to clients which fail to authenticate,
   // and then the connection is closed.
@@ -90,10 +73,10 @@ export default function Authenticator(sources) {
   // A confirmation message is sent to successfully-connected clients.
   const wsConfirm$ = isloginValid$
     .filter(({ loginValid }) => loginValid)
-    .map(({ socketId, game, bot_id, contest }) => ({
+    .map(({ socketId, game, bot, contest }) => ({
       type: OUTGOING,
       socketId,
-      payload: {authentication: 'OK', bot_id, game, contest },
+      payload: {authentication: 'OK', game, bot, contest },
     }));
 
   // The output "sink" of this component is a stream of add/remove
@@ -102,10 +85,10 @@ export default function Authenticator(sources) {
   // "Add authenticated socket" events.
   const add$ = isloginValid$
     .filter(({ loginValid }) => loginValid)
-    .map(({ socketId, bot_id, game, contest }) => ({
+    .map(({ socketId, game, bot, contest }) => ({
       type: ADD,
       socketId,
-      data: { bot_id, game, contest },
+      data: { game, bot, contest },
     }));
 
   // Emit a "Remove authenticated socket" events when an authenticated socket
@@ -121,13 +104,12 @@ export default function Authenticator(sources) {
   );
 
   const ws = Rx.Observable.merge(
-    wsSalt$,
     wsRejection$,
     wsConfirm$,
   );
 
-  const log = authenticated$.map(({ type, data: { bot_id, game }}) =>
-    `The ${game} bot ${bot_id} has ${type === ADD ? 'connected' : 'disconnected'}.`
+  const log = authenticated$.map(({ type, data: { bot, game }}) =>
+    `The ${game} bot ${bot} has ${type === ADD ? 'connected' : 'disconnected'}.`
   );
 
   const sinks = { ws, db: dbLookupBot$, log, sockets: authenticated$ }

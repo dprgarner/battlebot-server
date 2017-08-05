@@ -67,7 +67,7 @@ export default function Game(sources) {
     games[gameName].validator, games[gameName].reducer
   );
 
-  const botIds = _.pluck(props.sockets, 'bot_id');
+  const botIds = _.pluck(props.sockets, 'bot');
   const startTime = new Date();
 
   const logGameStart$ = Rx.Observable.of(
@@ -77,12 +77,12 @@ export default function Game(sources) {
 
   const game = gameReducer(
     Rx.Observable.from(props.sockets)
-      .flatMap(({ socketId, bot_id }) =>
+      .flatMap(({ socketId, bot }) =>
         sources.ws.filter(({ type, socketId: id }) => (
           type === INCOMING && socketId === id
         ))
         .map(({ payload }) => (
-          {...payload, player: bot_id, time: Date.now() }
+          {...payload, player: bot, time: Date.now() }
         ))
       )
       .startWith({ state: games[gameName].createInitialState(botIds) })
@@ -151,8 +151,8 @@ export default function Game(sources) {
   });
 
   const wsUpdate$ = Rx.Observable.from(props.sockets)
-    .flatMap(({ bot_id, socketId }) => updateWithConclusion$
-      .filter(({ turn }) => (!turn || turn.valid || turn.player === bot_id))
+    .flatMap(({ bot, socketId }) => updateWithConclusion$
+      .filter(({ turn }) => (!turn || turn.valid || turn.player === bot))
       .map(payload => ({ type: OUTGOING, socketId, payload }))
     );
 

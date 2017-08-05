@@ -8,7 +8,6 @@
   "main": "index.js",
   "scripts": {
     "start": "babel src --out-dir build --ignore test.js --copy-files --source-maps inline && node build/index.js",
-    "cycle": "babel src --out-dir build --ignore test.js --copy-files --source-maps inline && node build/ws/cycle.js",
     "test": "jest",
     "watchtest": "jest --watch",
     "coverage": "opn coverage/lcov-report/index.html",
@@ -55,10 +54,11 @@
   },
   "devDependencies": {
     "babel-jest": "^20.0.3",
+    "chai": "^4.1.1",
     "codeclimate-test-reporter": "^0.5.0",
     "codecov": "^2.2.0",
     "jest": "^20.0.4",
-    "nodemon": "^1.11.0",
-    "opn-cli": "^3.1.0"
+    "mocha": "^3.5.0",
+    "nodemon": "^1.11.0"
   }
 }
