@@ -99,6 +99,86 @@ describe('end-to-end tests', function() {
     this.mongod.kill();
   });
 
+  describe('registering bots', function() {
+    it('registers a bot', () => {
+      return rp({
+        method: 'POST',
+        uri: 'http://localhost:4444/bots/noughtsandcrosses',
+        body: {
+          bot: 'BotThree',
+          owner: 'David'
+        },
+        json: true,
+      })
+      .then(body => {
+        log(body);
+        return MongoClientPromise.connect('mongodb://localhost:27017/test_db')
+        .then(db => db.collection('bots').findOne({ name: 'BotThree' })
+          .then(botData => {
+            expect(botData).to.be.ok;
+            expect(botData.game).to.equal('noughtsandcrosses');
+            expect(botData.name).to.equal('BotThree');
+            expect(botData.owner).to.equal('David');
+            expect(botData.password).to.be.ok;
+          })
+          .then(() => db.close().then(() => log('Database reset')))
+          .catch(err => db.close().then(() => { console.error(err); throw err; }))
+        )
+      })
+    });
+
+    it('rejects registration if the bot name is taken', () => {
+      return rp({
+        method: 'POST',
+        uri: 'http://localhost:4444/bots/noughtsandcrosses',
+        body: {
+          bot: 'BotOne',
+          owner: 'David'
+        },
+        json: true,
+        simple: false,
+        resolveWithFullResponse: true,
+      })
+      .then(response => {
+        expect(response.statusCode).to.equal(400);
+        log(response.body);
+      })
+    });
+
+    it('rejects registration if the owner is not specified', () => {
+      return rp({
+        method: 'POST',
+        uri: 'http://localhost:4444/bots/noughtsandcrosses',
+        body: { bot: 'BotOne' },
+        json: true,
+        simple: false,
+        resolveWithFullResponse: true,
+      })
+      .then(response => {
+        expect(response.statusCode).to.equal(400);
+        log(response.body);
+      })
+    });
+
+    it('rejects registration if the game name is unrecognised', () => {
+      return rp({
+        method: 'POST',
+        uri: 'http://localhost:4444/bots/asyudbiag67sdasuyda',
+        body: {
+          bot: 'BotOne',
+          owner: 'David'
+        },
+        json: true,
+        simple: false,
+        resolveWithFullResponse: true,
+      })
+      .then(response => {
+        expect(response.statusCode).to.equal(400);
+        log(response.body);
+      })
+    });
+  });
+
   describe('playing games', function() {
     function waitForOpen(ws) {
       return new Promise((resolve, reject) => {

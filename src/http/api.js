@@ -4,6 +4,8 @@ import { createRandomHash } from '../hash';
 import games from '../games';
 import graphQLEndpoint from './graphql';
 
+import ClientError from './error';
+
 export default function addApi(app) {
   const jsonParser = bodyParser.json();
 
@@ -23,7 +25,7 @@ export default function addApi(app) {
         const bots = db.collection('bots');
 
         return bots
-          .count({ _id: bot })
+          .count({ name: bot })
           .then((count) => {
             if (count) throw new ClientError('Bot already registered with that name');
           })
