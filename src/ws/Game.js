@@ -67,12 +67,12 @@ export default function Game(sources) {
     games[gameName].validator, games[gameName].reducer
   );
 
-  const botIds = _.pluck(props.sockets, 'bot');
+  const bots = _.pluck(props.sockets, 'bot');
   const startTime = new Date();
 
   const logGameStart$ = Rx.Observable.of(
     `${gameId}: ` +
-    `A game of ${gameName} has started between ${botIds[0]} and ${botIds[1]}.`
+    `A game of ${gameName} has started between ${bots[0]} and ${bots[1]}.`
   );
 
   const game = gameReducer(
@@ -82,10 +82,10 @@ export default function Game(sources) {
           type === INCOMING && socketId === id
         ))
         .map(({ payload }) => (
-          {...payload, player: bot, time: Date.now() }
+          {...payload, bot, time: Date.now() }
         ))
       )
-      .startWith({ state: games[gameName].createInitialState(botIds) })
+      .startWith({ state: games[gameName].createInitialState(bots) })
   );
   const update$ = game.update;
   const victor$ = Victor({ props, ws: sources.ws, update: update$ }).victor;
@@ -122,7 +122,7 @@ export default function Game(sources) {
 
     (turns, finalState) => _.extend(
       _.pick({ contest }, _.identity),
-      _.omit(finalState.state, 'complete', 'nextPlayer'),
+      _.omit(finalState.state, 'complete', 'waitingFor'),
       { _id: gameId, game: gameName, turns, startTime }
     )
   );
@@ -143,16 +143,16 @@ export default function Game(sources) {
       })
     );
 
-  const logGameEnd$ = finalState$.map(({ _id, victor, game, players, reason }) => {
+  const logGameEnd$ = finalState$.map(({ _id, victor, game, bots, reason }) => {
     const text = victor ?
       `${victor} has won a game of ${game}.` :
-      `The ${game} game between ${players[0]} and ${players[1]} ended in a draw.`;
+      `The ${game} game between ${bots[0]} and ${bots[1]} ended in a draw.`;
     return `${_id}: ${text} (Reason: ${reason})`;
   });
 
   const wsUpdate$ = Rx.Observable.from(props.sockets)
     .flatMap(({ bot, socketId }) => updateWithConclusion$
-      .filter(({ turn }) => (!turn || turn.valid || turn.player === bot))
+      .filter(({ turn }) => (!turn || turn.valid || turn.bot === bot))
       .map(payload => ({ type: OUTGOING, socketId, payload }))
     );
 

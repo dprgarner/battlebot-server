@@ -45,7 +45,7 @@ export default function Victor(sources) {
         })
       ),
 
-    // Both players disconnected (within gracePeriod ms of each other)
+    // Both bots disconnected (within gracePeriod ms of each other)
     Rx.Observable.from(sockets)
       .concatMap(({ socketId }) =>
         sources.ws.first(({ type, socketId: id }) => (
@@ -61,7 +61,7 @@ export default function Victor(sources) {
     // Player repeatedly makes invalid turns
     ...sockets.map(({ bot }) => (
       update$
-        .filter(({ turn }) => turn && turn.player == bot && !turn.valid)
+        .filter(({ turn }) => turn && turn.bot == bot && !turn.valid)
         .concat(Rx.Observable.never())
         .take(strikes)
         .ignoreElements()

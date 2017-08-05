@@ -1,27 +1,27 @@
 import _ from 'underscore';
 
-export function createInitialState(players) {
+export function createInitialState(bots) {
   return {
-    players,
+    bots,
     board: [
         ['', '', ''],
         ['', '', ''],
         ['', '', ''],
     ],
     marks: {
-      X: players[0],
-      O: players[1],
+      X: bots[0],
+      O: bots[1],
     },
-    nextPlayer: players[0],
+    waitingFor: [bots[0]],
     complete: false,
   };
 }
 
 export function validator(state, turn) {
-  if (turn.player !== state.nextPlayer) return false;
+  if (state.waitingFor.indexOf(turn.bot) === -1) return false;
 
   if (turn.mark !== 'X' && turn.mark !== 'O') return false;
-  if (state.marks[turn.mark] !== turn.player) return false;
+  if (state.marks[turn.mark] !== turn.bot) return false;
 
   if (!turn.space || !_.isArray(turn.space) || turn.space.length !== 2) {
     return false;
@@ -50,9 +50,9 @@ export function getVictor(board) {
   if (_.all(_.flatten(board))) return -1;
 }
 
-export function reducer({ players, board, marks }, turn) {
-  // Must return a state object with { players, nextPlayer, complete }.
-  const nextPlayer = _.without(players, turn.player)[0];
+export function reducer({ bots, board, marks }, turn) {
+  // Must return a state object with { bots, nextPlayer, complete }.
+  const nextPlayer = _.without(bots, turn.bot)[0];
 
   const newBoard = [...board];
   newBoard[turn.space[0]] = [...board[turn.space[0]]];
@@ -62,21 +62,24 @@ export function reducer({ players, board, marks }, turn) {
   let victor, reason;
   let complete = false;
 
-  if (winningPiece === -1) {    
-    victor = null;
+  let waitingFor = [nextPlayer];
+
+  if (winningPiece) {
+    if (winningPiece === -1) {
+      victor = null;
+    } else {
+      victor = marks[winningPiece];
+    }
     reason = 'complete';
     complete = true;
-  } else if (winningPiece) {
-    victor = marks[winningPiece];
-    reason = 'complete';
-    complete = true;
+    waitingFor = [];
   }
 
   return {
     board: newBoard,
     marks,
-    players,
-    nextPlayer,
+    bots,
+    waitingFor,
     complete,
     victor,
     reason,

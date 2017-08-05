@@ -169,17 +169,17 @@ describe('end-to-end tests', function() {
     const ply1 = await sendWithResponse(
       sockets.BotOne, { mark: 'X', space: [0, 0] }
     );
+    log(ply1);
     expect(ply1.turn.valid).to.be.ok;
     expect(ply1.state.victor).to.not.be.ok;
-    log(ply1.state.board);
 
     await waitFor(50);
     const ply2 = await sendWithResponse(
       sockets.BotTwo, { mark: 'O', space: [1, 1] }
     );
+    log(ply2.state.board);
     expect(ply2.turn.valid).to.be.ok;
     expect(ply2.state.victor).to.not.be.ok;
-    log(ply2.state.board);
 
     await waitFor(50);
     const ply3 = await sendWithResponse(
@@ -211,7 +211,7 @@ describe('end-to-end tests', function() {
       .then(db => db.collection('games').findOne({})
         .then((game) => {
           expect(game).to.be.ok;
-          expect(game.players).to.deep.equal(['BotOne', 'BotTwo']);
+          expect(game.bots).to.deep.equal(['BotOne', 'BotTwo']);
           expect(game.reason).to.equal('complete');
         })
         .then(() => db.close())
@@ -266,7 +266,7 @@ describe('end-to-end tests', function() {
     log(attempt3.turn);
   });
 
-  it('rules against a player which disconnects', async () => {
+  it('rules against a bot which disconnects', async () => {
     const GRACE_PERIOD = 500;
     const sockets = await authenticateBots();
 
@@ -282,7 +282,7 @@ describe('end-to-end tests', function() {
       .then(db => db.collection('games').findOne({})
         .then((game) => {
           expect(game).to.be.ok;
-          expect(game.players).to.deep.equal(['BotOne', 'BotTwo']);
+          expect(game.bots).to.deep.equal(['BotOne', 'BotTwo']);
           expect(game.victor).to.equal('BotOne');
           expect(game.reason).to.equal('disconnect');
         })
@@ -291,7 +291,7 @@ describe('end-to-end tests', function() {
       );
   });
 
-  it('rules against a player which times out', async function () {
+  it('rules against a bot which times out', async function () {
     this.timeout(6000);
     const TIMEOUT = 5000;
     const sockets = await authenticateBots();
@@ -314,7 +314,7 @@ describe('end-to-end tests', function() {
       .then(db => db.collection('games').findOne({})
         .then((game) => {
           expect(game).to.be.ok;
-          expect(game.players).to.deep.equal(['BotOne', 'BotTwo']);
+          expect(game.bots).to.deep.equal(['BotOne', 'BotTwo']);
           expect(game.victor).to.equal('BotOne');
           expect(game.reason).to.equal('timeout');
         })
@@ -323,7 +323,7 @@ describe('end-to-end tests', function() {
       );
   });
 
-  it('records a draw if both players disconnect', async () => {
+  it('records a draw if both bots disconnect', async () => {
     const GRACE_PERIOD = 500;
     const sockets = await authenticateBots();
 
@@ -340,7 +340,7 @@ describe('end-to-end tests', function() {
       .then(db => db.collection('games').findOne({})
         .then((game) => {
           expect(game).to.be.ok;
-          expect(game.players).to.deep.equal(['BotOne', 'BotTwo']);
+          expect(game.bots).to.deep.equal(['BotOne', 'BotTwo']);
           expect(game.victor).to.not.be.ok;
           expect(game.reason).to.equal('disconnect');
         })
@@ -349,7 +349,7 @@ describe('end-to-end tests', function() {
       );
   });
 
-  it('rules against a player which makes multiple invalid moves', async () => {
+  it('rules against a bot which makes multiple invalid moves', async () => {
     const sockets = await authenticateBots();
 
     await Promise.all([
