@@ -11,7 +11,8 @@
     "test": "jest",
     "watchtest": "jest --watch",
     "coverage": "opn coverage/lcov-report/index.html",
-    "codecov": "codecov"
+    "codecov": "codecov",
+    "e2e": "mocha e2e/index.js"
   },
   "jest": {
     "collectCoverage": true,
