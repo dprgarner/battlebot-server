@@ -18,10 +18,10 @@ export function createInitialState(bots) {
 }
 
 export function validator(state, turn) {
-  if (state.waitingFor.indexOf(turn.bot) === -1) return false;
+  if (state.waitingFor.indexOf(turn.name) === -1) return false;
 
   if (turn.mark !== 'X' && turn.mark !== 'O') return false;
-  if (state.marks[turn.mark] !== turn.bot) return false;
+  if (state.marks[turn.mark] !== turn.name) return false;
 
   if (!turn.space || !_.isArray(turn.space) || turn.space.length !== 2) {
     return false;
@@ -52,7 +52,7 @@ export function getVictor(board) {
 
 export function reducer({ bots, board, marks }, turn) {
   // Must return a state object with { bots, nextPlayer, complete }.
-  const nextPlayer = _.without(bots, turn.bot)[0];
+  const nextPlayer = _.without(bots, turn.name)[0];
 
   const newBoard = [...board];
   newBoard[turn.space[0]] = [...board[turn.space[0]]];

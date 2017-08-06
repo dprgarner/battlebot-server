@@ -61,7 +61,7 @@ export default function Victor(sources) {
     // Player repeatedly makes invalid turns
     ...sockets.map(({ name }) => (
       update$
-        .filter(({ turn }) => turn && turn.bot == name && !turn.valid)
+        .filter(({ turn }) => turn && turn.name == name && !turn.valid)
         .concat(Rx.Observable.never())
         .take(strikes)
         .ignoreElements()

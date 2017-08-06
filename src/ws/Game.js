@@ -82,7 +82,7 @@ export default function Game(sources) {
           type === INCOMING && socketId === id
         ))
         .map(({ payload }) => (
-          {...payload, bot: name, time: Date.now() }
+          {...payload, name, time: Date.now() }
         ))
       )
       .startWith({ state: games[gameType].createInitialState(bots) })
@@ -152,7 +152,7 @@ export default function Game(sources) {
 
   const wsUpdate$ = Rx.Observable.from(props.sockets)
     .flatMap(({ name, socketId }) => updateWithConclusion$
-      .filter(({ turn }) => (!turn || turn.valid || turn.bot === name))
+      .filter(({ turn }) => (!turn || turn.valid || turn.name === name))
       .map(payload => ({ type: OUTGOING, socketId, payload }))
     );
 
