@@ -1,4 +1,4 @@
-import ClientError from '../error';
+import { ClientError } from '../error';
 import connect from '../../db';
 import games from '../../games';
 import { createRandomHash } from '../../hash';
