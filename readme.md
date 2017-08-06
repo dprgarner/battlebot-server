@@ -21,10 +21,10 @@ Before playing games, a new bot must first be registered with the server, which 
     registerBot(name: \"MyAwesomeBot\", gameType: \"noughtsandcrosses\", owner: \"David\") {
       password
       bot {
-        id
+        name
         owner
         gameType {
-          id
+          name
         }
         dateRegistered
       }
@@ -37,10 +37,10 @@ Before playing games, a new bot must first be registered with the server, which 
     "registerBot": {
       "password": "a8831f4c15a48adf38219c3828b385f0d6427b5c5c3fe4bfdfb9c279bc79c438",
       "bot": {
-        "id": "MyAwesomeBot",
+        "name": "MyAwesomeBot",
         "owner": "David",
         "gameType": {
-          "id": "noughtsandcrosses"
+          "name": "noughtsandcrosses"
         },
         "dateRegistered": "Sun Aug 06 2017 19:04:03 GMT+0100 (GMT Daylight Time)"
       }
@@ -55,16 +55,16 @@ To play a game, the bot should connect to the server via a (secure) WebSocket an
 ```javascript
 // To the server:
 {
-  "game": "noughtsandcrosses",
-  "bot": "MyAwesomeBot",
+  "gameType": "noughtsandcrosses",
+  "name": "MyAwesomeBot",
   "password": "8ad86f2934f346abf60ee7c192c96fbc838a54273c4c092de7ae97153b84d934"
 }
 
 // From the server:
 {
   "authentication": "OK",
-  "game": "noughtsandcrosses",
-  "bot": "MyAwesomeBot"
+  "gameType": "noughtsandcrosses",
+  "name": "MyAwesomeBot"
 }
 ```
 
@@ -85,8 +85,8 @@ To play a bot in a contest, the bot should add the name of a contest to its auth
 ```javascript
 // To the server:
 {
-  "game": "noughtsandcrosses",
-  "bot": "MyAwesomeBot",
+  "gameType": "noughtsandcrosses",
+  "name": "MyAwesomeBot",
   "password": "8ad86f2934f346abf60ee7c192c96fbc838a54273c4c092de7ae97153b84d934",
   "contest": "EpicTournament"
 }
@@ -94,8 +94,8 @@ To play a bot in a contest, the bot should add the name of a contest to its auth
 // From the server:
 {
   "authentication": "OK",
-  "game": "noughtsandcrosses",
-  "bot": "MyAwesomeBot",
+  "gameType": "noughtsandcrosses",
+  "name": "MyAwesomeBot",
   "contest": "EpicTournament"
 }
 ```
@@ -172,7 +172,7 @@ including the last valid turn:
 ```javascript
 {
   "turn": {
-    "bot": "IdiotBot2",
+    "name": "IdiotBot2",
     "valid": true,
     "space": [1, 2],
     "time": 1498036964996,
@@ -212,7 +212,6 @@ docker-compose up
 
 - Keep writing them tests
 - Find a way to incorporate "Victor" logic into noughtsandcrosses.js without making it ridiculously complex
-- bot_id, name, id, or bot?
 
 Next game:
 - Create an out-stream for spectator updates
