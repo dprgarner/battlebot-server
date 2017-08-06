@@ -5,6 +5,17 @@ type Query {
   gameType(id: ID!): GameType
 }
 
+type Mutation {
+  registerBot(name: ID!, owner: String!, gameType: ID!): CreateBot
+}
+
+# Returned when a bot is first registered.
+type CreateBot {
+  # error: String
+  password: String!
+  bot: Bot
+}
+
 # The type of the game.
 type GameType {
   # The name of the game. Lower-case.

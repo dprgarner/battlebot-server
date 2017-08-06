@@ -99,26 +99,50 @@ describe('end-to-end tests', function() {
     this.mongod.kill();
   });
 
-  describe('registering bots', function() {
-    it('registers a bot', () => {
+  describe.only('registering bots', function() {
+    function graphql(query, resolveWithFullResponse) {
       return rp({
         method: 'POST',
-        uri: 'http://localhost:4444/bots/noughtsandcrosses',
-        body: {
-          bot: 'BotThree',
-          owner: 'David'
-        },
+        uri: 'http://localhost:4444/graphql',
+        body: { query },
         json: true,
-      })
+        simple: !resolveWithFullResponse,
+        resolveWithFullResponse,
+      });
+    }
+
+    it('registers a bot', () => {
+      return graphql(`
+        mutation {
+          registerBot(name: "BotThree", owner: "Me", gameType: "noughtsandcrosses") {
+            password
+            bot {
+              id
+              owner
+              gameType {
+                id
+              }
+              dateRegistered
+            }
+          }
+        }
+      `)
       .then(body => {
-        log(body);
+        log(JSON.stringify(body, null, 2));
+
+        expect(body.data.registerBot.password).to.be.ok;
+        expect(body.data.registerBot.bot.id).to.equal('BotThree');
+        expect(body.data.registerBot.bot.owner).to.equal('Me');
+        expect(body.data.registerBot.bot.dateRegistered).to.be.ok;
+        expect(body.data.registerBot.bot.gameType).to.be.ok;
+
         return MongoClientPromise.connect('mongodb://localhost:27017/test_db')
         .then(db => db.collection('bots').findOne({ name: 'BotThree' })
           .then(botData => {
             expect(botData).to.be.ok;
             expect(botData.game).to.equal('noughtsandcrosses');
             expect(botData.name).to.equal('BotThree');
-            expect(botData.owner).to.equal('David');
+            expect(botData.owner).to.equal('Me');
             expect(botData.password).to.be.ok;
           })
           .then(() => db.close().then(() => log('Database reset')))
@@ -128,54 +152,74 @@ describe('end-to-end tests', function() {
     });
 
     it('rejects registration if the bot name is taken', () => {
-      return rp({
-        method: 'POST',
-        uri: 'http://localhost:4444/bots/noughtsandcrosses',
-        body: {
-          bot: 'BotOne',
-          owner: 'David'
-        },
-        json: true,
-        simple: false,
-        resolveWithFullResponse: true,
-      })
-      .then(response => {
-        expect(response.statusCode).to.equal(400);
-        log(response.body);
-      })
+      return graphql(`
+        mutation {
+          registerBot(name: "BotOne", owner: "Me", gameType: "noughtsandcrosses") {
+            password
+            bot {
+              id
+              owner
+              gameType {
+                id
+              }
+              dateRegistered
+            }
+          }
+        }
+      `)
+      .then(body => {
+        log(body);
+        expect(body.errors).to.have.length(1);
+        expect(body.errors[0].message).to.equal(
+          'Bot already registered with that name'
+        );
+      });
     });
 
     it('rejects registration if the owner is not specified', () => {
-      return rp({
-        method: 'POST',
-        uri: 'http://localhost:4444/bots/noughtsandcrosses',
-        body: { bot: 'BotOne' },
-        json: true,
-        simple: false,
-        resolveWithFullResponse: true,
-      })
+      return graphql(`
+        mutation {
+          registerBot(name: "BotOne", gameType: "noughtsandcrosses") {
+            password
+            bot {
+              id
+              owner
+              gameType {
+                id
+              }
+              dateRegistered
+            }
+          }
+        }
+      `, true)
       .then(response => {
-        expect(response.statusCode).to.equal(400);
         log(response.body);
-      })
+        expect(response.statusCode).to.equal(400);
+        expect(response.body.errors).to.have.length(1);
+      });
     });
 
     it('rejects registration if the game name is unrecognised', () => {
-      return rp({
-        method: 'POST',
-        uri: 'http://localhost:4444/bots/asyudbiag67sdasuyda',
-        body: {
-          bot: 'BotOne',
-          owner: 'David'
-        },
-        json: true,
-        simple: false,
-        resolveWithFullResponse: true,
-      })
-      .then(response => {
-        expect(response.statusCode).to.equal(400);
-        log(response.body);
-      })
+      return graphql(`
+        mutation {
+          registerBot(name: "BotOne", owner: "Me", gameType: "adasdasd") {
+            password
+            bot {
+              id
+              owner
+              gameType {
+                id
+              }
+              dateRegistered
+            }
+          }
+        }
+      `)
+      .then(body => {
+        log(body);
+        expect(body.errors).to.have.length(1);
+        expect(body.errors[0].message).to.equal('Game not recognised');
+      });
     });
   });
 
@@ -198,10 +242,10 @@ describe('end-to-end tests', function() {
       });
     }
 
-    function sendWithResponse(ws, msg) {
+    function sendWithResponse(ws, outMsg) {
       return new Promise((resolve, reject) => {
-        ws.send(JSON.stringify(msg));
-        ws.once('message', msg => resolve(JSON.parse(msg)));
+        ws.send(JSON.stringify(outMsg));
+        ws.once('message', inMsg => resolve(JSON.parse(inMsg)));
       });
     }
 
