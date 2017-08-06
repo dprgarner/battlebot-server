@@ -1,3 +1,4 @@
+const _ = require('underscore');
 const path = require('path');
 const { spawn, exec } = require('child_process');
 
@@ -49,10 +50,14 @@ describe('end-to-end tests', function() {
 
   beforeEach(function(done) {
     this.timeout(3000);
-    this.server = spawn('node', [path.join('build', 'index.js')], { env: {
-      MONGODB_URI: 'mongodb://localhost:27017/test_db',
-      PORT: 4444,
-    }});
+    this.server = spawn(
+      'node',
+      [path.join('build', 'index.js')],
+      { env: _.extend({}, process.env, {
+        MONGODB_URI: 'mongodb://localhost:27017/test_db',
+        PORT: 4444,
+      }) }
+    );
 
     this.server.stdout.on('data', (data) => {
       log(`${data}`.trim());
