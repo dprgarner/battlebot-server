@@ -1,19 +1,20 @@
 import express from 'express';
-import { ClientError } from './error';
-import addApi from './api';
+
 import addStaticRoutes from './static';
+import graphQLEndpoint from './graphql';
+import { ClientError } from './error';
 
 export default function createHttpServer(port) {
   const app = express();
   app.set('port', port);
 
   addStaticRoutes(app);
-  addApi(app);
+  app.use('/graphql', graphQLEndpoint);
 
   app.use((err, req, res, next) => {
     console.error(err);
     res
-      .status(err instanceof ClientError ? 400 : 500)
+      .status(err.name === 'ClientError' ? 400 : 500)
       .json({ error: err.message });
   });
 

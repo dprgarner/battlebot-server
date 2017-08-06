@@ -5,20 +5,20 @@ import stringify from 'json-stable-stringify';
 import connect from '../../db';
 
 function BotLoader() {
-  // Expects queries of the form { game, bot_id }.
+  // Expects queries of the form { gameType, name }.
   return new DataLoader(
     botQueries => {
       const botsByGame = _.chain(botQueries)
-        .groupBy('game')
-        .map((bots, game) => [game, _.pluck(bots, 'bot_id')])
+        .groupBy('gameType')
+        .map((bots, gameType) => [gameType, _.pluck(bots, 'name')])
         .object()
         .value();
 
       return Promise.all(
-        _.map(botsByGame, (bot_ids, game) => (
+        _.map(botsByGame, (botNames, gameType) => (
           connect(db => db
             .collection('bots')
-            .find({ game, bot_id: { $in: bot_ids } }, { _id: 0, pass_hash: 0 })
+            .find({ gameType, name: { $in: botNames } }, { _id: 0, password: 0 })
             .toArray()
           )
         ))
@@ -26,14 +26,14 @@ function BotLoader() {
       .then(gameGroupedBots => {
         const resolvedBotsByGame = _.chain(gameGroupedBots)
           .map((bots) => [
-            bots[0].game,
-            _.object(_.map(bots, bot => [bot.bot_id, bot])),
+            bots[0].gameType,
+            _.object(_.map(bots, bot => [bot.name, bot])),
           ])
           .object()
           .value();
 
         return botQueries.map(
-          ({ bot_id, game }) => resolvedBotsByGame[game][bot_id]
+          ({ gameType, name }) => resolvedBotsByGame[gameType][name]
         );
       });
     },
@@ -47,7 +47,7 @@ function BotsLoader() {
       botQueries.map(botQuery =>
         connect(db => db
           .collection('bots')
-          .find(botQuery, { _id: 0, pass_hash: 0 })
+          .find(botQuery, { _id: 0, password: 0 })
           .toArray()
         )
       )
@@ -61,18 +61,18 @@ function GamesLoader() {
     gameQueries.map(gameQuery => {
       gameQuery = _.extend({}, gameQuery); // Shallow-copy.
 
-      if (gameQuery.players) {
-        gameQuery.$and = _.map(gameQuery.players, player => (
-          { players: player }
+      if (gameQuery.bots) {
+        gameQuery.$and = _.map(gameQuery.bots, bot => (
+          { bots: bot }
         ));
-        delete gameQuery.players;
+        delete gameQuery.bots;
       }
 
-      if (gameQuery.anyPlayers) {
-        gameQuery.$or = _.map(gameQuery.anyPlayers, player => (
-          { players: player }
+      if (gameQuery.anyBots) {
+        gameQuery.$or = _.map(gameQuery.anyBots, bot => (
+          { bots: bot }
         ));
-        delete gameQuery.anyPlayers;
+        delete gameQuery.anyBots;
       }
 
       if (gameQuery.limit) return connect(db => db
@@ -95,15 +95,15 @@ function GamesLoader() {
 }
 
 function ContestsLoader() {
-  return new DataLoader(games => {
+  return new DataLoader(gameTypes => {
     return Promise.all(
-      games.map(game =>
+      gameTypes.map(gameType =>
         connect(db => db
           .collection('games')
-          .distinct('contest', { game })
+          .distinct('contest', { gameType })
         )
         .then(contests => contests.map(
-          contest => ({ game, contest })
+          contest => ({ gameType, contest })
         ))
       )
     )},

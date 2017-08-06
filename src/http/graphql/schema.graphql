@@ -2,20 +2,31 @@
 type Query {
   gameTypes: [GameType]
 
-  gameType(id: ID!): GameType
+  gameType(name: ID!): GameType
+}
+
+type Mutation {
+  registerBot(name: ID!, owner: String!, gameType: ID!): CreateBot
+}
+
+# Returned when a bot is first registered.
+type CreateBot {
+  # error: String
+  password: String!
+  bot: Bot
 }
 
 # The type of the game.
 type GameType {
   # The name of the game. Lower-case.
-  id: ID!
+  name: ID!
 
   # A list of the bots registered for this game.
   bots(owner: String): [Bot]
 
   contests: [Contest]
 
-  contest(id: ID!): Contest
+  contest(name: ID!): Contest
 
   # A list of played games.
   games(filters: GameInput): [Game]
@@ -26,7 +37,7 @@ type GameType {
 
 type Bot {
   # The name of the bot.
-  id: ID!
+  name: ID!
 
   # The game type that this bot is registered for.
   gameType: GameType!
@@ -39,7 +50,7 @@ type Bot {
 
 type Contest {
   # The name of the contest.
-  id: ID!
+  name: ID!
 
   # The game type of the contest.
   gameType: GameType!
@@ -88,10 +99,10 @@ input GameInput {
   contest: ID
 
   # Filter to games played by any of these bots (specified by their IDs.)
-  anyPlayers: [ID]
+  anyBots: [ID]
 
   # Filter to games played by these bots (specified by their IDs.)
-  players: [ID]
+  bots: [ID]
 }
 
 union Game = NoughtsAndCrosses
@@ -102,7 +113,7 @@ type NoughtsAndCrosses {
 
   gameType: GameType!
 
-  players: [Bot]!
+  bots: [Bot]!
 
   victor: Bot
 
@@ -146,5 +157,5 @@ type NoughtsAndCrossesTurn {
   time: String!
 
   # The bot that made the move.
-  player: Bot!
+  bot: Bot!
 }
