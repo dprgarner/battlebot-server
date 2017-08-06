@@ -9,7 +9,7 @@ function MatcherWithoutContest(sources) {
   const addRemoveSocket$ = sources.sockets;
   const createGame$ = addRemoveSocket$
     .startWith({ waiting: [], newGame: null })
-    .scan(({ waiting }, { type, socketId, data: { bot, game } }) => {
+    .scan(({ waiting }, { type, socketId, data: { gameType, name } }) => {
       if (type === REMOVE) {
         const index = waiting.findIndex(x => x.socketId === socketId);
         if (index !== -1) waiting.splice(index, 1);
@@ -18,21 +18,21 @@ function MatcherWithoutContest(sources) {
 
       // type === ADD
       const match = _.find(waiting, waitingSocket =>
-        waitingSocket.bot !== bot
+        waitingSocket.name !== name
       );
 
       if (!match) {
-        waiting.push({ socketId, bot });
+        waiting.push({ socketId, name });
         return { waiting, newGame: null };
       }
 
       // Found a match
       waiting.splice(waiting.indexOf(match), 1);
       return { waiting, newGame: {
-        game,
+        gameType,
         sockets: [
-          { socketId: match.socketId, bot: match.bot },
-          { socketId, bot },
+          { socketId: match.socketId, name: match.name },
+          { socketId, name },
         ]
       }};
     })
@@ -55,20 +55,20 @@ function MatcherByContest(sources) {
         return { waiting, played, newGame: null };
       }
 
-      const { bot, game, contest } = data;
-      if (!played[bot]) played[bot] = {};
+      const { gameType, name, contest } = data;
+      if (!played[name]) played[name] = {};
 
       const match = _.find(waiting, waitingSocket => {
-        if (waitingSocket.bot === bot) return false;
-        const gamesPlayedFirst = played[bot][waitingSocket.bot] || 0;
-        const gamesPlayedSecond = played[waitingSocket.bot][bot] || 0;
+        if (waitingSocket.name === name) return false;
+        const gamesPlayedFirst = played[name][waitingSocket.name] || 0;
+        const gamesPlayedSecond = played[waitingSocket.name][name] || 0;
         return (
           gamesPlayedFirst < gamesEachWay || gamesPlayedSecond < gamesEachWay
         );
       });
 
       if (!match) {
-        waiting.push({ socketId, bot });
+        waiting.push({ socketId, name });
         return { waiting, played, newGame: null };
       }
 
@@ -76,23 +76,23 @@ function MatcherByContest(sources) {
       waiting.splice(waiting.indexOf(match), 1);
 
       let firstBot, secondBot;
-      if ((played[match.bot][bot] || 0) < gamesEachWay) {
+      if ((played[match.name][name] || 0) < gamesEachWay) {
         firstBot = match;
-        secondBot = { socketId, bot };
+        secondBot = { socketId, name };
       } else {
-        firstBot = { socketId, bot };
+        firstBot = { socketId, name };
         secondBot = match;
       }
 
       // The first bot to connect goes first, unless that bot has gone first
       // (gamesEachWay) times.
-      played[firstBot.bot][secondBot.bot] = (
-        (played[firstBot.bot][secondBot.bot] || 0) + 1
+      played[firstBot.name][secondBot.name] = (
+        (played[firstBot.name][secondBot.name] || 0) + 1
       );
       console.log(played);
 
       return { waiting, played, newGame: {
-        game,
+        gameType,
         contest,
         sockets: [firstBot, secondBot],
       }};
@@ -103,7 +103,7 @@ function MatcherByContest(sources) {
   return createGame$;
 }
 
-function MatcherByGame(sources) {
+function MatcherByGameType(sources) {
   const addRemoveSocket$ = sources.sockets;
 
   // Games which are not contests
@@ -131,8 +131,8 @@ function MatcherByGame(sources) {
 export default function Matcher(sources) {
   const addRemoveSocket$ = sources.sockets;
   const createGame$ = addRemoveSocket$
-    .groupBy(addRemoveSocket => addRemoveSocket.data.game)
-    .flatMap(groupedByGame$ => MatcherByGame({
+    .groupBy(addRemoveSocket => addRemoveSocket.data.gameType)
+    .flatMap(groupedByGame$ => MatcherByGameType({
       sockets: groupedByGame$,
       props: sources.props,
     }));

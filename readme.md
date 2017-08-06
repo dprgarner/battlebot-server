@@ -211,6 +211,8 @@ docker-compose up
 ## TODO
 
 - Keep writing them tests
+- Find a way to incorporate "Victor" logic into noughtsandcrosses.js without making it ridiculously complex
+- bot_id, name, id, or bot?
 
 Next game:
 - Create an out-stream for spectator updates

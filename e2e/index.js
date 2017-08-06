@@ -80,13 +80,13 @@ describe('end-to-end tests', function() {
         ])
         .then(() => Promise.all([
           db.collection('bots').insertOne({
-            game: "noughtsandcrosses",
+            gameType: "noughtsandcrosses",
             name: "BotOne",
             password : "abc123",
             owner : "Anonymous",
           }),
           db.collection('bots').insertOne({
-            game: "noughtsandcrosses",
+            gameType: "noughtsandcrosses",
             name: "BotTwo",
             password : "321cba",
             owner : "Anonymous",
@@ -125,10 +125,10 @@ describe('end-to-end tests', function() {
           registerBot(name: "BotThree", owner: "Me", gameType: "noughtsandcrosses") {
             password
             bot {
-              id
+              name
               owner
               gameType {
-                id
+                name
               }
               dateRegistered
             }
@@ -139,7 +139,7 @@ describe('end-to-end tests', function() {
         log(JSON.stringify(body, null, 2));
 
         expect(body.data.registerBot.password).to.be.ok;
-        expect(body.data.registerBot.bot.id).to.equal('BotThree');
+        expect(body.data.registerBot.bot.name).to.equal('BotThree');
         expect(body.data.registerBot.bot.owner).to.equal('Me');
         expect(body.data.registerBot.bot.dateRegistered).to.be.ok;
         expect(body.data.registerBot.bot.gameType).to.be.ok;
@@ -148,7 +148,7 @@ describe('end-to-end tests', function() {
         .then(db => db.collection('bots').findOne({ name: 'BotThree' })
           .then(botData => {
             expect(botData).to.be.ok;
-            expect(botData.game).to.equal('noughtsandcrosses');
+            expect(botData.gameType).to.equal('noughtsandcrosses');
             expect(botData.name).to.equal('BotThree');
             expect(botData.owner).to.equal('Me');
             expect(botData.password).to.be.ok;
@@ -165,10 +165,10 @@ describe('end-to-end tests', function() {
           registerBot(name: "BotOne", owner: "Me", gameType: "noughtsandcrosses") {
             password
             bot {
-              id
+              name
               owner
               gameType {
-                id
+                name
               }
               dateRegistered
             }
@@ -190,10 +190,10 @@ describe('end-to-end tests', function() {
           registerBot(name: "BotOne", gameType: "noughtsandcrosses") {
             password
             bot {
-              id
+              name
               owner
               gameType {
-                id
+                name
               }
               dateRegistered
             }
@@ -213,10 +213,10 @@ describe('end-to-end tests', function() {
           registerBot(name: "BotOne", owner: "Me", gameType: "adasdasd") {
             password
             bot {
-              id
+              name
               owner
               gameType {
-                id
+                name
               }
               dateRegistered
             }
@@ -266,25 +266,25 @@ describe('end-to-end tests', function() {
       await Promise.all(Object.values(sockets).map(waitForOpen));
 
       const auth1 = await sendWithResponse(sockets.BotOne, {
-        bot: 'BotOne',
+        name: 'BotOne',
         password: 'abc123',
-        game: 'noughtsandcrosses',
+        gameType: 'noughtsandcrosses',
       });
       expect(auth1).to.deep.equal({
         authentication: 'OK',
-        game: 'noughtsandcrosses',
-        bot: 'BotOne',
+        gameType: 'noughtsandcrosses',
+        name: 'BotOne',
       });
 
       const auth2 = await sendWithResponse(sockets.BotTwo, {
-        bot: 'BotTwo',
+        name: 'BotTwo',
         password: '321cba',
-        game: 'noughtsandcrosses',
+        gameType: 'noughtsandcrosses',
       });
       expect(auth2).to.deep.equal({
         authentication: 'OK',
-        game: 'noughtsandcrosses',
-        bot: 'BotTwo',
+        gameType: 'noughtsandcrosses',
+        name: 'BotTwo',
       });
 
       return sockets;

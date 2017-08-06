@@ -16,8 +16,8 @@ function sortScore(botsToSort) {
 }
 
 function rewardWins(bots) {
-  let sortedBots = _.map(bots, bot => _.extend(
-    { score: 3 * bot.wins + bot.draws }, bot
+  let sortedBots = _.map(bots, bot => (
+    { ...bot, score: 3 * bot.wins + bot.draws }
   ));
 
   sortScore(sortedBots);
@@ -25,8 +25,8 @@ function rewardWins(bots) {
 }
 
 function punishLosses(bots) {
-  let sortedBots = _.map(bots, bot => _.extend(
-    { score: 3 * bot.wins + 2 * bot.draws }, bot
+  let sortedBots = _.map(bots, bot => (
+    { ...bot, score: 3 * bot.wins + 2 * bot.draws }
   ));
 
   sortScore(sortedBots);
@@ -34,8 +34,8 @@ function punishLosses(bots) {
 }
 
 function balanced(bots) {
-  let sortedBots = _.map(bots, bot => _.extend(
-    { score: 2 * bot.wins + bot.draws }, bot
+  let sortedBots = _.map(bots, bot => (
+    { ...bot, score: 2 * bot.wins + bot.draws }
   ));
 
   sortScore(sortedBots);
@@ -44,31 +44,31 @@ function balanced(bots) {
 
 export default {
   Contest: {
-    id: ({ contest }) => contest,
+    name: ({ contest }) => contest,
     gameType: ({ game }) => game,
     games: ({ contest, game }, { filters }, { Games }) => (
       Games.load(_.extend({ contest, game }, _.omit(filters, 'contest')))
     ),
-    rankings: ({ contest, game }, { method }, { Games }) => (
-      Games.load({ contest, game }).then(gameDocuments => {
+    rankings: ({ gameType, contest }, { method }, { Games }) => (
+      Games.load({ contest, gameType }).then(gameDocuments => {
         const bots = {};
 
         gameDocuments.forEach(game => {
-          game.players.forEach(player => {
-            if (!bots[player]) bots[player] = {
-              game: game.game,
+          game.bots.forEach(bot => {
+            if (!bots[bot]) bots[bot] = {
+              gameType,
               contest,
-              bot_id: player,
+              bot,
               wins: 0,
               losses: 0,
               draws: 0,
             };
-            if (game.victor === player) {
-              bots[player].wins += 1;
+            if (game.victor === bot) {
+              bots[bot].wins += 1;
             } else if (!game.victor) {
-              bots[player].draws += 1;
+              bots[bot].draws += 1;
             } else {
-              bots[player].losses += 1;
+              bots[bot].losses += 1;
             }
           });
         });
@@ -87,12 +87,12 @@ export default {
   },
 
   ContestRanking: {
-    bot: ({ bot_id, game }, _, { Bot }) => Bot.load({ game, bot_id }),
+    bot: ({ gameType, bot }, _args, { Bot }) => Bot.load({ gameType, name: bot }),
 
-    played: ({ bot_id, contest, game }, _args, { Games }) => (
-      Games.load({ contest, game }).then(
+    played: ({ gameType, contest, bot }, _args, { Games }) => (
+      Games.load({ gameType, contest }).then(
         gameDocuments => gameDocuments.filter(
-          game => game.players.includes(bot_id)
+          game => game.bots.includes(bot)
         ).length
       )
     ),

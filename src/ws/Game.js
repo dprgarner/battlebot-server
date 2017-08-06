@@ -61,31 +61,31 @@ export default function Game(sources) {
   const props = sources.props;
 
   const gameId = createShortRandomHash();
-  const gameName = props.game;
+  const gameType = props.gameType;
   const contest = props.contest;
   const gameReducer = runGame(
-    games[gameName].validator, games[gameName].reducer
+    games[gameType].validator, games[gameType].reducer
   );
 
-  const bots = _.pluck(props.sockets, 'bot');
+  const bots = _.pluck(props.sockets, 'name');
   const startTime = new Date();
 
   const logGameStart$ = Rx.Observable.of(
     `${gameId}: ` +
-    `A game of ${gameName} has started between ${bots[0]} and ${bots[1]}.`
+    `A game of ${gameType} has started between ${bots[0]} and ${bots[1]}.`
   );
 
   const game = gameReducer(
     Rx.Observable.from(props.sockets)
-      .flatMap(({ socketId, bot }) =>
+      .flatMap(({ socketId, name }) =>
         sources.ws.filter(({ type, socketId: id }) => (
           type === INCOMING && socketId === id
         ))
         .map(({ payload }) => (
-          {...payload, bot, time: Date.now() }
+          {...payload, bot: name, time: Date.now() }
         ))
       )
-      .startWith({ state: games[gameName].createInitialState(bots) })
+      .startWith({ state: games[gameType].createInitialState(bots) })
   );
   const update$ = game.update;
   const victor$ = Victor({ props, ws: sources.ws, update: update$ }).victor;
@@ -123,7 +123,7 @@ export default function Game(sources) {
     (turns, finalState) => _.extend(
       _.pick({ contest }, _.identity),
       _.omit(finalState.state, 'complete', 'waitingFor'),
-      { _id: gameId, game: gameName, turns, startTime }
+      { _id: gameId, gameType, turns, startTime }
     )
   );
   const dbUpdate$ = saveToDatabase(finalState$);
@@ -143,16 +143,16 @@ export default function Game(sources) {
       })
     );
 
-  const logGameEnd$ = finalState$.map(({ _id, victor, game, bots, reason }) => {
+  const logGameEnd$ = finalState$.map(({ _id, victor, gameType, bots, reason }) => {
     const text = victor ?
-      `${victor} has won a game of ${game}.` :
-      `The ${game} game between ${bots[0]} and ${bots[1]} ended in a draw.`;
+      `${victor} has won a game of ${gameType}.` :
+      `The ${gameType} game between ${bots[0]} and ${bots[1]} ended in a draw.`;
     return `${_id}: ${text} (Reason: ${reason})`;
   });
 
   const wsUpdate$ = Rx.Observable.from(props.sockets)
-    .flatMap(({ bot, socketId }) => updateWithConclusion$
-      .filter(({ turn }) => (!turn || turn.valid || turn.bot === bot))
+    .flatMap(({ name, socketId }) => updateWithConclusion$
+      .filter(({ turn }) => (!turn || turn.valid || turn.bot === name))
       .map(payload => ({ type: OUTGOING, socketId, payload }))
     );
 

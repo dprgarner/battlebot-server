@@ -25,18 +25,18 @@ export default function Authenticator(sources) {
     .filter(({ type }) => type === OPEN)
     .flatMap(({ socketId }) => sources.ws
       .first(({ type, socketId: id }) => type === INCOMING && socketId === id)
-      .map(({ payload: { game, bot, password, contest }}) => ({
+      .map(({ payload: { gameType, name, password, contest }}) => ({
         type: DB_AUTHENTICATE,
         socketId,
-        game,
-        bot,
+        gameType,
+        name,
         contest,
-        gen: db => db.collection('bots').findOne({ game, name: bot, password }),
+        gen: db => db.collection('bots').findOne({ gameType, name, password }),
       }))
     );
 
   // If the client does not send an authenticate message in the timeout period,
-  // or if the bot is not found with the input hash, then the login is rejected.
+  // or if the bot is not found with the password, then the login is rejected.
   const isloginValid$ = sources.ws
     .filter(({ type }) => type === OPEN)
     .flatMap(({ socketId }) => Rx.Observable
@@ -51,9 +51,9 @@ export default function Authenticator(sources) {
           .flatMap(response$ => response$
             .map(response => {
               if (!response) return { socketId, loginValid: false };
-              const { bot, game, contest } = response$.request;
+              const { gameType, name, contest } = response$.request;
 
-              return { socketId, loginValid: true, bot, game, contest }
+              return { socketId, loginValid: true, gameType, name, contest }
             })
             .catch(() => Rx.Observable.of({ socketId, loginValid: false }))
           ),
@@ -73,10 +73,10 @@ export default function Authenticator(sources) {
   // A confirmation message is sent to successfully-connected clients.
   const wsConfirm$ = isloginValid$
     .filter(({ loginValid }) => loginValid)
-    .map(({ socketId, game, bot, contest }) => ({
+    .map(({ socketId, gameType, name, contest }) => ({
       type: OUTGOING,
       socketId,
-      payload: {authentication: 'OK', game, bot, contest },
+      payload: {authentication: 'OK', gameType, name, contest },
     }));
 
   // The output "sink" of this component is a stream of add/remove
@@ -85,10 +85,10 @@ export default function Authenticator(sources) {
   // "Add authenticated socket" events.
   const add$ = isloginValid$
     .filter(({ loginValid }) => loginValid)
-    .map(({ socketId, game, bot, contest }) => ({
+    .map(({ socketId, gameType, name, contest }) => ({
       type: ADD,
       socketId,
-      data: { game, bot, contest },
+      data: { gameType, name, contest },
     }));
 
   // Emit a "Remove authenticated socket" events when an authenticated socket
@@ -108,8 +108,8 @@ export default function Authenticator(sources) {
     wsConfirm$,
   );
 
-  const log = authenticated$.map(({ type, data: { bot, game }}) =>
-    `The ${game} bot ${bot} has ${type === ADD ? 'connected' : 'disconnected'}.`
+  const log = authenticated$.map(({ type, data: { gameType, name }}) =>
+    `The ${gameType} bot ${name} has ${type === ADD ? 'connected' : 'disconnected'}.`
   );
 
   const sinks = { ws, db: dbLookupBot$, log, sockets: authenticated$ }

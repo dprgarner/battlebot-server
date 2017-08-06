@@ -20,8 +20,8 @@ export default function Victor(sources) {
 
   const update$ = sources.update;
 
-  function otherBot(bot) {
-    return _.without(_.pluck(sockets, 'bot'), bot)[0];
+  function otherBot(name) {
+    return _.without(_.pluck(sockets, 'name'), name)[0];
   }
 
   const victor$ = Rx.Observable.of(
@@ -34,13 +34,13 @@ export default function Victor(sources) {
 
     // One bot disconnected
     ...sockets
-      .map(({ socketId, bot }) =>
+      .map(({ socketId, name }) =>
         sources.ws.filter(({ type, socketId: id }) => (
           (type === ERROR || type === CLOSE) && socketId === id
         ))
         .delay(gracePeriod)
         .mapTo({
-          victor: otherBot(bot),
+          victor: otherBot(name),
           reason: DISCONNECTED,
         })
       ),
@@ -59,14 +59,14 @@ export default function Victor(sources) {
       })),
 
     // Player repeatedly makes invalid turns
-    ...sockets.map(({ bot }) => (
+    ...sockets.map(({ name }) => (
       update$
-        .filter(({ turn }) => turn && turn.bot == bot && !turn.valid)
+        .filter(({ turn }) => turn && turn.bot == name && !turn.valid)
         .concat(Rx.Observable.never())
         .take(strikes)
         .ignoreElements()
         .concat(Rx.Observable.of({
-          victor: otherBot(bot),
+          victor: otherBot(name),
           reason: IDIOCY,
         }))
         .delay(5)
@@ -79,8 +79,8 @@ export default function Victor(sources) {
       .concat(Rx.Observable.never())
       .catch(e => Rx.Observable.empty())
       .last()
-      .map(({ state: { nextPlayer } }) => ({
-        victor: otherBot(nextPlayer),
+      .map(({ state: { waitingFor } }) => ({
+        victor: otherBot(waitingFor[0]),
         reason: TIMEOUT,
       }))
   )
