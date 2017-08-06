@@ -34,13 +34,16 @@ describe('end-to-end tests', function() {
     const isWin = /^win/.test(process.platform);
     const babelFile = isWin ? 'babel.cmd': 'babel';
 
-    this.babel = spawn(path.join('node_modules', '.bin', babelFile), [
-      'src',
-      '--out-dir', 'build',
-      '--ignore', 'test.js',
-      '--copy-files',
-      '--source-maps', 'inline',
-    ]);
+    this.babel = spawn(
+      path.join(__dirname, '..', 'node_modules', '.bin', babelFile),
+      [
+        'src',
+        '--out-dir', 'build',
+        '--ignore', 'test.js',
+        '--copy-files',
+        '--source-maps', 'inline',
+      ]
+    );
 
     this.babel.once('close', (code) => {
       if (code) return done(code);
@@ -52,7 +55,7 @@ describe('end-to-end tests', function() {
     this.timeout(3000);
     this.server = spawn(
       'node',
-      [path.join('build', 'index.js')],
+      [path.join(__dirname, '..', 'build', 'index.js')],
       { env: _.extend({}, process.env, {
         MONGODB_URI: 'mongodb://localhost:27017/test_db',
         PORT: 4444,
