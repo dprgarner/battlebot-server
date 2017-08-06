@@ -45,7 +45,6 @@ function balanced(bots) {
 export default {
   Contest: {
     name: ({ contest }) => contest,
-    gameType: ({ game }) => game,
     games: ({ contest, game }, { filters }, { Games }) => (
       Games.load(_.extend({ contest, game }, _.omit(filters, 'contest')))
     ),
