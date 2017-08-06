@@ -1,15 +1,15 @@
 import express from 'express';
 
-import addApi from './api';
 import addStaticRoutes from './static';
 import ClientError from './error';
+import graphQLEndpoint from './graphql';
 
 export default function createHttpServer(port) {
   const app = express();
   app.set('port', port);
 
   addStaticRoutes(app);
-  addApi(app);
+  app.use('/graphql', graphQLEndpoint);
 
   app.use((err, req, res, next) => {
     console.error(err);

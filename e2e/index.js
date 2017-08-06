@@ -99,7 +99,7 @@ describe('end-to-end tests', function() {
     this.mongod.kill();
   });
 
-  describe.only('registering bots', function() {
+  describe('registering bots', function() {
     function graphql(query, resolveWithFullResponse) {
       return rp({
         method: 'POST',
