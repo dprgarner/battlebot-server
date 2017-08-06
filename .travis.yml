@@ -1,6 +1,14 @@
 language: node_js
 node_js:
  - "7"
+
+services:
+  - mongodb
+# Mongo takes some time to start up.
+before_script:
+- sleep 15
+
 script:
  - npm test
+ - npm run e2e
  - npm run codecov
