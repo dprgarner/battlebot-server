@@ -6,12 +6,12 @@ const gameTypes = ['noughtsandcrosses'];
 
 const baseGameResolver = {
   id: ({ _id }) => _id,
+
   bots: ({ gameType, bots }, _, { Bot }) => (
     Bot.loadMany(bots.map(name => ({ gameType, name })))
   ),
-  victor: ({ gameType, victor }, _, { Bot }) => (
-    victor && Bot.load({ gameType, name: victor })
-  ),
+
+  result: ({ gameType, result }) => (result && _.extend({ gameType }, result)),
 };
 
 const resolvers = {
@@ -44,6 +44,12 @@ const resolvers = {
       if (gameType === 'noughtsandcrosses') return 'NoughtsAndCrosses';
       return null;
     },
+  },
+
+  Result: {
+    victor: ({ gameType, victor }, _, { Bot }) => (
+      victor && Bot.load({ gameType, name: victor })
+    ),
   },
 
   NoughtsAndCrosses: baseGameResolver,

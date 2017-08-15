@@ -3,7 +3,7 @@ import * as noughtsAndCrosses from './noughtsandcrosses';
 const midGameState = {
   bots: ['botA', 'botB'],
   waitingFor: ['botB'],
-  complete: false,
+  result: null,
   board: [
       ['', '', 'X'],
       ['', 'X', ''],
@@ -18,7 +18,7 @@ const midGameState = {
 const endGameState = {
   bots: ['botA', 'botB'],
   waitingFor: ['botA'],
-  complete: false,
+  result: null,
   board: [
       ['O', '', 'X'],
       ['X', 'X', 'O'],
@@ -133,17 +133,15 @@ describe('Noughts and Crosses', () => {
       expect(newState.waitingFor).toEqual(['botA']);
     });
 
-    it('sets complete to false', () => {
+    it('leaves result as falsy', () => {
       const newState = noughtsAndCrosses.reducer(
         midGameState,
         { space: [2, 0], mark: 'O', name: 'botB' }
       );
-      expect(newState.complete).toBeFalsy();
-      expect(newState.victor).toBeFalsy();
-      expect(newState.reason).toBeFalsy();
+      expect(newState.result).toBeFalsy();
     });
 
-    it('sets complete to true if a bot wins', () => {
+    it('sets result if a bot wins', () => {
       const newState = noughtsAndCrosses.reducer(
         noughtsAndCrosses.reducer(
           midGameState,
@@ -151,19 +149,19 @@ describe('Noughts and Crosses', () => {
         ),
         { space: [2, 0], mark: 'X', name: 'botA' }
       );
-      expect(newState.complete).toBeTruthy();
-      expect(newState.victor).toEqual('botA');
-      expect(newState.reason).toEqual('complete');
+      expect(newState.result).toBeTruthy();
+      expect(newState.result.victor).toEqual('botA');
+      expect(newState.result.reason).toEqual('complete');
     });
 
-    it('sets complete to true when it is a draw', () => {
+    it('sets result when it is a draw', () => {
       const newState = noughtsAndCrosses.reducer(
         endGameState,
         { space: [0, 1], mark: 'X', name: 'botA' }
       );
-      expect(newState.complete).toBeTruthy();
-      expect(newState.victor).toEqual(null);
-      expect(newState.reason).toEqual('complete');
+      expect(newState.result).toBeTruthy();
+      expect(newState.result.victor).toEqual(null);
+      expect(newState.result.reason).toEqual('complete');
     });
   });
 

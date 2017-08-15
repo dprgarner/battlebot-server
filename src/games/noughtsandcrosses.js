@@ -13,7 +13,7 @@ export function createInitialState(bots) {
       O: bots[1],
     },
     waitingFor: [bots[0]],
-    complete: false,
+    result: null,
   };
 }
 
@@ -59,20 +59,14 @@ export function reducer({ bots, board, marks }, turn) {
   newBoard[turn.space[0]][turn.space[1]] = turn.mark;
 
   const winningPiece = getVictor(newBoard);
-  let victor, reason;
-  let complete = false;
-
+  let result = null;
   let waitingFor = [nextPlayer];
 
   if (winningPiece) {
-    if (winningPiece === -1) {
-      victor = null;
-    } else {
-      victor = marks[winningPiece];
-    }
-    reason = 'complete';
-    complete = true;
+    const victor = (winningPiece === -1) ? null : marks[winningPiece];
+    const reason = 'complete';
     waitingFor = [];
+    result = { reason, victor };
   }
 
   return {
@@ -80,8 +74,6 @@ export function reducer({ bots, board, marks }, turn) {
     marks,
     bots,
     waitingFor,
-    complete,
-    victor,
-    reason,
+    result,
   };
 }

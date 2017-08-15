@@ -212,6 +212,7 @@ docker-compose up
 
 - Keep writing them tests
 - Find a way to incorporate "Victor" logic into noughtsandcrosses.js without making it ridiculously complex
+- Perhaps move "victor" and "reason" into a nested GraphQL object "result", and remove "complete"
 
 Next game:
 - Create an out-stream for spectator updates

@@ -42,9 +42,9 @@ function runGame(validator, reducer) {
 
 function addLastTurn(update$) {
   return update$
-    .takeWhile(({ state: { complete } }) => !complete)
+    .takeWhile(({ state: { result } }) => !result)
     .concat(update$
-      .skipWhile(({ state: { complete } }) => !complete)
+      .skipWhile(({ state: { result } }) => !result)
       .take(1)
     );
 }
@@ -94,15 +94,10 @@ export default function Game(sources) {
   const updateWithConclusion$ = update$
     .takeUntil(victor$)
     .concat(victor$
-      .withLatestFrom(update$, ({ victor, reason }, finalUpdate) => {
-        if (finalUpdate.state.complete) return;
+      .withLatestFrom(update$, (result, finalUpdate) => {
+        if (finalUpdate.state.result) return;
         return {
-          state: {
-            ...finalUpdate.state,
-            complete: true,
-            victor,
-            reason,
-          },
+          state: { ...finalUpdate.state, result },
         };
       })
       .filter(x => x)
@@ -122,7 +117,7 @@ export default function Game(sources) {
 
     (turns, finalState) => _.extend(
       _.pick({ contest }, _.identity),
-      _.omit(finalState.state, 'complete', 'waitingFor'),
+      _.omit(finalState.state, 'waitingFor'),
       { _id: gameId, gameType, turns, startTime }
     )
   );
@@ -143,7 +138,8 @@ export default function Game(sources) {
       })
     );
 
-  const logGameEnd$ = finalState$.map(({ _id, victor, gameType, bots, reason }) => {
+  const logGameEnd$ = finalState$.map((state) => {
+    const { _id, gameType, bots, result: { victor, reason } } = state;
     const text = victor ?
       `${victor} has won a game of ${gameType}.` :
       `The ${gameType} game between ${bots[0]} and ${bots[1]} ended in a draw.`;

@@ -27,10 +27,8 @@ export default function Victor(sources) {
   const victor$ = Rx.Observable.of(
     // Game concluded normally (or abnormally)
     update$
-      .filter(({ state: { complete } }) => complete)
-      .map(({ state: { victor, reason } }) => (
-        { victor, reason: reason || COMPLETE }
-      )),
+      .filter(({ state: { result } }) => result)
+      .map(({ state: { result } }) => result),
 
     // One bot disconnected
     ...sockets

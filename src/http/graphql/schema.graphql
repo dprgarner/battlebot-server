@@ -92,9 +92,6 @@ input GameInput {
   # The maximum number of results to return.
   limit: Int
 
-  # Filter to games with this victor. Accepts "null" for draws.
-  victor: ID
-
   # Filter to games in this contest.
   contest: ID
 
@@ -105,23 +102,32 @@ input GameInput {
   bots: [ID]
 }
 
+# The result of a completed game. Defaults to null if the game is not
+# complete.
+type Result {
+  # The winner of the game.
+  victor: Bot
+
+  # The reason that the game ended.
+  reason: String!
+}
+
 union Game = NoughtsAndCrosses
 
 # A completed game of Noughts and Crosses.
 type NoughtsAndCrosses {
   id: ID!
 
-  gameType: GameType!
-
   bots: [Bot]!
 
-  victor: Bot
+  gameType: GameType!
 
   # The contest that this game was played in, if any.
   contest: ID
 
-  # The reason that the game ended.
-  reason: String!
+  # The result of a completed game. Defaults to null if the game is not
+  # complete.
+  result: Result
 
   # The final layout of the board. The outer array is an array of 
   # rows, the inner array is an array of columns.

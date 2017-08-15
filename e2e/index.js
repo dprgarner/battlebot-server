@@ -17,7 +17,7 @@ describe('end-to-end tests', function() {
   this.timeout(5000);
 
   function log(msg) {
-    if (process.env.LOG) console.log(msg);
+    if ((process.env.LOG || '').trim()) console.log(msg);
   }
 
   before(function(done) {
@@ -304,7 +304,7 @@ describe('end-to-end tests', function() {
       );
       log(ply1);
       expect(ply1.turn.valid).to.be.ok;
-      expect(ply1.state.victor).to.not.be.ok;
+      expect(ply1.state.result).to.not.be.ok;
 
       await waitFor(50);
       const ply2 = await sendWithResponse(
@@ -312,14 +312,14 @@ describe('end-to-end tests', function() {
       );
       log(ply2.state.board);
       expect(ply2.turn.valid).to.be.ok;
-      expect(ply2.state.victor).to.not.be.ok;
+      expect(ply2.state.result).to.not.be.ok;
 
       await waitFor(50);
       const ply3 = await sendWithResponse(
         sockets.BotOne, { mark: 'X', space: [1, 0] }
       );
       expect(ply3.turn.valid).to.be.ok;
-      expect(ply3.state.victor).to.not.be.ok;
+      expect(ply3.state.result).to.not.be.ok;
       log(ply3.state.board);
 
       await waitFor(50);
@@ -327,7 +327,7 @@ describe('end-to-end tests', function() {
         sockets.BotTwo, { mark: 'O', space: [0, 2] }
       );
       expect(ply4.turn.valid).to.be.ok;
-      expect(ply4.state.victor).to.not.be.ok;
+      expect(ply4.state.result).to.not.be.ok;
       log(ply4.state.board);
 
       await waitFor(50);
@@ -335,7 +335,8 @@ describe('end-to-end tests', function() {
         sockets.BotOne, { mark: 'X', space: [2, 0] }
       );
       expect(ply5.turn.valid).to.be.ok;
-      expect(ply5.state.victor).to.equal('BotOne');
+      expect(ply5.state.result).to.be.ok;
+      expect(ply5.state.result.victor).to.equal('BotOne');
       log(ply5.state.board);
 
       await waitFor(100);
@@ -345,7 +346,7 @@ describe('end-to-end tests', function() {
           .then((game) => {
             expect(game).to.be.ok;
             expect(game.bots).to.deep.equal(['BotOne', 'BotTwo']);
-            expect(game.reason).to.equal('complete');
+            expect(game.result.reason).to.equal('complete');
           })
           .then(() => db.close())
           .catch(err => db.close().then(() => { console.error(err); throw err; }))
@@ -366,7 +367,7 @@ describe('end-to-end tests', function() {
         sockets.BotTwo, { mark: 'X', space: [0, 0] }
       );
       expect(attempt1.turn.valid).to.not.be.ok;
-      expect(attempt1.state.victor).to.not.be.ok;
+      expect(attempt1.state.result).to.not.be.ok;
       log(attempt1.turn);
 
       await waitFor(50);
@@ -376,7 +377,7 @@ describe('end-to-end tests', function() {
       );
       expect(attempt2.turn.valid).to.not.be.ok;
       expect(attempt2.turn.space).to.deep.equal([-1, 1]);
-      expect(attempt2.state.victor).to.not.be.ok;
+      expect(attempt2.state.result).to.not.be.ok;
       log(attempt2.turn);
 
       await waitFor(50);
@@ -385,7 +386,7 @@ describe('end-to-end tests', function() {
         sockets.BotOne, { mark: 'X', space: [0, 0] }
       );
       expect(ply.turn.valid).to.be.ok;
-      expect(ply.state.victor).to.not.be.ok;
+      expect(ply.state.result).to.not.be.ok;
       log(ply.turn);
 
       await waitFor(50);
@@ -395,7 +396,7 @@ describe('end-to-end tests', function() {
       );
       expect(attempt3.turn.valid).to.not.be.ok;
       expect(attempt3.turn.space).to.deep.equal([0, 0]);
-      expect(attempt3.state.victor).to.not.be.ok;
+      expect(attempt3.state.result).to.not.be.ok;
       log(attempt3.turn);
     });
 
@@ -416,15 +417,15 @@ describe('end-to-end tests', function() {
           .then((game) => {
             expect(game).to.be.ok;
             expect(game.bots).to.deep.equal(['BotOne', 'BotTwo']);
-            expect(game.victor).to.equal('BotOne');
-            expect(game.reason).to.equal('disconnect');
+            expect(game.result.victor).to.equal('BotOne');
+            expect(game.result.reason).to.equal('disconnect');
           })
           .then(() => db.close())
           .catch(err => db.close().then(() => { console.error(err); throw err; }))
         );
     });
 
-    it('rules against a bot which times out', async function () {
+    it.only('rules against a bot which times out', async function () {
       this.timeout(6000);
       const TIMEOUT = 5000;
       const sockets = await authenticateBots();
@@ -438,7 +439,7 @@ describe('end-to-end tests', function() {
         sockets.BotOne, { mark: 'X', space: [0, 0] }
       );
       expect(ply.turn.valid).to.be.ok;
-      expect(ply.state.victor).to.not.be.ok;
+      expect(ply.state.result).to.not.be.ok;
       log(ply.state.board);
 
       await waitFor(TIMEOUT + 50);
@@ -448,8 +449,8 @@ describe('end-to-end tests', function() {
           .then((game) => {
             expect(game).to.be.ok;
             expect(game.bots).to.deep.equal(['BotOne', 'BotTwo']);
-            expect(game.victor).to.equal('BotOne');
-            expect(game.reason).to.equal('timeout');
+            expect(game.result.victor).to.equal('BotOne');
+            expect(game.result.reason).to.equal('timeout');
           })
           .then(() => db.close())
           .catch(err => db.close().then(() => { console.error(err); throw err; }))
@@ -474,8 +475,8 @@ describe('end-to-end tests', function() {
           .then((game) => {
             expect(game).to.be.ok;
             expect(game.bots).to.deep.equal(['BotOne', 'BotTwo']);
-            expect(game.victor).to.not.be.ok;
-            expect(game.reason).to.equal('disconnect');
+            expect(game.result.victor).to.not.be.ok;
+            expect(game.result.reason).to.equal('disconnect');
           })
           .then(() => db.close())
           .catch(err => db.close().then(() => { console.error(err); throw err; }))
@@ -498,11 +499,11 @@ describe('end-to-end tests', function() {
         );
         log(attempt.turn);
         expect(attempt.turn.valid).to.not.be.ok;
-        expect(attempt.state.complete).to.equal(false);
+        expect(attempt.state.result).to.not.be.ok;
       }
 
       const update = await waitForMessage(sockets.BotTwo);
-      expect(update.state.victor).to.equal('BotOne');
+      expect(update.state.result.victor).to.equal('BotOne');
     });
   });
 });
