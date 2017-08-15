@@ -51,7 +51,7 @@ export function getVictor(board) {
 }
 
 export function reducer({ bots, board, marks }, turn) {
-  // Must return a state object with { bots, nextPlayer, complete }.
+  // Must return a state object with { bots, waitingFor=[], result=null }.
   const nextPlayer = _.without(bots, turn.name)[0];
 
   const newBoard = [...board];
@@ -70,9 +70,9 @@ export function reducer({ bots, board, marks }, turn) {
   }
 
   return {
+    bots,
     board: newBoard,
     marks,
-    bots,
     waitingFor,
     result,
   };

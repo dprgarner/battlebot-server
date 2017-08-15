@@ -9,7 +9,7 @@ const TIMEOUT = 'timeout';
 const IDIOCY = "Didn't write unit tests";
 
 export default function Victor(sources) {
-  // Create a stream which emits a single item when a winner is decided. 
+  // Create a stream which emits a single item when a game concludes. 
   // The winner can be determined by the game finishing (normally or
   // abnormally), by timeout, disconnection, or by a bot repeatedly making
   // invalid turns.
@@ -31,8 +31,7 @@ export default function Victor(sources) {
       .map(({ state: { result } }) => result),
 
     // One bot disconnected
-    ...sockets
-      .map(({ socketId, name }) =>
+    ...sockets.map(({ socketId, name }) =>
         sources.ws.filter(({ type, socketId: id }) => (
           (type === ERROR || type === CLOSE) && socketId === id
         ))
@@ -57,7 +56,7 @@ export default function Victor(sources) {
       })),
 
     // Player repeatedly makes invalid turns
-    ...sockets.map(({ name }) => (
+    ...sockets.map(({ name }) =>
       update$
         .filter(({ turn }) => turn && turn.name == name && !turn.valid)
         .concat(Rx.Observable.never())
@@ -68,7 +67,7 @@ export default function Victor(sources) {
           reason: IDIOCY,
         }))
         .delay(5)
-    )),
+    ),
 
     // The next bot fails to make a valid move within the timeout period
     update$

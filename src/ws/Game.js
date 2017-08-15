@@ -88,12 +88,14 @@ export default function Game(sources) {
       .startWith({ state: games[gameType].createInitialState(bots) })
   );
   const update$ = game.update;
+  // TODO clean up all the game-ending stuff :(
   const victor$ = Victor({ props, ws: sources.ws, update: update$ }).victor;
 
   // Create a final update of the game if the game ends in an exceptional way
   const updateWithConclusion$ = update$
     .takeUntil(victor$)
-    .concat(victor$
+    .concat(
+      victor$
       .withLatestFrom(update$, (result, finalUpdate) => {
         if (finalUpdate.state.result) return;
         return {
@@ -104,6 +106,8 @@ export default function Game(sources) {
     );
 
   // Save completed game to database
+  // TODO extract out a function for collating the relevant turns from the
+  // game record?
   const finalState$ = Rx.Observable.zip(
     updateWithConclusion$
       .filter(update => update.turn && update.turn.valid)
@@ -154,8 +158,9 @@ export default function Game(sources) {
 
   const wsClose$ = finalState$.ignoreElements()
     .delay(10)
-    .concat(Rx.Observable.from(props.sockets)
-      .map(({ socketId }) => ({ type: CLOSE, socketId }))
+    .concat(
+      Rx.Observable.from(props.sockets)
+        .map(({ socketId }) => ({ type: CLOSE, socketId }))
     );
 
   return {
