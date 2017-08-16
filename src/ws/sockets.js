@@ -7,11 +7,11 @@ import { adapt } from '@cycle/run/lib/adapt';
 
 import { createRandomHash } from '../hash';
 
-export const OPEN = 'open';
-export const INCOMING = 'incoming';
-export const OUTGOING = 'outgoing';
-export const CLOSE = 'close';
-export const ERROR = 'error';
+export const OPEN = 'socket_open';
+export const INCOMING = 'socket_incoming';
+export const OUTGOING = 'socket_outgoing';
+export const CLOSE = 'socket_close';
+export const ERROR = 'socket_error';
 
 export function wsObserver(ws) {
   // An observer for outgoing JSON messages to the socket.

@@ -425,7 +425,7 @@ describe('end-to-end tests', function() {
         );
     });
 
-    it.only('rules against a bot which times out', async function () {
+    it('rules against a bot which times out', async function () {
       this.timeout(6000);
       const TIMEOUT = 5000;
       const sockets = await authenticateBots();
