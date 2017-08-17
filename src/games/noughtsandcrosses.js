@@ -79,20 +79,21 @@ function innerReducer({ bots, board, marks }, turn) {
   };
 }
 
-export function reducer({ state: oldState }, turn) {
+export function reducer({ state }, turn) {
   let valid = false;
-  let state = oldState;
   let log = null;
+  let out = [turn.name];
   try {
-    valid = validator(oldState, turn);
+    valid = validator(state, turn);
   } catch (e) {
     log = e.message;
   }
   if (valid) {
-    state = innerReducer(oldState, turn);
+    out = state.bots;
+    state = innerReducer(state, turn);
   }
-  turn.valid = valid;
-  return { state, turn, log };
+  turn = { ...turn, valid };
+  return { state, turn, log, out };
 }
 
 export function dbRecord(props) {

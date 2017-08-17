@@ -34,7 +34,10 @@ export default function Game(sources) {
     );
 
   const game = incoming$
-    .startWith({ state: games[gameType].createInitialState(botNames) })
+    .startWith({
+      state: games[gameType].createInitialState(botNames),
+      out: botNames,
+    })
     .scan(games[gameType].reducer)
     .shareReplay();
 
@@ -42,8 +45,9 @@ export default function Game(sources) {
   // This update stream misses off the final update if the game ends in an
   // exceptional way.
   const updateWithoutConclusion$ = game
-    .map(({ state, turn }) => ({ state, turn }));
+    .map(({ state, turn, out }) => ({ state, turn, out }));
   const victor$ = Victor({ props, ws: sources.ws, update: updateWithoutConclusion$ }).victor;
+
   const update$ = updateWithoutConclusion$
     .takeUntil(victor$)
     .concat(
@@ -52,9 +56,25 @@ export default function Game(sources) {
         if (finalUpdate.state.result) return;
         return {
           state: { ...finalUpdate.state, result },
+          out: botNames,
         };
       })
       .filter(x => x)
+    );
+
+  const wsUpdate$ = Rx.Observable.from(props.sockets)
+    .flatMap(({ name, socketId }) => update$
+      .filter(({ out }) => out.includes(name))
+      .map(payload => (
+        { type: OUTGOING, socketId, payload: _.omit(payload, 'out') }
+      ))
+    );
+
+  const wsClose$ = update$.ignoreElements()
+    .delay(10)
+    .concat(
+      Rx.Observable.from(props.sockets)
+        .map(({ socketId }) => ({ type: CLOSE, socketId }))
     );
 
   const dbUpdate$ = games[gameType].dbRecord(
@@ -87,19 +107,6 @@ export default function Game(sources) {
       `A ${gameType} game has ended in a draw`;
     return `${gameId}: ${text}. Bots: ${botNames.join(', ')} (Reason: ${reason})`;
   });
-
-  const wsUpdate$ = Rx.Observable.from(props.sockets)
-    .flatMap(({ name, socketId }) => update$
-      .filter(({ turn }) => (!turn || turn.valid || turn.name === name))
-      .map(payload => ({ type: OUTGOING, socketId, payload }))
-    );
-
-  const wsClose$ = update$.ignoreElements()
-    .delay(10)
-    .concat(
-      Rx.Observable.from(props.sockets)
-        .map(({ socketId }) => ({ type: CLOSE, socketId }))
-    );
 
   return {
     complete: Rx.Observable.merge(
