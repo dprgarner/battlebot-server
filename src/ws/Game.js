@@ -8,6 +8,14 @@ import { createShortRandomHash } from '../hash';
 
 const DB_SAVEGAME = 'savegame';
 
+function takeWhileInclusive(predicate) {
+  // Returns the stream until the predicate becomes false, and the first false
+  // result.
+  return src$ => src$
+    .takeWhile(predicate)
+    .concat(src$.first(x => !predicate(x)));
+}
+
 export default function Game(sources) {
   const props = sources.props;
 
@@ -41,32 +49,33 @@ export default function Game(sources) {
     .scan(games[gameType].reducer)
     .shareReplay();
 
-  // TODO clean up all the game-ending stuff :(
-  // This update stream misses off the final update if the game ends in an
-  // exceptional way.
-  const updateWithoutConclusion$ = game
-    .map(({ state, turn, out }) => ({ state, turn, out }));
-  const victor$ = Victor({ props, ws: sources.ws, update: updateWithoutConclusion$ }).victor;
+  // TODO fix timeouts and invalid move botches
+  const update$ = game
+    .let(takeWhileInclusive(({ state: { result } }) => !result));
 
-  const update$ = updateWithoutConclusion$
-    .takeUntil(victor$)
-    .concat(
-      victor$
-      .withLatestFrom(updateWithoutConclusion$, (result, finalUpdate) => {
-        if (finalUpdate.state.result) return;
-        return {
-          state: { ...finalUpdate.state, result },
-          out: botNames,
-        };
-      })
-      .filter(x => x)
-    );
+  // const updateWithoutConclusion$ = game
+  //   .map(({ state, turn, out }) => ({ state, turn, out }));
+  // const victor$ = Victor({ props, ws: sources.ws, update: updateWithoutConclusion$ }).victor;
+
+  // const update$ = updateWithoutConclusion$
+  //   .takeUntil(victor$)
+  //   .concat(
+  //     victor$
+  //     .withLatestFrom(updateWithoutConclusion$, (result, finalUpdate) => {
+  //       if (finalUpdate.state.result) return;
+  //       return {
+  //         state: { ...finalUpdate.state, result },
+  //         out: botNames,
+  //       };
+  //     })
+  //     .filter(x => x)
+  //   );
 
   const wsUpdate$ = Rx.Observable.from(props.sockets)
     .flatMap(({ name, socketId }) => update$
       .filter(({ out }) => out.includes(name))
       .map(payload => (
-        { type: OUTGOING, socketId, payload: _.omit(payload, 'out') }
+        { type: OUTGOING, socketId, payload: _.pick(payload, 'state', 'turn') }
       ))
     );
 

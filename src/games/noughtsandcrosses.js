@@ -15,6 +15,7 @@ export function createInitialState(bots) {
     },
     waitingFor: [bots[0]],
     result: null,
+    invalidTurns: { [bots[0]]: 0, [bots[1]]: 0 },
   };
 }
 
@@ -51,7 +52,7 @@ export function validator(state, turn) {
   return true;
 }
 
-function innerReducer({ bots, board, marks }, turn) {
+function innerReducer({ bots, board, marks, invalidTurns }, turn) {
   // Must return a state object with { bots, waitingFor=[], result=null }.
   const nextPlayer = _.without(bots, turn.name)[0];
 
@@ -76,13 +77,20 @@ function innerReducer({ bots, board, marks }, turn) {
     marks,
     waitingFor,
     result,
+    invalidTurns,
   };
+}
+
+const MAX_STRIKES = 3;
+
+function otherBot(bots, name) {
+  return bots[0] === name ? bots[1] : bots[0];
 }
 
 export function reducer({ state }, turn) {
   let valid = false;
   let log = null;
-  let out = [turn.name];
+  let out;
   try {
     valid = validator(state, turn);
   } catch (e) {
@@ -91,8 +99,19 @@ export function reducer({ state }, turn) {
   if (valid) {
     out = state.bots;
     state = innerReducer(state, turn);
+  } else {
+    out = [turn.name];
+    state.invalidTurns[turn.name] += 1;
+    if (state.invalidTurns[turn.name] === MAX_STRIKES) {
+      const victor = otherBot(state.bots, turn.name);
+      const reason = 'idiocy';
+      const result = { reason, victor };
+      state = { ...state, waitingFor: [], result };
+      out = state.bots;
+    }
   }
   turn = { ...turn, valid };
+
   return { state, turn, log, out };
 }
 
