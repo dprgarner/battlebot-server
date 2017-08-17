@@ -51,7 +51,7 @@ export function validator(state, turn) {
   return true;
 }
 
-export function reducer({ bots, board, marks }, turn) {
+function innerReducer({ bots, board, marks }, turn) {
   // Must return a state object with { bots, waitingFor=[], result=null }.
   const nextPlayer = _.without(bots, turn.name)[0];
 
@@ -77,6 +77,22 @@ export function reducer({ bots, board, marks }, turn) {
     waitingFor,
     result,
   };
+}
+
+export function reducer({ state: oldState }, turn) {
+  let valid = false;
+  let state = oldState;
+  let log = null;
+  try {
+    valid = validator(oldState, turn);
+  } catch (e) {
+    log = e.message;
+  }
+  if (valid) {
+    state = innerReducer(oldState, turn);
+  }
+  turn.valid = valid;
+  return { state, turn, log };
 }
 
 export function dbRecord(props) {
