@@ -235,7 +235,7 @@ describe('end-to-end tests', function() {
     });
   });
 
-  describe.only('playing games', function() {
+  describe('playing games', function() {
     function waitForOpen(ws) {
       return new Promise((resolve, reject) => {
         ws.once('open', () => resolve(ws));
@@ -404,8 +404,7 @@ describe('end-to-end tests', function() {
       log(attempt3.turn);
     });
 
-    it.skip('rules against a bot which disconnects', async () => {
-      const GRACE_PERIOD = 500;
+    it('rules against a bot which disconnects', async () => {
       const sockets = await authenticateBots();
 
       await Promise.all([
@@ -414,7 +413,7 @@ describe('end-to-end tests', function() {
       ]);
 
       sockets.BotTwo.close();
-      await waitFor(GRACE_PERIOD + 50);
+      await waitFor(50);
 
       return MongoClientPromise.connect('mongodb://localhost:27017/test_db')
         .then(db => db.collection('games').findOne({})
@@ -429,7 +428,7 @@ describe('end-to-end tests', function() {
         );
     });
 
-    it.skip('rules against a bot which times out', async function () {
+    it('rules against a bot which times out', async function () {
       this.timeout(6000);
       const TIMEOUT = 5000;
       const sockets = await authenticateBots();
@@ -455,33 +454,6 @@ describe('end-to-end tests', function() {
             expect(game.bots).to.deep.equal(['BotOne', 'BotTwo']);
             expect(game.result.victor).to.equal('BotOne');
             expect(game.result.reason).to.equal('timeout');
-          })
-          .then(() => db.close())
-          .catch(err => db.close().then(() => { console.error(err); throw err; }))
-        );
-    });
-
-    it.skip('records a draw if both bots disconnect', async () => {
-      // Remove this test?
-      const GRACE_PERIOD = 500;
-      const sockets = await authenticateBots();
-
-      await Promise.all([
-        waitForMessage(sockets.BotOne),
-        waitForMessage(sockets.BotTwo),
-      ]);
-
-      sockets.BotOne.close();
-      sockets.BotTwo.close();
-      await waitFor(GRACE_PERIOD + 50);
-
-      return MongoClientPromise.connect('mongodb://localhost:27017/test_db')
-        .then(db => db.collection('games').findOne({})
-          .then((game) => {
-            expect(game).to.be.ok;
-            expect(game.bots).to.deep.equal(['BotOne', 'BotTwo']);
-            expect(game.result.victor).to.not.be.ok;
-            expect(game.result.reason).to.equal('disconnect');
           })
           .then(() => db.close())
           .catch(err => db.close().then(() => { console.error(err); throw err; }))

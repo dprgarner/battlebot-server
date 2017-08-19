@@ -1,7 +1,7 @@
 import _ from 'underscore';
 import Rx from 'rxjs';
 
-import { UPDATE_TURN } from '../ws/Game';
+import { UPDATE_TURN, DISCONNECT } from '../ws/Game';
 const TIMEOUT = 'timeout';
 
 export function createInitialState(bots) {
@@ -98,9 +98,9 @@ function otherBot(bots, name) {
 export function reducer({ state }, turn) {
   let out;
 
-  if (turn.type === TIMEOUT) {
+  if (turn.type === TIMEOUT || turn.type === DISCONNECT) {
     const victor = otherBot(state.bots, turn.name);
-    const reason = 'timeout';
+    const reason = turn.type === TIMEOUT ? 'timeout' : 'disconnect';
     const result = { reason, victor };
     state = { ...state, waitingFor: [], result };
     out = state.bots;
