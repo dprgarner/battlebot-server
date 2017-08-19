@@ -235,7 +235,7 @@ describe('end-to-end tests', function() {
     });
   });
 
-  describe('playing games', function() {
+  describe.only('playing games', function() {
     function waitForOpen(ws) {
       return new Promise((resolve, reject) => {
         ws.once('open', () => resolve(ws));

@@ -1,7 +1,6 @@
 import _ from 'underscore';
 import Rx from 'rxjs';
 
-import Victor from './Victor';
 import games from '../games';
 import makeWsDriver, { CLOSE, ERROR, INCOMING, OUTGOING }  from './sockets';
 import { createShortRandomHash } from '../hash';
@@ -36,20 +35,21 @@ export default function Game(sources) {
 
   const botUpdate$ = Rx.Observable.from(props.sockets)
     .flatMap(({ socketId, name }) =>
-      sources.ws.filter(({ socketId: id }) => (socketId === id))
-      .map((update) => {
-        if (update.type === INCOMING) {
-          return {
-            ...update.payload,
-            name,
-            time: Date.now(),
-            type: UPDATE_TURN,
-          };
-        }
-        if (update.type === CLOSE || update.type === ERROR) {
-          return { name, type: DISCONNECT };
-        }
-      })
+      sources.ws
+        .filter(({ socketId: id }) => (socketId === id))
+        .map((update) => {
+          if (update.type === INCOMING) {
+            return {
+              ...update.payload,
+              name,
+              time: Date.now(),
+              type: UPDATE_TURN,
+            };
+          }
+          if (update.type === CLOSE || update.type === ERROR) {
+            return { name, type: DISCONNECT };
+          }
+        })
     );
 
   // TODO
@@ -85,20 +85,24 @@ export default function Game(sources) {
       ))
     );
 
-  const wsClose$ = update$.ignoreElements()
+  const wsClose$ = update$
+    .ignoreElements()
     .delay(10)
     .concat(
       Rx.Observable.from(props.sockets)
         .map(({ socketId }) => ({ type: CLOSE, socketId }))
     );
 
-  const dbUpdate$ = games[gameType].dbRecord(
-    { update$, gameId, startTime, contest }
-  ).map(gameRecord => ({
-    type: DB_SAVEGAME,
-    id: gameRecord._id,
-    gen: db => db.collection('games').insertOne(gameRecord),
-  }));
+  const dbUpdate$ = update$
+    .last()
+    .map(({ state }) => games[gameType].getDbRecord(
+      { state, gameId, startTime, contest }
+    ))
+    .map(gameRecord => ({
+      type: DB_SAVEGAME,
+      id: gameRecord._id,
+      gen: db => db.collection('games').insertOne(gameRecord),
+    }));
 
   const logDbSuccess$ = sources.db
     .first(({ request: { type, id } }) => (

@@ -19,6 +19,7 @@ export function createInitialState(bots) {
     waitingFor: [bots[0]],
     result: null,
     invalidTurns: { [bots[0]]: 0, [bots[1]]: 0 },
+    turns: [],
   };
 }
 
@@ -60,33 +61,28 @@ export function validator(state, turn) {
   return true;
 }
 
-export function innerReducer({ bots, board, marks, invalidTurns }, turn) {
+export function validTurnReducer(state, turn) {
   // Must return a state object with { bots, waitingFor=[], result=null }.
-  const nextPlayer = _.without(bots, turn.name)[0];
+  const nextPlayer = _.without(state.bots, turn.name)[0];
 
-  const newBoard = [...board];
-  newBoard[turn.space[0]] = [...board[turn.space[0]]];
-  newBoard[turn.space[0]][turn.space[1]] = turn.mark;
+  const board = [...state.board];
+  board[turn.space[0]] = [...state.board[turn.space[0]]];
+  board[turn.space[0]][turn.space[1]] = turn.mark;
 
-  const winningPiece = getVictor(newBoard);
+  const winningPiece = getVictor(board);
   let result = null;
   let waitingFor = [nextPlayer];
 
   if (winningPiece) {
-    const victor = (winningPiece === -1) ? null : marks[winningPiece];
+    const victor = (winningPiece === -1) ? null : state.marks[winningPiece];
     const reason = 'complete';
     waitingFor = [];
     result = { reason, victor };
   }
 
-  return {
-    bots,
-    board: newBoard,
-    marks,
-    waitingFor,
-    result,
-    invalidTurns,
-  };
+  const turns = [...state.turns, turn];
+
+  return { ...state, board, waitingFor, result, turns };
 }
 
 const MAX_STRIKES = 3;
@@ -95,58 +91,47 @@ function otherBot(bots, name) {
   return bots[0] === name ? bots[1] : bots[0];
 }
 
-export function reducer({ state }, turn) {
+export function reducer({ state }, update) {
   let out;
 
-  if (turn.type === TIMEOUT || turn.type === DISCONNECT) {
-    const victor = otherBot(state.bots, turn.name);
-    const reason = turn.type === TIMEOUT ? 'timeout' : 'disconnect';
+  if (update.type === TIMEOUT || update.type === DISCONNECT) {
+    const victor = otherBot(state.bots, update.name);
+    const reason = update.type === TIMEOUT ? 'timeout' : 'disconnect';
     const result = { reason, victor };
     state = { ...state, waitingFor: [], result };
     out = state.bots;
     return { state, out };
   }
 
-  const valid = validator(state, turn);
+  const valid = validator(state, update);
   if (valid) {
     out = state.bots;
-    state = innerReducer(state, turn);
+    state = validTurnReducer(state, update);
   } else {
-    out = [turn.name];
-    state.invalidTurns[turn.name] += 1;
-    if (state.invalidTurns[turn.name] === MAX_STRIKES) {
-      const victor = otherBot(state.bots, turn.name);
+    out = [update.name];
+    state.invalidTurns[update.name] += 1;
+
+    if (state.invalidTurns[update.name] === MAX_STRIKES) {
+      const victor = otherBot(state.bots, update.name);
       const reason = 'idiocy';
       const result = { reason, victor };
       state = { ...state, waitingFor: [], result };
       out = state.bots;
     }
   }
-  turn = { ...turn, valid };
+  const turn = { ...update, valid };
 
   return { state, turn, out };
 }
 
-export function dbRecord(props) {
+export function getDbRecord(props) {
   const gameType = 'noughtsandcrosses';
-  const { update$, gameId, startTime, contest } = props;
+  const { gameId, startTime, contest, state } = props;
 
-  return Rx.Observable.zip(
-    update$
-      .filter(update => update.turn && update.turn.valid)
-      .reduce((acc, { turn }) => {
-        const parsedTurn = _.omit(turn, 'valid');
-        parsedTurn.time = new Date(parsedTurn.time);
-        return acc.concat(parsedTurn)
-      }, []),
-
-    update$.last(),
-
-    (turns, finalState) => _.extend(
-      _.pick({ contest }, _.identity),
-      _.omit(finalState.state, 'waitingFor'),
-      { _id: gameId, gameType, turns, startTime }
-    )
+  return _.extend(
+    _.pick({ contest }, _.identity),
+    _.omit(state, 'waitingFor'),
+    { gameType, _id: gameId, startTime, turns: state.turns }
   );
 }
 
@@ -154,7 +139,7 @@ export function sideEffects(incoming$) {
   return incoming$
     .filter(({ turn }) => !turn || turn.type === UPDATE_TURN && turn.valid)
     .switchMap(({ state: { waitingFor } }) =>
-      Rx.Observable.timer(4500)
+      Rx.Observable.timer(4000)
         .mapTo({ type: TIMEOUT, name: waitingFor[0] })
     );
 }
