@@ -64,8 +64,8 @@ const resolvers = {
   },
 
   NoughtsAndCrossesTurn: {
-    bot: ({ bot }, _, { Bot }) => Bot.load(
-      { gameType: 'noughtsandcrosses', name: bot }
+    bot: ({ name }, _, { Bot }) => Bot.load(
+      { gameType: 'noughtsandcrosses', name }
     ),
   },
 };
