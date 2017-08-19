@@ -1,6 +1,9 @@
 import _ from 'underscore';
 import Rx from 'rxjs';
 
+import { UPDATE_TURN } from '../ws/Game';
+const TIMEOUT = 'timeout';
+
 export function createInitialState(bots) {
   return {
     bots,
@@ -36,23 +39,28 @@ export function getVictor(board) {
 }
 
 export function validator(state, turn) {
-  if (state.waitingFor.indexOf(turn.name) === -1) return false;
+  try {
+    if (state.waitingFor.indexOf(turn.name) === -1) return false;
 
-  if (turn.mark !== 'X' && turn.mark !== 'O') return false;
-  if (state.marks[turn.mark] !== turn.name) return false;
+    if (turn.mark !== 'X' && turn.mark !== 'O') return false;
+    if (state.marks[turn.mark] !== turn.name) return false;
 
-  if (!turn.space || !_.isArray(turn.space) || turn.space.length !== 2) {
+    if (!turn.space || !_.isArray(turn.space) || turn.space.length !== 2) {
+      return false;
+    }
+    if (!_.isNumber(turn.space[0]) || !_.isNumber(turn.space[1])) return false;
+    if (turn.space[0] < 0 || turn.space[0] > 2) return false;
+    if (turn.space[1] < 0 || turn.space[1] > 2) return false;
+
+    if (state.board[turn.space[0]][turn.space[1]]) return false;
+  } catch (e) {
     return false;
   }
-  if (!_.isNumber(turn.space[0]) || !_.isNumber(turn.space[1])) return false;
-  if (turn.space[0] < 0 || turn.space[0] > 2) return false;
-  if (turn.space[1] < 0 || turn.space[1] > 2) return false;
 
-  if (state.board[turn.space[0]][turn.space[1]]) return false;
   return true;
 }
 
-function innerReducer({ bots, board, marks, invalidTurns }, turn) {
+export function innerReducer({ bots, board, marks, invalidTurns }, turn) {
   // Must return a state object with { bots, waitingFor=[], result=null }.
   const nextPlayer = _.without(bots, turn.name)[0];
 
@@ -88,14 +96,18 @@ function otherBot(bots, name) {
 }
 
 export function reducer({ state }, turn) {
-  let valid = false;
-  let log = null;
   let out;
-  try {
-    valid = validator(state, turn);
-  } catch (e) {
-    log = e.message;
+
+  if (turn.type === TIMEOUT) {
+    const victor = otherBot(state.bots, turn.name);
+    const reason = 'timeout';
+    const result = { reason, victor };
+    state = { ...state, waitingFor: [], result };
+    out = state.bots;
+    return { state, out };
   }
+
+  const valid = validator(state, turn);
   if (valid) {
     out = state.bots;
     state = innerReducer(state, turn);
@@ -112,7 +124,7 @@ export function reducer({ state }, turn) {
   }
   turn = { ...turn, valid };
 
-  return { state, turn, log, out };
+  return { state, turn, out };
 }
 
 export function dbRecord(props) {
@@ -136,4 +148,13 @@ export function dbRecord(props) {
       { _id: gameId, gameType, turns, startTime }
     )
   );
+}
+
+export function sideEffects(incoming$) {
+  return incoming$
+    .filter(({ turn }) => !turn || turn.type === UPDATE_TURN && turn.valid)
+    .switchMap(({ state: { waitingFor } }) =>
+      Rx.Observable.timer(4500)
+        .mapTo({ type: TIMEOUT, name: waitingFor[0] })
+    );
 }

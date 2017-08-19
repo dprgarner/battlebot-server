@@ -7,10 +7,11 @@ import makeWsDriver, { CLOSE, INCOMING, OUTGOING }  from './sockets';
 import { createShortRandomHash } from '../hash';
 
 const DB_SAVEGAME = 'savegame';
+export const UPDATE_TURN = 'update_turn';
 
 function takeWhileInclusive(predicate) {
-  // Returns the stream until the predicate becomes false, and the first false
-  // result.
+  // Returns the stream until the predicate becomes false, and also return the
+  // first false result.
   return src$ => src$
     .takeWhile(predicate)
     .concat(src$.first(x => !predicate(x)));
@@ -25,6 +26,7 @@ export default function Game(sources) {
 
   const botNames = _.pluck(props.sockets, 'name');
 
+  // Perhaps move the logging into the game itself? Nah.
   const logGameStart$ = Rx.Observable.of(
     `${gameId}: ` +
     `A game of ${gameType} has started. ` +
@@ -37,39 +39,32 @@ export default function Game(sources) {
         type === INCOMING && socketId === id
       ))
       .map(({ payload }) => (
-        {...payload, name, time: Date.now() }
+        {...payload, name, time: Date.now(), type: UPDATE_TURN }
       ))
     );
 
-  const game = incoming$
+  // TODO add support for timeouts, remove support for simultaneous timing-
+  // out, and check that the database-saved games don't look screwed-up. 
+
+  // Also, consider refactoring the way that turns are stored - accumulate as
+  // the game goes-along, rather than in some unnecessary stream logic at the
+  // end.
+
+  const sideEffect$ = new Rx.Subject();
+
+  const update$ = incoming$
+    .merge(sideEffect$)
     .startWith({
       state: games[gameType].createInitialState(botNames),
       out: botNames,
     })
     .scan(games[gameType].reducer)
-    .shareReplay();
+    .shareReplay()
+    .let(takeWhileInclusive(({ state: { result } }) => !result))
 
-  // TODO fix timeouts and invalid move botches
-  const update$ = game
-    .let(takeWhileInclusive(({ state: { result } }) => !result));
-
-  // const updateWithoutConclusion$ = game
-  //   .map(({ state, turn, out }) => ({ state, turn, out }));
-  // const victor$ = Victor({ props, ws: sources.ws, update: updateWithoutConclusion$ }).victor;
-
-  // const update$ = updateWithoutConclusion$
-  //   .takeUntil(victor$)
-  //   .concat(
-  //     victor$
-  //     .withLatestFrom(updateWithoutConclusion$, (result, finalUpdate) => {
-  //       if (finalUpdate.state.result) return;
-  //       return {
-  //         state: { ...finalUpdate.state, result },
-  //         out: botNames,
-  //       };
-  //     })
-  //     .filter(x => x)
-  //   );
+  update$
+    .let(games[gameType].sideEffects)
+    .subscribe(sideEffect$);
 
   const wsUpdate$ = Rx.Observable.from(props.sockets)
     .flatMap(({ name, socketId }) => update$

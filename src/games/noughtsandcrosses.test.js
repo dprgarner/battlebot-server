@@ -13,6 +13,7 @@ const midGameState = {
     X: 'botA',
     O: 'botB',
   },
+  invalidTurns: { botA: 0, botB: 0 },
 };
 
 const endGameState = {
@@ -28,6 +29,7 @@ const endGameState = {
     X: 'botA',
     O: 'botB',
   },
+  invalidTurns: { botA: 0, botB: 0 },
 };
 
 describe('Noughts and Crosses', () => {
@@ -110,9 +112,9 @@ describe('Noughts and Crosses', () => {
     });
   });
 
-  describe('reducer', () => {
+  describe('innerReducer', () => {
     it('adds the mark to the space', () => {
-      const newState = noughtsAndCrosses.reducer(
+      const newState = noughtsAndCrosses.innerReducer(
         midGameState,
         { space: [2, 0], mark: 'O', name: 'botB' }
       );
@@ -125,7 +127,7 @@ describe('Noughts and Crosses', () => {
     });
 
     it('flips the bot in waitingFor', () => {
-      const newState = noughtsAndCrosses.reducer(
+      const newState = noughtsAndCrosses.innerReducer(
         midGameState,
         { space: [2, 0], mark: 'O', name: 'botB' }
       );
@@ -134,7 +136,7 @@ describe('Noughts and Crosses', () => {
     });
 
     it('leaves result as falsy', () => {
-      const newState = noughtsAndCrosses.reducer(
+      const newState = noughtsAndCrosses.innerReducer(
         midGameState,
         { space: [2, 0], mark: 'O', name: 'botB' }
       );
@@ -142,8 +144,8 @@ describe('Noughts and Crosses', () => {
     });
 
     it('sets result if a bot wins', () => {
-      const newState = noughtsAndCrosses.reducer(
-        noughtsAndCrosses.reducer(
+      const newState = noughtsAndCrosses.innerReducer(
+        noughtsAndCrosses.innerReducer(
           midGameState,
           { space: [2, 2], mark: 'O', name: 'botB' }
         ),
@@ -155,7 +157,7 @@ describe('Noughts and Crosses', () => {
     });
 
     it('sets result when it is a draw', () => {
-      const newState = noughtsAndCrosses.reducer(
+      const newState = noughtsAndCrosses.innerReducer(
         endGameState,
         { space: [0, 1], mark: 'X', name: 'botA' }
       );
