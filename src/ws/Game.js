@@ -6,8 +6,6 @@ import makeWsDriver, { CLOSE, ERROR, INCOMING, OUTGOING }  from './sockets';
 import { createShortRandomHash } from '../hash';
 
 const DB_SAVEGAME = 'savegame';
-export const UPDATE_TURN = 'update_turn';
-export const DISCONNECT = 'disconnect';
 
 function takeWhileInclusive(predicate) {
   // Returns the stream until the predicate becomes false, and also return the
@@ -26,7 +24,6 @@ export default function Game(sources) {
 
   const botNames = _.pluck(props.sockets, 'name');
 
-  // Perhaps move the logging into the game itself? Nah.
   const logGameStart$ = Rx.Observable.of(
     `${gameId}: ` +
     `A game of ${gameType} has started. ` +
@@ -37,20 +34,11 @@ export default function Game(sources) {
     .flatMap(({ socketId, name }) =>
       sources.ws
         .filter(({ socketId: id }) => (socketId === id))
-        .map((update) => {
-          if (update.type === INCOMING) {
-            return {
-              ...update.payload,
-              name,
-              time: Date.now(),
-              type: UPDATE_TURN,
-            };
-          }
-          if (update.type === CLOSE || update.type === ERROR) {
-            return { name, type: DISCONNECT };
-          }
-        })
-    );
+        .map(({ type, payload = {} }) => (
+          { ...payload, type, name, time: Date.now() }
+        ))
+    )
+    .share();
 
   // TODO
   // - Check that the database-saved games don't look screwed-up.
@@ -65,10 +53,7 @@ export default function Game(sources) {
 
   const update$ = botUpdate$
     .merge(sideEffect$)
-    .startWith({
-      state: games[gameType].createInitialState(botNames),
-      out: botNames,
-    })
+    .startWith(games[gameType].createInitialUpdate(botNames))
     .scan(games[gameType].reducer)
     .shareReplay()
     .let(takeWhileInclusive(({ state: { result } }) => !result));
@@ -79,9 +64,9 @@ export default function Game(sources) {
 
   const wsUpdate$ = Rx.Observable.from(props.sockets)
     .flatMap(({ name, socketId }) => update$
-      .filter(({ out }) => out.includes(name))
-      .map(payload => (
-        { type: OUTGOING, socketId, payload: _.pick(payload, 'state', 'turn') }
+      .filter(({ outgoing }) => outgoing[name])
+      .map(({ outgoing: { [name]: payload }}) => (
+        { type: OUTGOING, socketId, payload }
       ))
     );
 
@@ -120,7 +105,7 @@ export default function Game(sources) {
     );
 
   const logGameEnd$ = update$.last().map(({ state }) => {
-    const { gameId, bots, result: { victor, reason } } = state;
+    const { bots, result: { victor, reason } } = state;
     const text = victor ?
       `${victor} has won a game of ${gameType}` :
       `A ${gameType} game has ended in a draw`;
