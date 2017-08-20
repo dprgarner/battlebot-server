@@ -10,15 +10,15 @@ const initialState = {
     . . . . . . + + + . . . . . .
     . . # # # . . . . . # # # . .
     . . # . . . . . . . . . # . .
+    . £ # . . . . . . . . . # . .
+    . . . . . . . . . . . . . £ .
+    . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . .
+    . . # . £ . . . . . . . # . .
     . . # . . . . . . . . . # . .
-    . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . .
-    . . # . . . . . . . . . # . .
-    . . # . . . . . . . . . # . .
-    . . # # # . . . . . # # # . .
+    . . # # # . . . . . # # # £ .
     . . . . . . x x x . . . . . .
     . . . . . x x x x x . . . . .
   `),
@@ -35,6 +35,7 @@ const initialState = {
     BotTwo: 0,
   },
   result: null,
+  turnNumber: 0,
   turns: [],
 };
 
@@ -149,6 +150,8 @@ describe('Bumblebots (reducer)', () => {
   });
 
   describe('resolving drone moves', () => {
+    const update = { type: bumblebots.BUMBLEBOTS_TICK, turnNumber: 1 };
+
     it('moves the drones around', () => {
       const state1 = {
         ...initialState,
@@ -166,14 +169,18 @@ describe('Bumblebots (reducer)', () => {
         BotOne: { A: 'UP' },
         BotTwo: { Z: 'RIGHT' },
       };
-      const update = { type: bumblebots.BUMBLEBOTS_TICK, number: 0 };
 
       const reduced = bumblebots.reducer(
         { state: state1, orders: orders1 }, update
       );
       const { state: state2, orders: orders2 } = reduced;
       expect(orders2).toEqual({});
-      expect(_.omit(state1, 'drones')).toEqual(_.omit(state2, 'drones'));
+      expect(
+        _.omit(state1, 'drones', 'turnNumber')
+      ).toEqual(
+        _.omit(state2, 'drones', 'turnNumber')
+      );
+      expect(state2.turnNumber).toEqual(state1.turnNumber + 1);
 
       expect(state2.drones).toEqual({
         BotOne: {
@@ -202,14 +209,10 @@ describe('Bumblebots (reducer)', () => {
         BotOne: { A: 'DOWN' },
         BotTwo: { Z: 'UP' },
       };
-      const update = { type: bumblebots.BUMBLEBOTS_TICK, number: 0 };
 
-      const reduced = bumblebots.reducer(
+      const { state: state2 } = bumblebots.reducer(
         { state: state1, orders: orders1 }, update
       );
-      const { state: state2, orders: orders2 } = reduced;
-      expect(orders2).toEqual({});
-      expect(_.omit(state1, 'drones')).toEqual(_.omit(state2, 'drones'));
 
       expect(state2.drones).toEqual({
         BotOne: { A: { position: [7, 7] } },
@@ -232,14 +235,10 @@ describe('Bumblebots (reducer)', () => {
       const orders1 = {
         BotTwo: { Z: 'UP' },
       };
-      const update = { type: bumblebots.BUMBLEBOTS_TICK, number: 0 };
 
-      const reduced = bumblebots.reducer(
+      const { state: state2 } = bumblebots.reducer(
         { state: state1, orders: orders1 }, update
       );
-      const { state: state2, orders: orders2 } = reduced;
-      expect(orders2).toEqual({});
-      expect(_.omit(state1, 'drones')).toEqual(_.omit(state2, 'drones'));
 
       expect(state2.drones).toEqual({
         BotOne: { A: { position: [7, 7] } },
@@ -263,14 +262,10 @@ describe('Bumblebots (reducer)', () => {
         BotOne: { A: 'UP' },
         BotTwo: { Z: 'UP' },
       };
-      const update = { type: bumblebots.BUMBLEBOTS_TICK, number: 0 };
 
-      const reduced = bumblebots.reducer(
+      const { state: state2 } = bumblebots.reducer(
         { state: state1, orders: orders1 }, update
       );
-      const { state: state2, orders: orders2 } = reduced;
-      expect(orders2).toEqual({});
-      expect(_.omit(state1, 'drones')).toEqual(_.omit(state2, 'drones'));
 
       expect(state2.drones).toEqual({
         BotOne: { A: { position: [6, 7] } },
@@ -301,14 +296,10 @@ describe('Bumblebots (reducer)', () => {
           E: 'DOWN',
         },
       };
-      const update = { type: bumblebots.BUMBLEBOTS_TICK, number: 0 };
 
-      const reduced = bumblebots.reducer(
+      const { state: state2 } = bumblebots.reducer(
         { state: state1, orders: orders1 }, update
       );
-      const { state: state2, orders: orders2 } = reduced;
-      expect(orders2).toEqual({});
-      expect(_.omit(state1, 'drones')).toEqual(_.omit(state2, 'drones'));
 
       expect(state2.drones).toEqual({
         BotOne: {
@@ -344,14 +335,10 @@ describe('Bumblebots (reducer)', () => {
           D: 'DOWN',
         },
       };
-      const update = { type: bumblebots.BUMBLEBOTS_TICK, number: 0 };
 
-      const reduced = bumblebots.reducer(
+      const { state: state2 } = bumblebots.reducer(
         { state: state1, orders: orders1 }, update
       );
-      const { state: state2, orders: orders2 } = reduced;
-      expect(orders2).toEqual({});
-      expect(_.omit(state1, 'drones')).toEqual(_.omit(state2, 'drones'));
 
       expect(state2.drones).toEqual({
         BotOne: {
@@ -387,14 +374,10 @@ describe('Bumblebots (reducer)', () => {
           E: 'DOWN',
         },
       };
-      const update = { type: bumblebots.BUMBLEBOTS_TICK, number: 0 };
 
-      const reduced = bumblebots.reducer(
+      const { state: state2 } = bumblebots.reducer(
         { state: state1, orders: orders1 }, update
       );
-      const { state: state2, orders: orders2 } = reduced;
-      expect(orders2).toEqual({});
-      expect(_.omit(state1, 'drones')).toEqual(_.omit(state2, 'drones'));
 
       expect(state2.drones).toEqual({
         BotOne: {
@@ -429,14 +412,10 @@ describe('Bumblebots (reducer)', () => {
           D: 'RIGHT',
         },
       };
-      const update = { type: bumblebots.BUMBLEBOTS_TICK, number: 0 };
 
-      const reduced = bumblebots.reducer(
+      const { state: state2 } = bumblebots.reducer(
         { state: state1, orders: orders1 }, update
       );
-      const { state: state2, orders: orders2 } = reduced;
-      expect(orders2).toEqual({});
-      expect(_.omit(state1, 'drones')).toEqual(_.omit(state2, 'drones'));
 
       expect(state2.drones).toEqual({
         BotOne: {
@@ -469,14 +448,10 @@ describe('Bumblebots (reducer)', () => {
           Z: 'UP',
         },
       };
-      const update = { type: bumblebots.BUMBLEBOTS_TICK, number: 0 };
 
-      const reduced = bumblebots.reducer(
+      const { state: state2 } = bumblebots.reducer(
         { state: state1, orders: orders1 }, update
       );
-      const { state: state2, orders: orders2 } = reduced;
-      expect(orders2).toEqual({});
-      expect(_.omit(state1, 'drones')).toEqual(_.omit(state2, 'drones'));
 
       expect(state2.drones).toEqual({
         BotOne: {
@@ -485,6 +460,32 @@ describe('Bumblebots (reducer)', () => {
         BotTwo: {
           Z: { position: [7, 7] },
         },
+      });
+    });
+  });
+
+  describe('conclusion', () => {
+    it('stops the game after 100 turns', () => {
+      const state1 = {
+        ...initialState,
+        drones: {
+          BotOne: {
+            A: { position: [6, 7] },
+          },
+          BotTwo: {},
+        },
+      };
+      const finalUpdate = { type: bumblebots.BUMBLEBOTS_TICK, turnNumber: 100 };
+
+      const reduced = bumblebots.reducer(
+        { state: state1, orders: {} }, finalUpdate
+      );
+      const { state: state2, orders: orders2 } = reduced;
+      expect(orders2).toEqual({});
+      expect(state2.turnNumber).toEqual(100);
+      expect(state2.result).toEqual({
+        victor: null,
+        reason: bumblebots.BUMBLEBOTS_FULL_TIME,
       });
     });
   });

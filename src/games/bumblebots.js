@@ -11,7 +11,11 @@ const POSSIBLE_MOVES = {
   RIGHT: [0, 1],
 };
 
-export const BUMBLEBOTS_TICK = 'BUMBLEBOTS_TICK'
+export const BUMBLEBOTS_TICK = 'BUMBLEBOTS_TICK';
+export const BUMBLEBOTS_FULL_TIME = 'BUMBLEBOTS_FULL_TIME';
+
+export const BUMBLEBOTS_TICK_TIME = 250;
+export const BUMBLEBOTS_TURN_LIMIT = 100;
 
 function createOutgoing(bots, state) {
   return {};
@@ -20,6 +24,7 @@ function createOutgoing(bots, state) {
 const CHAR_TO_INT = {
   '.': 0,
   '#': 1,
+  '£': 2,
   '+': 3,
   'x': 4,
 };
@@ -45,15 +50,15 @@ export function createInitialUpdate(bots) {
       . . . . . . + + + . . . . . .
       . . # # # . . . . . # # # . .
       . . # . . . . . . . . . # . .
+      . £ # . . . . . . . . . # . .
+      . . . . . . . . . . . . . £ .
+      . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . .
+      . . # . £ . . . . . . . # . .
       . . # . . . . . . . . . # . .
-      . . . . . . . . . . . . . . .
-      . . . . . . . . . . . . . . .
-      . . . . . . . . . . . . . . .
-      . . . . . . . . . . . . . . .
-      . . . . . . . . . . . . . . .
-      . . # . . . . . . . . . # . .
-      . . # . . . . . . . . . # . .
-      . . # # # . . . . . # # # . .
+      . . # # # . . . . . # # # £ .
       . . . . . . x x x . . . . . .
       . . . . . x x x x x . . . . .
     `),
@@ -82,13 +87,17 @@ export function createInitialUpdate(bots) {
       BotTwo: 0,
     },
     result: null,
+    turnNumber: 0,
     turns: [],
   };
   return { state, orders: {}, outgoing: createOutgoing(bots, state) };
 }
 
 export function sideEffects(incoming$) {
-  return Rx.Observable.never();
+  return Rx.Observable.interval(BUMBLEBOTS_TICK_TIME)
+    .skip(1)
+    .take(BUMBLEBOTS_TURN_LIMIT)
+    .map(turnNumber => ({ type: BUMBLEBOTS_TICK, turnNumber }));
 }
 
 function validateDroneOrder(state, name, order, droneId) {
@@ -187,8 +196,8 @@ function resolveDroneMoves(state, orders) {
           return;
         }
 
-        // The drone in space (i, j) is clashing, and its move should be
-        // cancelled.
+        // The drone in space (i, j) is blocked by another drone, and its move
+        // should be cancelled.
         drone.moveTo = null;
         intendedPositions[i][j] = [];
         allMovesValid = false;
@@ -205,9 +214,7 @@ function resolveDroneMoves(state, orders) {
       position: moveTo,
     };
   });
-  const drones = merge.recursive(true, state.drones, newDrones);
-
-  return { ...state, drones };
+  return merge.recursive(true, state.drones, newDrones);
 }
 
 export function reducer({ state, orders }, update) {
@@ -221,18 +228,23 @@ export function reducer({ state, orders }, update) {
   }
 
   if (update.type === BUMBLEBOTS_TICK) {
-    state = resolveDroneMoves(state, orders);
+    const drones = resolveDroneMoves(state, orders);
+    let result = null;
+    if (update.turnNumber === BUMBLEBOTS_TURN_LIMIT) {
+      result = { victor: null, reason: BUMBLEBOTS_FULL_TIME };
+    }
+    state = { ...state, drones, result, turnNumber: update.turnNumber };
     return { state, outgoing: {}, orders: {} };
   }
 }
 
 export function getDbRecord(props) {
-  // const gameType = 'noughtsandcrosses';
-  // const { gameId, startTime, contest, state } = props;
+  const gameType = 'bumblebots';
+  const { gameId, startTime, contest, state } = props;
 
-  // return _.extend(
-  //   _.pick({ contest }, _.identity),
-  //   _.omit(state, 'waitingFor'),
-  //   { gameType, _id: gameId, startTime, turns: state.turns }
-  // );
+  return _.extend(
+    _.pick({ contest }, _.identity),
+    state,
+    { gameType, _id: gameId, startTime, turns: state.turns }
+  );
 }
