@@ -4,6 +4,19 @@ import Rx from 'rxjs';
 import { CLOSE, ERROR, INCOMING } from '../ws/sockets';
 
 const TIMEOUT = 'timeout';
+const DISCONNECT = 'disconnect';
+const BAD_MOVES = 'idiocy';
+
+const MAX_STRIKES = 3;
+const TIME_LIMIT = 4000;
+
+function otherBot(bots, name) {
+  return bots[0] === name ? bots[1] : bots[0];
+}
+
+function createOutgoing(bots, state, turn) {
+  return _.object(bots.map(name => [name, { state, turn }]));
+}
 
 export function createInitialUpdate(bots) {
   const state = {
@@ -87,42 +100,39 @@ export function validTurnReducer(state, turn) {
   return { ...state, board, waitingFor, result, turns };
 }
 
-const MAX_STRIKES = 3;
-
-function otherBot(bots, name) {
-  return bots[0] === name ? bots[1] : bots[0];
-}
-
-function createOutgoing(bots, state, turn) {
-  return _.object(bots.map(name => [name, { state, turn }]));
-}
-
 export function reducer({ state }, update) {
   let outgoing;
 
   if ([TIMEOUT, CLOSE, ERROR].includes(update.type)) {
     const victor = otherBot(state.bots, update.name);
-    const reason = update.type === TIMEOUT ? 'timeout' : 'disconnect';
+    const reason = update.type === TIMEOUT ? TIMEOUT : DISCONNECT;
     const result = { reason, victor };
-    state = { ...state, waitingFor: [], result };
     outgoing = createOutgoing(state.bots, state);
+    state = { ...state, waitingFor: [], result };
     return { state, outgoing };
   }
 
   const valid = validator(state, update);
-  const turn = { ...update, valid };
+  const turn = { ..._.omit(update, 'type'), valid };
   if (valid) {
     state = validTurnReducer(state, update);
     outgoing = createOutgoing(state.bots, state, turn);
   } else {
-    state.invalidTurns[update.name] += 1;
+    state = {
+      ...state,
+      invalidTurns: {
+        ...state.invalidTurns,
+        [update.name]: state.invalidTurns[update.name] + 1,
+      },
+    };
+    outgoing = createOutgoing([update.name], state, turn);
 
     if (state.invalidTurns[update.name] === MAX_STRIKES) {
       const victor = otherBot(state.bots, update.name);
-      const reason = 'idiocy';
+      const reason = BAD_MOVES;
       const result = { reason, victor };
       state = { ...state, waitingFor: [], result };
-      outgoing = createOutgoing([update.name], state, turn);
+      outgoing = createOutgoing(state.bots, state);
     }
   }
 
@@ -142,9 +152,9 @@ export function getDbRecord(props) {
 
 export function sideEffects(incoming$) {
   return incoming$
-    .filter(({ turn }) => !turn || turn.type === INCOMING && turn.valid)
+    .filter(({ turn }) => !turn || turn.valid)
     .switchMap(({ state: { waitingFor } }) =>
-      Rx.Observable.timer(4000)
+      Rx.Observable.timer(TIME_LIMIT)
         .mapTo({ type: TIMEOUT, name: waitingFor[0] })
     );
 }

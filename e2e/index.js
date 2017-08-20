@@ -476,11 +476,15 @@ describe('end-to-end tests', function() {
           sockets.BotTwo, { mark: 'X', space: [0, 0] }
         );
         log(attempt.turn);
-        expect(attempt.turn.valid).to.not.be.ok;
-        expect(!!attempt.state.result).to.equal(i === 2);
+        if (i !== 2) {
+          expect(attempt.turn.valid).to.not.be.ok;
+          expect(attempt.state.result).to.not.be.ok;
+        } else {
+          expect(attempt.turn).to.not.be.ok;
+          expect(attempt.state.result).to.be.ok;
+          expect(attempt.state.result.victor).to.equal('BotOne');
+        }
       }
-
-      expect(attempt.state.result.victor).to.equal('BotOne');
     });
   });
 });
