@@ -76,7 +76,7 @@ When it is a bot's turn to move, the bot should send a turn to the server over t
 
 The server will then reply with an object containing the keys `state` and `turn`. The `turn` will be the most recently attempted turn, but will also include the extra data of the player that made the turn `player`, the `time` the turn was made, and the boolean `valid` stating whether the turn was valid or not. If the move is invalid, then this update is sent only to the bot which attempted the invalid move, along with the (unchanged) state of the game. If the move is valid, then the turn and new state of the game will be sent to both bots.
 
-Once the game ends, the server will attempt to send a final update to both bots containing the final state of the board, and then close both connections. The final state of the board will contain the boolean key `complete` set to true, the key `victor` set to the ID of the winning bot, or null if the game ends in a draw, and the key `reason` stating how the game was decided. A game can be completed normally, but can also end if a bot is disqualified by disconnecting early, making three invalid turns during the course of the game, or taking longer than three seconds to take a turn. If an error is thrown by the server during the running of the game, then the game will (hopefully) be recorded as a draw.
+Once the game ends, the server will attempt to send a final update to both bots containing the final state of the board, and then close both connections. The final state of the board will contain the object `result`, with the key `victor`set to the ID of the winning bot or null if the game ends in a draw, and the key `reason` stating how the game was decided. A game can be completed normally, but can also end if a bot is disqualified by disconnecting early, making three invalid turns during the course of the game, or taking longer than five seconds to take a turn.
 
 ## Contests
 
@@ -145,13 +145,13 @@ The initial state of a game is of this form:
       "IdiotBot2",
       "IdiotBot"
     ],
-    "complete": false,
     "board": [
       ["", "", ""],
       ["", "", ""],
       ["", "", ""]
     ],
     "waitingFor": ["IdiotBot2"],
+    "result": null,
     "marks": {
       "X": "IdiotBot2",
       "O": "IdiotBot"
@@ -179,7 +179,10 @@ including the last valid turn:
     "mark": "X"
   },
   "state": {
-    "complete": true,
+    "result": {
+      "complete": true,
+      "victor": "IdiotBot2"
+    },
     "bots": [
       "IdiotBot2",
       "IdiotBot"
@@ -194,8 +197,7 @@ including the last valid turn:
       "X": "IdiotBot2",
       "O": "IdiotBot"
     },
-    "waitingFor": [],
-    "victor": "IdiotBot2"
+    "waitingFor": []
   }
 }
 ```
@@ -211,13 +213,10 @@ docker-compose up
 ## TODO
 
 - Keep writing them tests
-- Find a way to incorporate "Victor" logic into noughtsandcrosses.js without making it ridiculously complex
 
 Next game:
 - Create an out-stream for spectator updates
 - Simple spectator stream page (dump JSON for now)
 -- Maybe try GraphQL subscriptions and Apollo because it's hip and trendy
 -- Closed information updates
-- Start with Rock-Paper-Scissors
-- How can Victor allow for a more forgiving pattern?
--- Perhaps Victor patterns should be game-specific.
+- Start with Rock-Paper-Scissors?
