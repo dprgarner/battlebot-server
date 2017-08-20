@@ -1,7 +1,7 @@
 import _ from 'underscore';
 import Rx from 'rxjs';
 
-import { SOCKET_CLOSE, SOCKET_ERROR, SOCKET_INCOMING } from '../const';
+import { SOCKET_CLOSE, SOCKET_ERROR } from '../const';
 
 const REASON_TIMEOUT = 'timeout';
 const REASON_DISCONNECT = 'disconnect';
@@ -144,6 +144,15 @@ export function reducer({ state }, update) {
   return { state, turn, outgoing };
 }
 
+export function sideEffects(incoming$) {
+  return incoming$
+    .filter(({ turn }) => !turn || turn.valid)
+    .switchMap(({ state: { waitingFor } }) =>
+      Rx.Observable.timer(TIME_LIMIT)
+        .mapTo({ type: REASON_TIMEOUT, name: waitingFor[0] })
+    );
+}
+
 export function getDbRecord(props) {
   const gameType = 'noughtsandcrosses';
   const { gameId, startTime, contest, state } = props;
@@ -153,13 +162,4 @@ export function getDbRecord(props) {
     _.omit(state, 'waitingFor'),
     { gameType, _id: gameId, startTime, turns: state.turns }
   );
-}
-
-export function sideEffects(incoming$) {
-  return incoming$
-    .filter(({ turn }) => !turn || turn.valid)
-    .switchMap(({ state: { waitingFor } }) =>
-      Rx.Observable.timer(TIME_LIMIT)
-        .mapTo({ type: REASON_TIMEOUT, name: waitingFor[0] })
-    );
 }
