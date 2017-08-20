@@ -22,7 +22,8 @@
     "testPathIgnorePatterns": [
       "<rootDir>/build/",
       "<rootDir>/node_modules/"
-    ]
+    ],
+    "verbose": true
   },
   "author": "David Garner",
   "license": "ISC",
