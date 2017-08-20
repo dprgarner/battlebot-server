@@ -1,6 +1,8 @@
 import _ from 'underscore';
 import Rx from 'rxjs';
 
+import { SOCKET_INCOMING } from '../const';
+
 function createOutgoing(bots, state) {
   return {};
 }
@@ -61,11 +63,18 @@ export function createInitialUpdate(bots) {
         V: { position: [14, 9], fixed: false },
       },
     },
-    orders: {},
+    territory: {
+      BotOne: 2,
+      BotTwo: 3,
+    },
+    collected: {
+      BotOne: 0,
+      BotTwo: 0,
+    },
     result: null,
     turns: [],
   };
-  return { state, outgoing: createOutgoing(bots, state) };
+  return { state, orders: {}, outgoing: createOutgoing(bots, state) };
 }
 
 export function sideEffects(incoming$) {
@@ -111,17 +120,20 @@ export function validator(state, update) {
   return true; 
 }
 
-export function reducer({ state }, update) {
-  return { state, outgoing: {} }
+export function reducer({ state, orders }, update) {
+  if (update.type === SOCKET_INCOMING && validator(state, update)) {
+    orders = {...orders, [update.name]: update.orders };
+  }
+  return { state, outgoing: {}, orders };
 }
 
 export function getDbRecord(props) {
-  const gameType = 'noughtsandcrosses';
-  const { gameId, startTime, contest, state } = props;
+  // const gameType = 'noughtsandcrosses';
+  // const { gameId, startTime, contest, state } = props;
 
-  return _.extend(
-    _.pick({ contest }, _.identity),
-    _.omit(state, 'waitingFor'),
-    { gameType, _id: gameId, startTime, turns: state.turns }
-  );
+  // return _.extend(
+  //   _.pick({ contest }, _.identity),
+  //   _.omit(state, 'waitingFor'),
+  //   { gameType, _id: gameId, startTime, turns: state.turns }
+  // );
 }

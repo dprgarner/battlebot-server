@@ -1,6 +1,43 @@
 import * as bumblebots from './bumblebots';
 
-describe.only('Bumblebots', () => {
+import { SOCKET_INCOMING } from '../const';
+
+const initialState = {
+  bots: ['BotOne', 'BotTwo'],
+  board: bumblebots.parseBoard(`
+    . . . . . + + + + + . . . . .
+    . . . . . . + + + . . . . . .
+    . . # # # . . . . . # # # . .
+    . . # . . . . . . . . . # . .
+    . . # . . . . . . . . . # . .
+    . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . .
+    . . # . . . . . . . . . # . .
+    . . # . . . . . . . . . # . .
+    . . # # # . . . . . # # # . .
+    . . . . . . x x x . . . . . .
+    . . . . . x x x x x . . . . .
+  `),
+  drones: {
+    BotOne: {},
+    BotTwo: {},
+  },
+  territory: {
+    BotOne: 2,
+    BotTwo: 3,
+  },
+  collected: {
+    BotOne: 0,
+    BotTwo: 0,
+  },
+  result: null,
+  turns: [],
+};
+
+describe('Bumblebots', () => {
   describe('parsing', () => {
     it('parses string-boards to int-boards', () => {
       const parsedBoard = bumblebots.parseBoard(`
@@ -81,28 +118,9 @@ describe.only('Bumblebots', () => {
   });
 
   describe('validator', () => {
-    const board = bumblebots.parseBoard(`
-      . . . . . + + + + + . . . . .
-      . . . . . . + + + . . . . . .
-      . . # # # . . . . . # # # . .
-      . . # . . . . . . . . . # . .
-      . . # . . . . . . . . . # . .
-      . . . . . . . . . . . . . . .
-      . . . . . . . . . . . . . . .
-      . . . . . . . . . . . . . . .
-      . . . . . . . . . . . . . . .
-      . . . . . . . . . . . . . . .
-      . . # . . . . . . . . . # . .
-      . . # . . . . . . . . . # . .
-      . . # # # . . . . . # # # . .
-      . . . . . . x x x . . . . . .
-      . . . . . x x x x x . . . . .
-    `);
-
     it('returns true if the move is valid', () => {
       const state = {
-        bots: ['BotOne', 'BotTwo'],
-        board,
+        ...initialState,
         drones: {
           BotOne: {
             A: { position: [2, 7] },
@@ -111,13 +129,6 @@ describe.only('Bumblebots', () => {
             Z: { position: [12, 7] },
           },
         },
-        territory: {
-          BotOne: 2,
-          BotTwo: 3,
-        },
-        orders: {},
-        result: null,
-        turns: [],
       };
 
       expect(
@@ -139,8 +150,7 @@ describe.only('Bumblebots', () => {
 
     it('returns false if trying to move another bot\'s drones', () => {
       const state = {
-        bots: ['BotOne', 'BotTwo'],
-        board,
+        ...initialState,
         drones: {
           BotOne: {
             A: { position: [7, 7] },
@@ -149,13 +159,6 @@ describe.only('Bumblebots', () => {
             Z: { position: [8, 7] },
           },
         },
-        territory: {
-          BotOne: 2,
-          BotTwo: 3,
-        },
-        orders: {},
-        result: null,
-        turns: [],
       };
       const turn = { name: 'BotOne', orders: { Z: 'UP' } };
 
@@ -164,8 +167,7 @@ describe.only('Bumblebots', () => {
 
     it('returns false if inputting a string which is not a direction', () => {
       const state = {
-        bots: ['BotOne', 'BotTwo'],
-        board,
+        ...initialState,
         drones: {
           BotOne: {
             A: { position: [7, 7] },
@@ -174,9 +176,6 @@ describe.only('Bumblebots', () => {
             Z: { position: [8, 7] },
           },
         },
-        orders: {},
-        result: null,
-        turns: [],
       };
       const turn = { name: 'BotOne', orders: { A: 'ASDF' } };
 
@@ -185,8 +184,7 @@ describe.only('Bumblebots', () => {
 
     it('returns false if attempting to leave the arena', () => {
       const state = {
-        bots: ['BotOne', 'BotTwo'],
-        board,
+        ...initialState,
         drones: {
           BotOne: {
             A: { position: [0, 7] },
@@ -198,13 +196,6 @@ describe.only('Bumblebots', () => {
             Z: { position: [8, 7] },
           },
         },
-        territory: {
-          BotOne: 2,
-          BotTwo: 3,
-        },
-        orders: {},
-        result: null,
-        turns: [],
       };
       const turn = { name: 'BotOne', orders: { A: 'UP' } };
 
@@ -224,8 +215,7 @@ describe.only('Bumblebots', () => {
 
     it('returns false if moving into an invalid square', () => {
       const state = {
-        bots: ['BotOne', 'BotTwo'],
-        board,
+        ...initialState,
         drones: {
           BotOne: {
             A: { position: [1, 2] },
@@ -235,13 +225,6 @@ describe.only('Bumblebots', () => {
             Z: { position: [2, 7] },
           },
         },
-        territory: {
-          BotOne: 2,
-          BotTwo: 3,
-        },
-        orders: {},
-        result: null,
-        turns: [],
       };
       const turn = { name: 'BotOne', orders: { A: 'UP' } };
 
@@ -258,43 +241,85 @@ describe.only('Bumblebots', () => {
   });
 
   describe('reducer', () => {
-    const board = bumblebots.parseBoard(`
-      . . . . . + + + + + . . . . .
-      . . . . . . + + + . . . . . .
-      . . # # # . . . . . # # # . .
-      . . # . . . . . . . . . # . .
-      . . # . . . . . . . . . # . .
-      . . . . . . . . . . . . . . .
-      . . . . . . . . . . . . . . .
-      . . . . . . . . . . . . . . .
-      . . . . . . . . . . . . . . .
-      . . . . . . . . . . . . . . .
-      . . # . . . . . . . . . # . .
-      . . # . . . . . . . . . # . .
-      . . # # # . . . . . # # # . .
-      . . . . . . x x x . . . . . .
-      . . . . . x x x x x . . . . .
-    `);
+    it('queues up a valid order request', () => {
+      const state1 = {
+        ...initialState,
+        drones: {
+          BotOne: {
+            A: { position: [7, 7] },
+          },
+          BotTwo: {
+            Z: { position: [8, 7] },
+          },
+        },
+      };
+      const update = {
+        type: SOCKET_INCOMING,
+        name: 'BotOne',
+        orders: { A: 'UP' },
+      };
 
-    // it('???', () => {
-    //   const state = {
-    //     bots: ['BotOne', 'BotTwo'],
-    //     board,
-    //     drones: {
-    //       BotOne: {
-    //         A: { position: [7, 7] },
-    //       },
-    //       BotTwo: {
-    //         Z: { position: [8, 7] },
-    //       },
-    //     },
-    //     orders: {},
-    //     result: null,
-    //     turns: [],
-    //   };
-    //   const turn = { name: 'BotOne', A: 'UP' };
+      const reduced = bumblebots.reducer({ state: state1, orders: {} }, update);
+      const { state: state2, orders, outgoing } = reduced;
+      expect(state1).toEqual(state2);
+      expect(outgoing).toEqual({});
+      expect(orders).toEqual({ BotOne: { A: 'UP' } });
+    });
 
-    //   expect(bumblebots.validator(state, turn)).toBeTruthy();
-    // });
+    it('ignores an invalid order request', () => {
+      const state1 = {
+        ...initialState,
+        drones: {
+          BotOne: {
+            A: { position: [7, 7] },
+          },
+          BotTwo: {
+            Z: { position: [8, 7] },
+          },
+        },
+      };
+      const update = {
+        type: SOCKET_INCOMING,
+        name: 'BotTwo',
+        orders: { A: 'UP' },
+      };
+
+      const reduced = bumblebots.reducer({ state: state1, orders: {} }, update);
+      const { state: state2, orders, outgoing } = reduced;
+      expect(state1).toEqual(state2);
+      expect(outgoing).toEqual({});
+      expect(orders).toEqual({});
+    });
+
+    it('appends to existing order requests', () => {
+      const state1 = {
+        ...initialState,
+        drones: {
+          BotOne: {
+            A: { position: [7, 7] },
+          },
+          BotTwo: {
+            Z: { position: [8, 7] },
+          },
+        },
+      };
+      const orders1 = { BotOne: { A: 'UP' } };
+      const update = {
+        type: SOCKET_INCOMING,
+        name: 'BotTwo',
+        orders: { Z: 'DOWN' },
+      };
+
+      const reduced = bumblebots.reducer(
+        { state: state1, orders: orders1 }, update
+      );
+      const { state: state2, orders: orders2, outgoing } = reduced;
+      expect(state1).toEqual(state2);
+      expect(outgoing).toEqual({});
+      expect(orders2).toEqual({
+        BotOne: { A: 'UP' },
+        BotTwo: { Z: 'DOWN' },
+      });
+    });
   });
 });
