@@ -5,10 +5,11 @@ node_js:
 services:
   - mongodb
 # Mongo takes some time to start up.
+
 before_script:
-- sleep 15
+- sleep 30
 
 script:
- - npm test
- - npm run e2e
- - npm run codecov
+ - yarn test
+ - yarn e2e
+ - yarn codecov

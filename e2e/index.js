@@ -27,6 +27,7 @@ describe('end-to-end tests', function() {
     this.mongod.stderr.on('data', (data) => {
       console.error(`MongoDB error: ${data}`);
     });
+
     this.mongod.on('close', (code) => {
       log(`mongod exited with code ${code}`);
     });
