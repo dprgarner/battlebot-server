@@ -2,10 +2,12 @@ import Rx from 'rxjs';
 import { run } from '@cycle/rxjs-run';
 import Collection from '@cycle/collection';
 
-import Authenticator, { ADD, REMOVE } from './Authenticator';
-import makeWsDriver, { CLOSE }  from './sockets';
+import Authenticator from './Authenticator';
+import makeWsDriver from './sockets';
 import Matcher from './Matcher';
 import { makeDbDriver } from '../db';
+
+import { AUTHENTICATE_ADD, AUTHENTICATE_REMOVE } from '../const';
 
 import Game from './Game';
 
@@ -16,8 +18,8 @@ function main(sources) {
   const sockets$ = authenticate.sockets
     .startWith({})
     .scan((sockets, { type, socketId, data }) => {
-      if (type === ADD) sockets[socketId] = data;
-      if (type === REMOVE) delete sockets[socketId];
+      if (type === AUTHENTICATE_ADD) sockets[socketId] = data;
+      if (type === AUTHENTICATE_REMOVE) delete sockets[socketId];
       return { ...sockets };
     });
 

@@ -1,11 +1,12 @@
 import _ from 'underscore';
 import Rx from 'rxjs';
 
-import { CLOSE, ERROR, INCOMING } from '../ws/sockets';
+import { SOCKET_CLOSE, SOCKET_ERROR, SOCKET_INCOMING } from '../const';
 
-const TIMEOUT = 'timeout';
-const DISCONNECT = 'disconnect';
-const BAD_MOVES = 'idiocy';
+const REASON_TIMEOUT = 'timeout';
+const REASON_DISCONNECT = 'disconnect';
+const REASON_IDIOCY = "Didn't write unit tests";
+const REASON_COMPLETE = 'complete';
 
 const MAX_STRIKES = 3;
 const TIME_LIMIT = 4000;
@@ -92,7 +93,7 @@ export function validTurnReducer(state, turn) {
 
   if (winningPiece) {
     const victor = (winningPiece === -1) ? null : state.marks[winningPiece];
-    const reason = 'complete';
+    const reason = REASON_COMPLETE;
     waitingFor = [];
     result = { reason, victor };
   }
@@ -105,9 +106,11 @@ export function validTurnReducer(state, turn) {
 export function reducer({ state }, update) {
   let outgoing;
 
-  if ([TIMEOUT, CLOSE, ERROR].includes(update.type)) {
+  if ([REASON_TIMEOUT, SOCKET_CLOSE, SOCKET_ERROR].includes(update.type)) {
     const victor = otherBot(state.bots, update.name);
-    const reason = update.type === TIMEOUT ? TIMEOUT : DISCONNECT;
+    const reason = update.type === REASON_TIMEOUT ?
+      REASON_TIMEOUT :
+      REASON_DISCONNECT;
     const result = { reason, victor };
     state = { ...state, waitingFor: [], result };
     outgoing = createOutgoing(state.bots, state);
@@ -132,7 +135,7 @@ export function reducer({ state }, update) {
 
     if (state.invalidTurns[update.name] === MAX_STRIKES) {
       const victor = otherBot(state.bots, update.name);
-      const reason = BAD_MOVES;
+      const reason = REASON_IDIOCY;
       const result = { reason, victor };
       state = { ...state, waitingFor: [], result };
       outgoing = createOutgoing(state.bots, state);
@@ -157,6 +160,6 @@ export function sideEffects(incoming$) {
     .filter(({ turn }) => !turn || turn.valid)
     .switchMap(({ state: { waitingFor } }) =>
       Rx.Observable.timer(TIME_LIMIT)
-        .mapTo({ type: TIMEOUT, name: waitingFor[0] })
+        .mapTo({ type: REASON_TIMEOUT, name: waitingFor[0] })
     );
 }

@@ -1,17 +1,16 @@
-/*
-  Experiments in running the websocket server with CycleJS.
-*/
 import Rx from 'rxjs';
 import WebSocket from 'ws';
 import { adapt } from '@cycle/run/lib/adapt';
 
 import { createRandomHash } from '../hash';
 
-export const OPEN = 'socket_open';
-export const INCOMING = 'socket_incoming';
-export const OUTGOING = 'socket_outgoing';
-export const CLOSE = 'socket_close';
-export const ERROR = 'socket_error';
+import {
+  SOCKET_INCOMING,
+  SOCKET_OUTGOING,
+  SOCKET_OPEN,
+  SOCKET_CLOSE,
+  SOCKET_ERROR,
+} from '../const';
 
 export function wsObserver(ws) {
   // An observer for outgoing JSON messages to the socket.
@@ -71,8 +70,8 @@ function createWsUpdate$(socketId, ws, outgoing$) {
   // Handles websocket-specific listeners, tagging and untagging instructions
   // to send and receive messages to the client and closing the connection.
   outgoing$
-    .takeWhile(({ type }) => type !== CLOSE && type !== ERROR)
-    .filter(({ type }) => type === OUTGOING)
+    .takeWhile(({ type }) => type !== SOCKET_CLOSE && type !== SOCKET_ERROR)
+    .filter(({ type }) => type === SOCKET_OUTGOING)
     .map(({ payload }) => payload)
     .subscribe(wsObserver(ws));
 
@@ -80,13 +79,13 @@ function createWsUpdate$(socketId, ws, outgoing$) {
   incoming$.subscribe({ error: () => ws.close(1002, 'ERROR') });
 
   return incoming$
-    .map(payload => ({ type: INCOMING, socketId, payload }))
-    .startWith({ type: OPEN, socketId })
-    .concat(Rx.Observable.of({ type: CLOSE, socketId }))
+    .map(payload => ({ type: SOCKET_INCOMING, socketId, payload }))
+    .startWith({ type: SOCKET_OPEN, socketId })
+    .concat(Rx.Observable.of({ type: SOCKET_CLOSE, socketId }))
     .catch(error => {
       console.error(error);
       return Rx.Observable.of(
-        { type: ERROR, socketId, payload: { error: error.toString() }}
+        { type: SOCKET_ERROR, socketId, payload: { error: error.toString() }}
       )
     });
 }
@@ -96,11 +95,13 @@ function getOpenSockets$(update$) {
   // emits an array of open socket IDs every time a socket connects or
   // disconnects.
   return update$
-    .filter(({ type }) => type !== INCOMING)
+    .filter(({ type }) => type !== SOCKET_INCOMING)
     .startWith({})
     .scan((sockets, { type, socketId }) => {
-      if (type === OPEN) sockets[socketId] = true;
-      if (type === CLOSE || type === ERROR) delete sockets[socketId];
+      if (type === SOCKET_OPEN) sockets[socketId] = true;
+      if (type === SOCKET_CLOSE || type === SOCKET_ERROR) {
+        delete sockets[socketId];
+      }
       return sockets;
     })
     .map(sockets => Object.keys(sockets));

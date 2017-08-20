@@ -2,10 +2,12 @@ import _ from 'underscore';
 import Rx from 'rxjs';
 
 import games from '../games';
-import makeWsDriver, { CLOSE, ERROR, INCOMING, OUTGOING }  from './sockets';
+import makeWsDriver from './sockets';
 import { createShortRandomHash } from '../hash';
 
-const DB_SAVEGAME = 'savegame';
+import { SOCKET_OUTGOING, SOCKET_CLOSE } from '../const';
+
+const GAME_DB_SAVE = 'GAME_DB_SAVE';
 
 function takeWhileInclusive(predicate) {
   // Returns the stream until the predicate becomes false, and also return the
@@ -58,7 +60,7 @@ export default function Game(sources) {
     .flatMap(({ name, socketId }) => update$
       .filter(({ outgoing }) => outgoing[name])
       .map(({ outgoing: { [name]: payload }}) => (
-        { type: OUTGOING, socketId, payload }
+        { type: SOCKET_OUTGOING, socketId, payload }
       ))
     );
 
@@ -67,7 +69,7 @@ export default function Game(sources) {
     .delay(10)
     .concat(
       Rx.Observable.from(props.sockets)
-        .map(({ socketId }) => ({ type: CLOSE, socketId }))
+        .map(({ socketId }) => ({ type: SOCKET_CLOSE, socketId }))
     );
 
   const dbUpdate$ = update$
@@ -76,14 +78,14 @@ export default function Game(sources) {
       { state, gameId, startTime, contest }
     ))
     .map(gameRecord => ({
-      type: DB_SAVEGAME,
+      type: GAME_DB_SAVE,
       id: gameRecord._id,
       gen: db => db.collection('games').insertOne(gameRecord),
     }));
 
   const logDbSuccess$ = sources.db
     .first(({ request: { type, id } }) => (
-      type === DB_SAVEGAME && gameId === id
+      type === GAME_DB_SAVE && gameId === id
     ))
     .flatMap(response$ => response$
       .ignoreElements()

@@ -3,14 +3,14 @@ import clone from 'clone';
 import Rx from 'rxjs';
 import WebSocket from 'ws';
 
-import { REMOVE } from './Authenticator';
+import { AUTHENTICATE_REMOVE } from '../const';
 
 function MatcherWithoutContest(sources) {
   const addRemoveSocket$ = sources.sockets;
   const createGame$ = addRemoveSocket$
     .startWith({ waiting: [], newGame: null })
     .scan(({ waiting }, { type, socketId, data: { gameType, name } }) => {
-      if (type === REMOVE) {
+      if (type === AUTHENTICATE_REMOVE) {
         const index = waiting.findIndex(x => x.socketId === socketId);
         if (index !== -1) waiting.splice(index, 1);
         return { waiting, newGame: null };
@@ -49,7 +49,7 @@ function MatcherByContest(sources) {
   const createGame$ = addRemoveSocket$
     .startWith({ waiting: [], played: {}, newGame: null })
     .scan(({ waiting, played }, { type, socketId, data }) => {
-      if (type === REMOVE) {
+      if (type === AUTHENTICATE_REMOVE) {
         const index = waiting.findIndex(x => x.socketId === socketId);
         if (index !== -1) waiting.splice(index, 1);
         return { waiting, played, newGame: null };

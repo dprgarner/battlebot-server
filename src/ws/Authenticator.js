@@ -2,31 +2,33 @@ import _ from 'underscore';
 import Rx from 'rxjs';
 
 import { createHash, createRandomHash } from '../hash';
-import {
-  wsObserver,
-  wsObservable,
-  OPEN,
-  CLOSE,
-  ERROR,
-  INCOMING,
-  OUTGOING,
-} from './sockets';
+import { wsObserver, wsObservable } from './sockets';
 
-export const ADD = 'add';
-export const REMOVE = 'remove';
-const DB_AUTHENTICATE = 'authenticate';
+import {
+  AUTHENTICATE_ADD,
+  AUTHENTICATE_REMOVE,
+  SOCKET_INCOMING,
+  SOCKET_OUTGOING,
+  SOCKET_OPEN,
+  SOCKET_CLOSE,
+  SOCKET_ERROR,
+} from '../const';
+
+const AUTHENTICATE_DB = 'AUTHENTICATE_DB';
+const AUTHENTICATE_TIMEOUT = 10000;
 
 export default function Authenticator(sources) {
-  const TIMEOUT = 10000;
 
   // When a websocket connects and sends a login message, a database request
   // is made to find the details of the requested bot.
   const dbLookupBot$ = sources.ws
-    .filter(({ type }) => type === OPEN)
+    .filter(({ type }) => type === SOCKET_OPEN)
     .flatMap(({ socketId }) => sources.ws
-      .first(({ type, socketId: id }) => type === INCOMING && socketId === id)
+      .first(({ type, socketId: id }) => (
+        type === SOCKET_INCOMING && socketId === id
+      ))
       .map(({ payload: { gameType, name, password, contest }}) => ({
-        type: DB_AUTHENTICATE,
+        type: AUTHENTICATE_DB,
         socketId,
         gameType,
         name,
@@ -38,15 +40,15 @@ export default function Authenticator(sources) {
   // If the client does not send an authenticate message in the timeout period,
   // or if the bot is not found with the password, then the login is rejected.
   const isloginValid$ = sources.ws
-    .filter(({ type }) => type === OPEN)
+    .filter(({ type }) => type === SOCKET_OPEN)
     .flatMap(({ socketId }) => Rx.Observable
       .merge(
-        Rx.Observable.timer(TIMEOUT)
+        Rx.Observable.timer(AUTHENTICATE_TIMEOUT)
           .map(() => ({ socketId, loginValid: false })),
 
         sources.db
           .filter(({ request: { type, socketId: id } }) => (
-            type === DB_AUTHENTICATE && socketId === id
+            type === AUTHENTICATE_DB && socketId === id
           ))
           .flatMap(response$ => response$
             .map(response => {
@@ -66,15 +68,15 @@ export default function Authenticator(sources) {
   const wsRejection$ = isloginValid$
     .filter(({ loginValid }) => !loginValid)
     .flatMap(({ socketId }) => Rx.Observable.from([
-      { type: OUTGOING, socketId, payload: { authentication: 'failed' } },
-      { type: CLOSE, socketId },
+      { type: SOCKET_OUTGOING, socketId, payload: { authentication: 'failed' } },
+      { type: SOCKET_CLOSE, socketId },
     ]));
 
   // A confirmation message is sent to successfully-connected clients.
   const wsConfirm$ = isloginValid$
     .filter(({ loginValid }) => loginValid)
     .map(({ socketId, gameType, name, contest }) => ({
-      type: OUTGOING,
+      type: SOCKET_OUTGOING,
       socketId,
       payload: {authentication: 'OK', gameType, name, contest },
     }));
@@ -86,7 +88,7 @@ export default function Authenticator(sources) {
   const add$ = isloginValid$
     .filter(({ loginValid }) => loginValid)
     .map(({ socketId, gameType, name, contest }) => ({
-      type: ADD,
+      type: AUTHENTICATE_ADD,
       socketId,
       data: { gameType, name, contest },
     }));
@@ -97,9 +99,10 @@ export default function Authenticator(sources) {
     Rx.Observable.of(add).concat(
       sources.ws
         .first(({ type, socketId }) => (
-          (type === CLOSE || type === ERROR) && add.socketId === socketId
+          (type === SOCKET_CLOSE || type === SOCKET_ERROR)
+            && add.socketId === socketId
         ))
-        .mapTo({ ...add, type: REMOVE })
+        .mapTo({ ...add, type: AUTHENTICATE_REMOVE })
     )
   );
 
@@ -109,7 +112,9 @@ export default function Authenticator(sources) {
   );
 
   const log = authenticated$.map(({ type, data: { gameType, name }}) =>
-    `The ${gameType} bot ${name} has ${type === ADD ? 'connected' : 'disconnected'}.`
+    `The ${gameType} bot ${name} has ${
+      type === AUTHENTICATE_ADD ? 'connected' : 'disconnected'
+    }.`
   );
 
   const sinks = { ws, db: dbLookupBot$, log, sockets: authenticated$ }
