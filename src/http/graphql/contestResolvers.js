@@ -62,9 +62,9 @@ export default {
               losses: 0,
               draws: 0,
             };
-            if (game.victor === bot) {
+            if (game.result.victor === bot) {
               bots[bot].wins += 1;
-            } else if (!game.victor) {
+            } else if (!game.result.victor) {
               bots[bot].draws += 1;
             } else {
               bots[bot].losses += 1;
