@@ -117,8 +117,8 @@ describe('Bumblebots', () => {
     });
   });
 
-  describe('validator', () => {
-    it('returns true if the move is valid', () => {
+  describe('sanitiseOrdersUpdate', () => {
+    it('allows valid moves', () => {
       const state = {
         ...initialState,
         drones: {
@@ -131,21 +131,27 @@ describe('Bumblebots', () => {
         },
       };
 
-      expect(
-        bumblebots.validator(state, { name: 'BotOne', A: 'UP' })
-      ).toBeTruthy();
-      expect(
-        bumblebots.validator(state, { name: 'BotOne', A: 'DOWN' })
-      ).toBeTruthy();
-      expect(
-        bumblebots.validator(state, { name: 'BotOne', A: 'LEFT' })
-      ).toBeTruthy();
-      expect(
-        bumblebots.validator(state, { name: 'BotOne', A: 'RIGHT' })
-      ).toBeTruthy();
-      expect(
-        bumblebots.validator(state, { name: 'BotTwo', Z: 'DOWN' })
-      ).toBeTruthy();
+      let update;
+
+      update = { name: 'BotOne', orders: { A: 'UP' } };
+      expect(bumblebots.sanitiseOrdersUpdate(state, update))
+        .toEqual(update.orders);
+
+      update = { name: 'BotOne', orders: { A: 'DOWN' } };
+      expect(bumblebots.sanitiseOrdersUpdate(state, update))
+        .toEqual(update.orders);
+
+      update = { name: 'BotOne', orders: { A: 'LEFT' } };
+      expect(bumblebots.sanitiseOrdersUpdate(state, update))
+        .toEqual(update.orders);
+
+      update = { name: 'BotOne', orders: { A: 'RIGHT' } };
+      expect(bumblebots.sanitiseOrdersUpdate(state, update))
+        .toEqual(update.orders);
+
+      update = { name: 'BotTwo', orders: { Z: 'UP' } };
+      expect(bumblebots.sanitiseOrdersUpdate(state, update))
+        .toEqual(update.orders);
     });
 
     it('returns false if trying to move another bot\'s drones', () => {
@@ -160,9 +166,8 @@ describe('Bumblebots', () => {
           },
         },
       };
-      const turn = { name: 'BotOne', orders: { Z: 'UP' } };
-
-      expect(bumblebots.validator(state, turn)).toBeFalsy();
+      const update = { name: 'BotOne', orders: { Z: 'UP' } };
+      expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
     });
 
     it('returns false if inputting a string which is not a direction', () => {
@@ -177,9 +182,8 @@ describe('Bumblebots', () => {
           },
         },
       };
-      const turn = { name: 'BotOne', orders: { A: 'ASDF' } };
-
-      expect(bumblebots.validator(state, turn)).toBeFalsy();
+      const update = { name: 'BotOne', orders: { A: 'ASDF' } };
+      expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
     });
 
     it('returns false if attempting to leave the arena', () => {
@@ -197,20 +201,19 @@ describe('Bumblebots', () => {
           },
         },
       };
-      const turn = { name: 'BotOne', orders: { A: 'UP' } };
 
-      expect(bumblebots.validator(state, {
-        name: 'BotOne', orders: { A: 'UP' }
-      })).toBeFalsy();
-      expect(bumblebots.validator(state, {
-        name: 'BotOne', orders: { B: 'DOWN' }
-      })).toBeFalsy();
-      expect(bumblebots.validator(state, {
-        name: 'BotOne', orders: { C: 'LEFT' }
-      })).toBeFalsy();
-      expect(bumblebots.validator(state, {
-        name: 'BotOne', orders: { D: 'RIGHT' }
-      })).toBeFalsy();
+      let update;
+      update = { name: 'BotOne', orders:{ A: 'UP' } };
+      expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
+
+      update = { name: 'BotOne', orders:{ B: 'DOWN' } };
+      expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
+
+      update = { name: 'BotOne', orders:{ C: 'LEFT' } };
+      expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
+
+      update = { name: 'BotOne', orders:{ D: 'RIGHT' } };
+      expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
     });
 
     it('returns false if moving into an invalid square', () => {
@@ -226,17 +229,19 @@ describe('Bumblebots', () => {
           },
         },
       };
-      const turn = { name: 'BotOne', orders: { A: 'UP' } };
 
-      expect(bumblebots.validator(state, {
-        name: 'BotOne', orders: { A: 'DOWN' }
-      })).toBeFalsy();
-      expect(bumblebots.validator(state, {
-        name: 'BotOne', orders: { B: 'DOWN' }
-      })).toBeFalsy();
-      expect(bumblebots.validator(state, {
-        name: 'BotTwo', orders: { Z: 'UP' }
-      })).toBeFalsy();
+      let update;
+      update = { name: 'BotOne', orders: { A: 'DOWN' }};
+      expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
+
+      update = { name: 'BotOne', orders: { B: 'DOWN' } };
+      expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
+
+      update = { name: 'BotTwo', orders: { Z: 'UP' } };
+      expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
+
+      update = { name: 'BotOne', orders:{ D: 'RIGHT' } };
+      expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
     });
   });
 
@@ -281,7 +286,7 @@ describe('Bumblebots', () => {
       const update = {
         type: SOCKET_INCOMING,
         name: 'BotTwo',
-        orders: { A: 'UP' },
+        asdf: 'qqq',
       };
 
       const reduced = bumblebots.reducer({ state: state1, orders: {} }, update);
@@ -320,6 +325,32 @@ describe('Bumblebots', () => {
         BotOne: { A: 'UP' },
         BotTwo: { Z: 'DOWN' },
       });
+    });
+
+    it('filters invalid orders in a well-formatted request', () => {
+      const state1 = {
+        ...initialState,
+        drones: {
+          BotOne: {
+            A: { position: [7, 7] },
+            B: { position: [9, 9] },
+          },
+          BotTwo: {
+            Z: { position: [8, 7] },
+          },
+        },
+      };
+      const update = {
+        type: SOCKET_INCOMING,
+        name: 'BotOne',
+        orders: { A: 'DOWN', B: 'WHAT' },
+      };
+
+      const reduced = bumblebots.reducer({ state: state1, orders: {} }, update);
+      const { state: state2, orders, outgoing } = reduced;
+      expect(state1).toEqual(state2);
+      expect(outgoing).toEqual({});
+      expect(orders).toEqual({ BotOne: { A: 'DOWN' } });
     });
   });
 });

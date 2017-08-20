@@ -88,41 +88,47 @@ const moves = {
   RIGHT: [0, 1],
 };
 
-export function validator(state, update) {
+function validateDroneOrder(state, name, order, droneId) {
   // Checks whether the move is in the correct format and not moving somewhere
   // strange. (The check for collisions with other bots happen when all the
   // turns have been received.)
-  const movingBots = _.keys(update.orders);
   const height = state.board.length;
   const width = state.board[0].length;
 
-  for (let i = 0; i < movingBots.length; i++) {
-    // Check each drone.
-    const drone = state.drones[update.name][movingBots[i]];
-    if (!drone) return false;
-    if (drone.fixed) return false;
+  // Check each drone.
+  const drone = state.drones[name][droneId];
+  if (!drone) return false;
+  if (drone.fixed) return false;
 
-    const order = update.orders[movingBots[i]];
-    if (!moves[order]) return false;
+  if (!moves[order]) return false;
 
-    const position = [
-      drone.position[0] + moves[order][0],
-      drone.position[1] + moves[order][1],
-    ];
-    if (position[0] < 0) return false;
-    if (position[0] >= height) return false;
-    if (position[1] < 0) return false;
-    if (position[1] >= width) return false;
+  const position = [
+    drone.position[0] + moves[order][0],
+    drone.position[1] + moves[order][1],
+  ];
+  if (position[0] < 0) return false;
+  if (position[0] >= height) return false;
+  if (position[1] < 0) return false;
+  if (position[1] >= width) return false;
 
-    const square = state.board[position[0]][position[1]];
-    if (square !== 0 && square !== state.territory[update.name]) return false;
-  }
-  return true; 
+  const square = state.board[position[0]][position[1]];
+  if (square !== 0 && square !== state.territory[name]) return false;
+
+  return true;
+}
+
+export function sanitiseOrdersUpdate(state, { name, orders }) {
+  return _.pick(orders, (order, droneId) =>
+    validateDroneOrder(state, name, order, droneId)
+  );
 }
 
 export function reducer({ state, orders }, update) {
-  if (update.type === SOCKET_INCOMING && validator(state, update)) {
-    orders = {...orders, [update.name]: update.orders };
+  if (update.type === SOCKET_INCOMING) {
+    // Check that the update is in the correct format: an object with orders.
+    if (!update.orders) return { state, orders, outgoing: {} };
+
+    orders = {...orders, [update.name]: sanitiseOrdersUpdate(state, update) };
   }
   return { state, outgoing: {}, orders };
 }
