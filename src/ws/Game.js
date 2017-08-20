@@ -21,6 +21,7 @@ export default function Game(sources) {
   const gameId = createShortRandomHash();
   const { gameType, contest } = props;
   const startTime = new Date();
+  const game = games[gameType];
 
   const botNames = _.pluck(props.sockets, 'name');
 
@@ -40,26 +41,17 @@ export default function Game(sources) {
     )
     .share();
 
-  // TODO
-  // - Check that the database-saved games don't look screwed-up.
-  // - Consider refactoring the way that turns are stored: accumulate as the
-  // game goes-along, rather than in some unnecessary extra stream logic at
-  // the end.
-  // - Perhaps clean up the whole scan-reducer pattern - there seems to be too
-  // - many unnecessary transformations between turns/updates/turn-and-state
-  // events, etc.
-
   const sideEffect$ = new Rx.Subject();
 
   const update$ = botUpdate$
     .merge(sideEffect$)
-    .startWith(games[gameType].createInitialUpdate(botNames))
-    .scan(games[gameType].reducer)
+    .startWith(game.createInitialUpdate(botNames))
+    .scan(game.reducer)
     .shareReplay()
     .let(takeWhileInclusive(({ state: { result } }) => !result));
 
   update$
-    .let(games[gameType].sideEffects)
+    .let(game.sideEffects)
     .subscribe(sideEffect$);
 
   const wsUpdate$ = Rx.Observable.from(props.sockets)
@@ -80,7 +72,7 @@ export default function Game(sources) {
 
   const dbUpdate$ = update$
     .last()
-    .map(({ state }) => games[gameType].getDbRecord(
+    .map(({ state }) => game.getDbRecord(
       { state, gameId, startTime, contest }
     ))
     .map(gameRecord => ({

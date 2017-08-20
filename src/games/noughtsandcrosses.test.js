@@ -14,6 +14,7 @@ const midGameState = {
     O: 'botB',
   },
   invalidTurns: { botA: 0, botB: 0 },
+  turns: [],
 };
 
 const endGameState = {
@@ -30,13 +31,15 @@ const endGameState = {
     O: 'botB',
   },
   invalidTurns: { botA: 0, botB: 0 },
+  turns: [],
 };
 
 describe('Noughts and Crosses', () => {
   it('sets the initial state with an initial bot', () => {
-    const initialState = noughtsAndCrosses.createInitialState(
+    const initialUpdate = noughtsAndCrosses.createInitialUpdate(
       ['botA', 'botB']
     );
+    const initialState = initialUpdate.state;
     expect(initialState.board).toEqual([
       ['', '', ''],
       ['', '', ''],

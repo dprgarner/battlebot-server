@@ -15,7 +15,9 @@ function otherBot(bots, name) {
 }
 
 function createOutgoing(bots, state, turn) {
-  return _.object(bots.map(name => [name, { state, turn }]));
+  return _.object(bots.map(name =>
+    [name, { state: _.omit(state, 'turns'), turn }]
+  ));
 }
 
 export function createInitialUpdate(bots) {
@@ -36,22 +38,6 @@ export function createInitialUpdate(bots) {
     turns: [],
   };
   return { state, outgoing: createOutgoing(bots, state) };
-}
-
-export function getVictor(board) {
-  for (let mark of ['X', 'O']) {
-    if (
-      (mark === board[0][0] && mark === board[0][1] && mark === board[0][2]) ||
-      (mark === board[1][0] && mark === board[1][1] && mark === board[1][2]) ||
-      (mark === board[2][0] && mark === board[2][1] && mark === board[2][2]) ||
-      (mark === board[0][0] && mark === board[1][0] && mark === board[2][0]) ||
-      (mark === board[0][1] && mark === board[1][1] && mark === board[2][1]) ||
-      (mark === board[0][2] && mark === board[1][2] && mark === board[2][2]) ||
-      (mark === board[0][0] && mark === board[1][1] && mark === board[2][2]) ||
-      (mark === board[0][2] && mark === board[1][1] && mark === board[2][0])
-    ) return mark;
-  }
-  if (_.all(_.flatten(board))) return -1;
 }
 
 export function validator(state, turn) {
@@ -76,6 +62,22 @@ export function validator(state, turn) {
   return true;
 }
 
+export function getVictor(board) {
+  for (let mark of ['X', 'O']) {
+    if (
+      (mark === board[0][0] && mark === board[0][1] && mark === board[0][2]) ||
+      (mark === board[1][0] && mark === board[1][1] && mark === board[1][2]) ||
+      (mark === board[2][0] && mark === board[2][1] && mark === board[2][2]) ||
+      (mark === board[0][0] && mark === board[1][0] && mark === board[2][0]) ||
+      (mark === board[0][1] && mark === board[1][1] && mark === board[2][1]) ||
+      (mark === board[0][2] && mark === board[1][2] && mark === board[2][2]) ||
+      (mark === board[0][0] && mark === board[1][1] && mark === board[2][2]) ||
+      (mark === board[0][2] && mark === board[1][1] && mark === board[2][0])
+    ) return mark;
+  }
+  if (_.all(_.flatten(board))) return -1;
+}
+
 export function validTurnReducer(state, turn) {
   // Must return a state object with { bots, waitingFor=[], result=null }.
   const nextPlayer = _.without(state.bots, turn.name)[0];
@@ -95,7 +97,7 @@ export function validTurnReducer(state, turn) {
     result = { reason, victor };
   }
 
-  const turns = [...state.turns, _.omit(turn, 'type')];
+  const turns = [...state.turns, turn];
 
   return { ...state, board, waitingFor, result, turns };
 }
@@ -107,15 +109,16 @@ export function reducer({ state }, update) {
     const victor = otherBot(state.bots, update.name);
     const reason = update.type === TIMEOUT ? TIMEOUT : DISCONNECT;
     const result = { reason, victor };
-    outgoing = createOutgoing(state.bots, state);
     state = { ...state, waitingFor: [], result };
+    outgoing = createOutgoing(state.bots, state);
     return { state, outgoing };
   }
 
   const valid = validator(state, update);
-  const turn = { ..._.omit(update, 'type'), valid };
+  const turnWithoutType = _.omit(update, 'type');
+  const turn = { ...turnWithoutType, valid };
   if (valid) {
-    state = validTurnReducer(state, update);
+    state = validTurnReducer(state, turnWithoutType);
     outgoing = createOutgoing(state.bots, state, turn);
   } else {
     state = {
@@ -135,7 +138,6 @@ export function reducer({ state }, update) {
       outgoing = createOutgoing(state.bots, state);
     }
   }
-
   return { state, turn, outgoing };
 }
 
