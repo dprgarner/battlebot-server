@@ -18,8 +18,15 @@ const baseGameResolver = {
 
 const resolvers = {
   Query: {
-    gameTypes: () => gameTypes,
-    gameType: (_, { name }) => gameTypes.includes(name) ? name : null,
+    games: (_root, { gameType, filters }, { Games }) => (
+      Games.load({ gameType, ...filters })
+    ),
+    game: (_root, { gameType, id }, { Games }) => (
+      Games.load({ gameType, _id: id }).then(games => games && games[0])
+    ),
+    bots: (_root, args, { Bots }) => Bots.load(args),
+    contest: (_root, { gameType, name }) => ({ gameType, contest: name }),
+    contests: (_root, { gameType }, { Contests }) => Contests.load(gameType),
   },
 
   Mutation: {
@@ -28,22 +35,9 @@ const resolvers = {
     ),
   },
 
-  GameType: {
-    name: gameType => gameType,
-    games: (gameType, { filters }, { Games }) => (
-      Games.load({ gameType, ...filters })
-    ),
-    game: (gameType, { id }, { Games }) => (
-      Games.load({ gameType, _id: id }).then(games => games && games[0])
-    ),
-    bots: (gameType, args, { Bots }) => Bots.load(_.extend({ gameType }, args)),
-    contest: (gameType, { name }) => ({ gameType, contest: name }),
-    contests: (gameType, args, { Contests }) => Contests.load(gameType),
-  },
-
   Game: {
     __resolveType({ gameType }) {
-      if (gameType === 'noughtsandcrosses') return 'NoughtsAndCrosses';
+      if (gameType === 'noughtsandcrosses') return 'NoughtsAndCrossesGame';
       return null;
     },
   },
@@ -54,7 +48,7 @@ const resolvers = {
     ),
   },
 
-  NoughtsAndCrosses: baseGameResolver,
+  NoughtsAndCrossesGame: baseGameResolver,
 
   NoughtsAndCrossesMarks: {
     X: (marks, _, { Bot }) => Bot.load(

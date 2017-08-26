@@ -26,14 +26,12 @@ describe('registering bots', function() {
   it('registers a bot', async () => {
     const body = await graphql(`
       mutation {
-        registerBot(name: "BotFour", owner: "Me", gameType: "noughtsandcrosses") {
+        registerBot(gameType: noughtsandcrosses, name: "BotFour", owner: "Me") {
           password
           bot {
             name
             owner
-            gameType {
-              name
-            }
+            gameType
             dateRegistered
           }
         }
@@ -66,14 +64,12 @@ describe('registering bots', function() {
   it('rejects registration if the bot name is taken', async () => {
     const body = await graphql(`
       mutation {
-        registerBot(name: "BotOne", owner: "Me", gameType: "noughtsandcrosses") {
+        registerBot(gameType: noughtsandcrosses, name: "BotOne", owner: "Me") {
           password
           bot {
             name
             owner
-            gameType {
-              name
-            }
+            gameType
             dateRegistered
           }
         }
@@ -90,14 +86,12 @@ describe('registering bots', function() {
   it('rejects registration if the owner is not specified', async () => {
     const response = await graphql(`
       mutation {
-        registerBot(name: "BotFour", gameType: "noughtsandcrosses") {
+        registerBot(gameType: noughtsandcrosses, name: "BotFour") {
           password
           bot {
             name
             owner
-            gameType {
-              name
-            }
+            gameType
             dateRegistered
           }
         }
@@ -110,24 +104,22 @@ describe('registering bots', function() {
   });
 
   it('rejects registration if the game name is unrecognised', async () => {
-    const body = await graphql(`
+    const response = await graphql(`
       mutation {
-        registerBot(name: "BotFour", owner: "Me", gameType: "adasdasd") {
+        registerBot(gameType: adasdasd, name: "BotFour") {
           password
           bot {
             name
             owner
-            gameType {
-              name
-            }
+            gameType
             dateRegistered
           }
         }
       }
-    `)
+    `, true)
 
-    log(body);
-    expect(body.errors).to.have.length(1);
-    expect(body.errors[0].message).to.equal('Game not recognised');
+    log(response.body);
+    expect(response.statusCode).to.equal(400);
+    expect(response.body.errors.length).to.be.ok;
   });
 });

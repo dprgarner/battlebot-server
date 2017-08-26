@@ -1,41 +1,33 @@
 # The root-level query.
 type Query {
-  gameTypes: [GameType]
+  # A list of the bots registered for this game.
+  bots(gameType: GameType!, owner: String): [Bot]
 
-  gameType(name: ID!): GameType
+  # A list of contests.
+  contest(gameType: GameType!, name: ID!): Contest
+
+  # A single contest, by ID.
+  contests(gameType: GameType!): [Contest]
+
+  # A list of played games.
+  games(gameType: GameType!, filters: GameInput): [Game]
+
+  # A single game, by ID.
+  game(gameType: GameType!, id: ID!): Game
 }
 
 # The root-level mutation.
 type Mutation {
   # The mutation to register a new bot.
-  registerBot(name: ID!, owner: String!, gameType: ID!): CreatedBot
-}
-
-# Returned when a bot is first registered.
-type CreatedBot {
-  password: String!
-  bot: Bot
+  registerBot(name: ID!, owner: String!, gameType: GameType!): CreatedBot
 }
 
 # The type of the game.
-type GameType {
-  # The name of the game. Lower-case.
-  name: ID!
-
-  # A list of the bots registered for this game.
-  bots(owner: String): [Bot]
-
-  contests: [Contest]
-
-  contest(name: ID!): Contest
-
-  # A list of played games.
-  games(filters: GameInput): [Game]
-
-  # A single game, by ID.
-  game(id: ID!): Game
+enum GameType {
+  noughtsandcrosses
 }
 
+# A bot type.
 type Bot {
   # The name of the bot.
   name: ID!
@@ -47,6 +39,12 @@ type Bot {
   owner: String!
 
   dateRegistered: String
+}
+
+# Returned when a bot is first registered.
+type CreatedBot {
+  password: String!
+  bot: Bot
 }
 
 type Contest {
@@ -113,15 +111,15 @@ type Result {
   reason: String!
 }
 
-union Game = NoughtsAndCrosses
+union Game = NoughtsAndCrossesGame
 
 # A completed game of Noughts and Crosses.
-type NoughtsAndCrosses {
+type NoughtsAndCrossesGame {
   id: ID!
 
-  bots: [Bot]!
-
   gameType: GameType!
+
+  bots: [Bot]!
 
   # The contest that this game was played in, if any.
   contest: Contest

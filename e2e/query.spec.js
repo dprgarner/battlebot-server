@@ -29,39 +29,29 @@ describe('query', function() {
   it('queries bots', async () => {
     const body = await graphql(`
       query {
-        gameType(name: "noughtsandcrosses") {
-          bots {
-            name
-            gameType {
-              name
-            }
-            owner
-          }
+        bots(gameType: noughtsandcrosses) {
+          name
+          gameType
+          owner
         }
       }
     `)
     log(JSON.stringify(body, null, 2));
 
-    expect(body.data.gameType.bots).to.deep.have.members([
+    expect(body.data.bots).to.deep.have.members([
       {
         name: 'BotOne',
-        gameType: {
-          name: 'noughtsandcrosses'
-        },
+        gameType: 'noughtsandcrosses',
         owner: 'Anonymous',
       },
       {
         name: 'BotTwo',
-        gameType: {
-          name: 'noughtsandcrosses'
-        },
+        gameType: 'noughtsandcrosses',
         owner: 'Anonymous',
       },
       {
         name: 'BotThree',
-        gameType: {
-          name: 'noughtsandcrosses'
-        },
+        gameType: 'noughtsandcrosses',
         owner: 'Me',
       },
     ]);
@@ -80,28 +70,26 @@ describe('query', function() {
     // Next, look up the game via a GraphQL query.
     const body = await graphql(`
       query {
-        gameType(name: "noughtsandcrosses") {
-          games {
-            __typename
-            ...on NoughtsAndCrosses {
-              bots {
-                name
-              }
-              gameType { name }
-              result {
-                reason
-                victor { name }
-              }
-              board
-              marks {
-                X { name }
-                O { name }
-              }
-              turns {
-                bot { name }
-                mark
-                space
-              }
+        games(gameType: noughtsandcrosses) {
+          __typename
+          ...on NoughtsAndCrossesGame {
+            bots {
+              name
+            }
+            gameType
+            result {
+              reason
+              victor { name }
+            }
+            board
+            marks {
+              X { name }
+              O { name }
+            }
+            turns {
+              bot { name }
+              mark
+              space
             }
           }
         }
@@ -109,13 +97,13 @@ describe('query', function() {
     `)
     log(JSON.stringify(body, null, 2));
 
-    expect(body.data.gameType.games).to.deep.equal([{
-      __typename: 'NoughtsAndCrosses',
+    expect(body.data.games).to.deep.equal([{
+      __typename: 'NoughtsAndCrossesGame',
       bots: [
         { name: 'BotOne' },
         { name: 'BotTwo' },
       ],
-      gameType: { name: 'noughtsandcrosses' },
+      gameType: 'noughtsandcrosses',
       result: {
         reason: 'complete',
         victor: { name: 'BotOne' },
@@ -192,28 +180,26 @@ describe('query', function() {
     // Next, look up the contest via a GraphQL query.
     const body = await graphql(`
       query {
-        gameType(name: "noughtsandcrosses") {
-          contest(name: "myContest") {
-            name
-            gameType { name }
-            rankings {
-              bot { name }
-              wins
-              draws
-              losses
-              played
-              score
-            }
-            games {
-              __typename
-              ...on NoughtsAndCrosses {
-                contest { name }
-                bots {
-                  name
-                }
-                result {
-                  victor { name }
-                }
+        contest(gameType: noughtsandcrosses, name: "myContest") {
+          name
+          gameType
+          rankings {
+            bot { name }
+            wins
+            draws
+            losses
+            played
+            score
+          }
+          games {
+            __typename
+            ...on NoughtsAndCrossesGame {
+              contest { name }
+              bots {
+                name
+              }
+              result {
+                victor { name }
               }
             }
           }
@@ -222,9 +208,9 @@ describe('query', function() {
     `)
     log(JSON.stringify(body, null, 2));
 
-    expect(body.data.gameType.contest).to.deep.equal({
+    expect(body.data.contest).to.deep.equal({
       name: 'myContest',
-      gameType: { name: 'noughtsandcrosses' },
+      gameType: 'noughtsandcrosses',
       rankings: [
         {
           bot: { name: 'BotOne' },
@@ -245,7 +231,7 @@ describe('query', function() {
       ],
       games: [
         {
-          __typename: 'NoughtsAndCrosses',
+          __typename: 'NoughtsAndCrossesGame',
           contest: { name: 'myContest' },
           bots: [
             { name: 'BotOne' },
@@ -256,7 +242,7 @@ describe('query', function() {
           },
         },
         {
-          __typename: 'NoughtsAndCrosses',
+          __typename: 'NoughtsAndCrossesGame',
           contest: { name: 'myContest' },
           bots: [
             { name: 'BotOne' },
