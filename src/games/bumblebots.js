@@ -5,10 +5,12 @@ import { SOCKET_INCOMING } from '../const';
 import merge from 'merge';
 
 const POSSIBLE_MOVES = {
-  UP: [-1, 0],
-  DOWN: [1, 0],
-  LEFT: [0, -1],
-  RIGHT: [0, 1],
+  UL: [-1, -1],
+  UR: [-1, 0],
+  R: [0, 1],
+  DR: [1, 1],
+  DL: [1, 0],
+  L: [0, -1],
 };
 
 export const BUMBLEBOTS_TICK = 'BUMBLEBOTS_TICK';
@@ -30,52 +32,88 @@ const CHAR_TO_INT = {
 };
 const INT_TO_CHAR = _.invert(CHAR_TO_INT);
 
-export function parseBoard(str) {
+/*
+The hexes on the board are specified uniquely by integer tuples (i, j). For
+example, the hex at the centre of the board is (7, 7).
+
+       *---j---> # # #
+      / . . + + + . . #
+     i . . . . . . . . #
+    / . . . . . . . . . #
+  |_ . . . . . . . . . . #
+  # . . . . . . . . . . . #
+ # . . . . . . . . . . . . #
+# . . . . . . # . . . . . . #
+ # . . . . . . . . . . . . #
+  # . . . . . . . . . . . #
+   # . . . . . . . . . . #
+    # . . . . . . . . . #
+     # . . . . . . . . #
+      # . . x x x . . #
+       # # # # # # # #
+*/
+
+export function parseHexBoard(str) {
   // Convert a string-representation of the board into a [[Int]]
   // representation.
-  return str.trim().split('\n')
-    .map(row => row.trim().split(' ').map(c => CHAR_TO_INT[c]));
+  const collapsedRows = str.trim().split('\n').map(r => r.replace(/ /g, ''));
+  const maxWidth = Math.max(...collapsedRows.map(r => r.length));
+  for (let i = 0; i < collapsedRows.length; i++) {
+    let addDots = i - (maxWidth - 1) / 2
+    if (addDots > 0) {
+      collapsedRows[i] = '.'.repeat(addDots) + collapsedRows[i];
+    }
+  }
+
+  return collapsedRows.map(row => row.split('').map(c => CHAR_TO_INT[c]));
 }
 
-export function renderBoard(rows) {
-  const str = rows.map(row => row.map(i => INT_TO_CHAR[i]).join(' ')).join('\n');
-  return `\n${str}\n`;
+export function renderHexBoard(rows) {
+  const stringRows = rows.map(row => {
+    let str = '';
+    for (let i = 0; i < row.length; i++) {
+      if (row[i] || str) str += INT_TO_CHAR[row[i]] + ' ';
+    }
+    return str.trim();
+  });
+  const maxWidth = Math.max(...rows.map(r => r.length));
+  for (let i = 0; i < stringRows.length; i++) {
+    let addPadding = Math.abs((stringRows.length - 1) / 2 - i);
+    stringRows[i] = ' '.repeat(addPadding) + stringRows[i];
+  }
+  return `\n${stringRows.join('\n')}\n`;
 }
 
 export function createInitialUpdate(bots) {
   const state = {
     bots,
-    board: parseBoard(`
-      . . . . . + + + + + . . . . .
-      . . . . . . + + + . . . . . .
-      . . # # # . . . . . # # # . .
-      . . # . . . . . . . . . # . .
-      . £ # . . . . . . . . . # . .
-      . . . . . . . . . . . . . £ .
-      . . . . . . . . . . . . . . .
-      . . . . . . . . . . . . . . .
-      . . . . . . . . . . . . . . .
-      . . . . . . . . . . . . . . .
-      . . # . £ . . . . . . . # . .
-      . . # . . . . . . . . . # . .
-      . . # # # . . . . . # # # £ .
-      . . . . . . x x x . . . . . .
-      . . . . . x x x x x . . . . .
+    board: parseHexBoard(`
+             # # # # # # # #
+            # . . + + + . . #
+           # . . . . . . . . #
+          # . . # # . # # . . #
+         # . . # £ . . . # . . #
+        # . . . . . . . . . . . #
+       # . . # . . . . . . # . . #
+      # . . # . . . . . . . # £ . #
+       # . . # . . . . . . # . . #
+        # . . . . . . . . . . . #
+         # . . # . . . . # . . #
+          # £ . # # . # # . . #
+           # . . . . . . . . #
+            # . . x x x . . #
+             # # # # # # # #
     `),
     drones: {
       [bots[0]]: {
-        A: { position: [0, 5] },
-        B: { position: [0, 6] },
-        C: { position: [0, 7] },
-        D: { position: [0, 8] },
-        E: { position: [0, 9] },
+        A: { position: [1, 3] },
+        B: { position: [1, 4] },
+        C: { position: [1, 5] },
       },
       [bots[1]]: {
-        Z: { position: [14, 5] },
-        Y: { position: [14, 6] },
-        X: { position: [14, 7] },
-        W: { position: [14, 8] },
-        V: { position: [14, 9] },
+        Z: { position: [13, 11] },
+        Y: { position: [13, 10] },
+        X: { position: [13, 9] },
       },
     },
     territory: {
@@ -105,7 +143,7 @@ function validateDroneOrder(state, name, order, droneId) {
   // strange. (The check for collisions with other bots happen when all the
   // turns have been received.)
   const height = state.board.length;
-  const width = state.board[0].length;
+  const width = state.board[state.board.length - 1].length;
 
   // Check each drone.
   const drone = state.drones[name][droneId];
@@ -118,13 +156,9 @@ function validateDroneOrder(state, name, order, droneId) {
     drone.position[0] + POSSIBLE_MOVES[order][0],
     drone.position[1] + POSSIBLE_MOVES[order][1],
   ];
-  if (position[0] < 0) return false;
-  if (position[0] >= height) return false;
-  if (position[1] < 0) return false;
-  if (position[1] >= width) return false;
 
-  const square = state.board[position[0]][position[1]];
-  if (square !== 0 && square !== state.territory[name]) return false;
+  const hex = state.board[position[0]][position[1]];
+  if (hex !== 0 && hex !== state.territory[name]) return false;
 
   return true;
 }
@@ -140,10 +174,10 @@ function resolveDroneMoves(state, orders) {
   // which they are trying to move.
   const currentPositions = _.times(state.board.length, () => []);
   const intendedPositions = _.times(state.board.length, () => 
-    _.times(state.board[0].length, () => [])
+    _.times(state.board[state.board.length - 1].length, () => [])
   );
 
-  _.each(state.drones, (dronesByBot, name) =>
+  _.each(state.drones, (dronesByBot, name) => {
     _.each(dronesByBot, ({ position: [i, j] }, droneId ) => {
       const drone = state.drones[name][droneId];
       const order = (orders[name] || {})[droneId] || null;
@@ -162,13 +196,13 @@ function resolveDroneMoves(state, orders) {
         intendedPositions[moveTo[0]][moveTo[1]].push(currentPositions[i][j]);
       }
     })
-  );
+  });
 
-  // Stop two or more drones if they are trying to move into the same square.
+  // Stop two or more drones if they are trying to move into the same hex.
   _.each(intendedPositions, (row, i) => {
-    _.each(row, (botsInSquare, j) => {
-      if (botsInSquare.length > 1) {
-        _.each(botsInSquare, drone => {
+    _.each(row, (botsInHex, j) => {
+      if (botsInHex.length > 1) {
+        _.each(botsInHex, drone => {
           drone.moveTo = null;
         });
         intendedPositions[i][j] = [];

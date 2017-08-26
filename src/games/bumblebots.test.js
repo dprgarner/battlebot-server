@@ -5,22 +5,22 @@ import { SOCKET_INCOMING } from '../const';
 
 const initialState = {
   bots: ['BotOne', 'BotTwo'],
-  board: bumblebots.parseBoard(`
-    . . . . . + + + + + . . . . .
-    . . . . . . + + + . . . . . .
-    . . # # # . . . . . # # # . .
-    . . # . . . . . . . . . # . .
-    . £ # . . . . . . . . . # . .
-    . . . . . . . . . . . . . £ .
-    . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . .
-    . . # . £ . . . . . . . # . .
-    . . # . . . . . . . . . # . .
-    . . # # # . . . . . # # # £ .
-    . . . . . . x x x . . . . . .
-    . . . . . x x x x x . . . . .
+  board: bumblebots.parseHexBoard(`
+           # # # # # # # #
+          # . . + + + . . #
+         # . . . . . . . . #
+        # . . # # . # # . . #
+       # . . # £ . . . # . . #
+      # . . . . . . . . . . . #
+     # . . # . . . . . . # . . #
+    # . . # . . . . . . . # £ . #
+     # . . # . . . . . . # . . #
+      # . . . . . . . . . . . #
+       # . . # . . . . # . . #
+        # £ . # # . # # . . #
+         # . . . . . . . . #
+          # . . x x x . . #
+           # # # # # # # #
   `),
   drones: {
     BotOne: {},
@@ -42,77 +42,78 @@ const initialState = {
 describe('Bumblebots (general)', () => {
   describe('parsing', () => {
     it('parses string-boards to int-boards', () => {
-      const parsedBoard = bumblebots.parseBoard(`
-        . . . . . + + + + + . . . . .
-        . . . . . . + + + . . . . . .
-        . . # # # . . . . . # # # . .
-        . . # . . . . . . . . . # . .
-        . £ # . . . . . . . . . # . .
-        . . . . . . . . . . . . . £ .
-        . . . . . . . . . . . . . . .
-        . . . . . . . . . . . . . . .
-        . . . . . . . . . . . . . . .
-        . . . . . . . . . . . . . . .
-        . . # . £ . . . . . . . # . .
-        . . # . . . . . . . . . # . .
-        . . # # # . . . . . # # # £ .
-        . . . . . . x x x . . . . . .
-        . . . . . x x x x x . . . . .
+      const parsedBoard = bumblebots.parseHexBoard(`
+               # # # # # # # #
+              # . . + + + . . #
+             # . . . . . . . . #
+            # . . # # . # # . . #
+           # . . # £ . . . # . . #
+          # . . . . . . . . . . . #
+         # . . # . . . . . . # . . #
+        # . . # . . . . . . . # £ . #
+         # . . # . . . . . . # . . #
+          # . . . . . . . . . . . #
+           # . . # . . . . # . . #
+            # £ . # # . # # . . #
+             # . . . . . . . . #
+              # . . x x x . . #
+               # # # # # # # #
       `);
+
       expect(parsedBoard).toEqual([
-        [0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0],
-        [0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0],
-        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-        [0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-        [0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 2, 0],
-        [0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 3, 3, 3, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1],
+        [1, 0, 0, 1, 2, 0, 0, 0, 1, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+        [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 1],
+        [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1],
+        [0, 0, 0, 0, 1, 2, 0, 1, 1, 0, 1, 1, 0, 0, 1],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0, 1, 0, 0, 4, 4, 4, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
       ]);
     });
 
     it('renders int-boards as strings', () => {
-      const renderedBoard = bumblebots.renderBoard([
-        [0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0],
-        [0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0],
-        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-        [0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-        [0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 2, 0],
-        [0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0],
+      const renderedBoard = bumblebots.renderHexBoard([
+        [1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 3, 3, 3, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1],
+        [1, 0, 0, 1, 2, 0, 0, 0, 1, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+        [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 1],
+        [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1],
+        [0, 0, 0, 0, 1, 2, 0, 1, 1, 0, 1, 1, 0, 0, 1],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0, 1, 0, 0, 4, 4, 4, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
       ]);
       const stringBoard = (
 `
-. . . . . + + + + + . . . . .
-. . . . . . + + + . . . . . .
-. . # # # . . . . . # # # . .
-. . # . . . . . . . . . # . .
-. £ # . . . . . . . . . # . .
-. . . . . . . . . . . . . £ .
-. . . . . . . . . . . . . . .
-. . . . . . . . . . . . . . .
-. . . . . . . . . . . . . . .
-. . . . . . . . . . . . . . .
-. . # . £ . . . . . . . # . .
-. . # . . . . . . . . . # . .
-. . # # # . . . . . # # # £ .
-. . . . . . x x x . . . . . .
-. . . . . x x x x x . . . . .
+       # # # # # # # #
+      # . . + + + . . #
+     # . . . . . . . . #
+    # . . # # . # # . . #
+   # . . # £ . . . # . . #
+  # . . . . . . . . . . . #
+ # . . # . . . . . . # . . #
+# . . # . . . . . . . # £ . #
+ # . . # . . . . . . # . . #
+  # . . . . . . . . . . . #
+   # . . # . . . . # . . #
+    # £ . # # . # # . . #
+     # . . . . . . . . #
+      # . . x x x . . #
+       # # # # # # # #
 `
       );
       expect(renderedBoard).toEqual(stringBoard);
@@ -125,33 +126,45 @@ describe('Bumblebots (general)', () => {
         ...initialState,
         drones: {
           BotOne: {
-            A: { position: [2, 7] },
+            A: { position: [1, 4] },
           },
           BotTwo: {
-            Z: { position: [12, 7] },
+            Z: { position: [13, 10] },
           },
         },
       };
 
       let update;
 
-      update = { name: 'BotOne', orders: { A: 'UP' } };
+      update = { name: 'BotOne', orders: { A: 'DL' } };
       expect(bumblebots.sanitiseOrdersUpdate(state, update))
         .toEqual(update.orders);
 
-      update = { name: 'BotOne', orders: { A: 'DOWN' } };
+      update = { name: 'BotOne', orders: { A: 'DR' } };
       expect(bumblebots.sanitiseOrdersUpdate(state, update))
         .toEqual(update.orders);
 
-      update = { name: 'BotOne', orders: { A: 'LEFT' } };
+      update = { name: 'BotOne', orders: { A: 'L' } };
       expect(bumblebots.sanitiseOrdersUpdate(state, update))
         .toEqual(update.orders);
 
-      update = { name: 'BotOne', orders: { A: 'RIGHT' } };
+      update = { name: 'BotOne', orders: { A: 'R' } };
       expect(bumblebots.sanitiseOrdersUpdate(state, update))
         .toEqual(update.orders);
 
-      update = { name: 'BotTwo', orders: { Z: 'UP' } };
+      update = { name: 'BotTwo', orders: { Z: 'UL' } };
+      expect(bumblebots.sanitiseOrdersUpdate(state, update))
+        .toEqual(update.orders);
+
+      update = { name: 'BotTwo', orders: { Z: 'UR' } };
+      expect(bumblebots.sanitiseOrdersUpdate(state, update))
+        .toEqual(update.orders);
+
+      update = { name: 'BotTwo', orders: { Z: 'L' } };
+      expect(bumblebots.sanitiseOrdersUpdate(state, update))
+        .toEqual(update.orders);
+
+      update = { name: 'BotTwo', orders: { Z: 'R' } };
       expect(bumblebots.sanitiseOrdersUpdate(state, update))
         .toEqual(update.orders);
     });
@@ -168,7 +181,7 @@ describe('Bumblebots (general)', () => {
           },
         },
       };
-      const update = { name: 'BotOne', orders: { Z: 'UP' } };
+      const update = { name: 'BotOne', orders: { Z: 'R' } };
       expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
     });
 
@@ -188,61 +201,34 @@ describe('Bumblebots (general)', () => {
       expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
     });
 
-    it('returns false if attempting to leave the arena', () => {
+    it('returns false if moving into an invalid hex', () => {
       const state = {
         ...initialState,
         drones: {
           BotOne: {
-            A: { position: [0, 7] },
-            B: { position: [14, 7] },
-            C: { position: [7, 0] },
-            D: { position: [7, 14] },
+            A: { position: [1, 4] },
+            B: { position: [7, 4] },
           },
           BotTwo: {
-            Z: { position: [8, 7] },
+            Z: { position: [13, 10] },
           },
         },
       };
 
       let update;
-      update = { name: 'BotOne', orders: { A: 'UP' } };
+      update = { name: 'BotOne', orders: { A: 'U' }};
       expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
 
-      update = { name: 'BotOne', orders: { B: 'DOWN' } };
+      update = { name: 'BotOne', orders: { B: 'UL' } };
       expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
 
-      update = { name: 'BotOne', orders: { C: 'LEFT' } };
+      update = { name: 'BotOne', orders: { B: 'L' } };
       expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
 
-      update = { name: 'BotOne', orders: { D: 'RIGHT' } };
-      expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
-    });
-
-    it('returns false if moving into an invalid square', () => {
-      const state = {
-        ...initialState,
-        drones: {
-          BotOne: {
-            A: { position: [1, 2] },
-            B: { position: [12, 7] },
-          },
-          BotTwo: {
-            Z: { position: [2, 7] },
-          },
-        },
-      };
-
-      let update;
-      update = { name: 'BotOne', orders: { A: 'DOWN' }};
+      update = { name: 'BotOne', orders: { B: 'DL' } };
       expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
 
-      update = { name: 'BotOne', orders: { B: 'DOWN' } };
-      expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
-
-      update = { name: 'BotTwo', orders: { Z: 'UP' } };
-      expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
-
-      update = { name: 'BotOne', orders: { D: 'RIGHT' } };
+      update = { name: 'BotTwo', orders: { Z: 'D' } };
       expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
     });
   });

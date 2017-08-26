@@ -5,22 +5,22 @@ import { SOCKET_INCOMING } from '../const';
 
 const initialState = {
   bots: ['BotOne', 'BotTwo'],
-  board: bumblebots.parseBoard(`
-    . . . . . + + + + + . . . . .
-    . . . . . . + + + . . . . . .
-    . . # # # . . . . . # # # . .
-    . . # . . . . . . . . . # . .
-    . £ # . . . . . . . . . # . .
-    . . . . . . . . . . . . . £ .
-    . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . .
-    . . # . £ . . . . . . . # . .
-    . . # . . . . . . . . . # . .
-    . . # # # . . . . . # # # £ .
-    . . . . . . x x x . . . . . .
-    . . . . . x x x x x . . . . .
+  board: bumblebots.parseHexBoard(`
+           # # # # # # # #
+          # . . + + + . . #
+         # . . . . . . . . #
+        # . . # # . # # . . #
+       # . . # £ . . . # . . #
+      # . . . . . . . . . . . #
+     # . . # . . . . . . # . . #
+    # . . # . . . . . . . # £ . #
+     # . . # . . . . . . # . . #
+      # . . . . . . . . . . . #
+       # . . # . . . . # . . #
+        # £ . # # . # # . . #
+         # . . . . . . . . #
+          # . . x x x . . #
+           # # # # # # # #
   `),
   drones: {
     BotOne: {},
@@ -56,14 +56,14 @@ describe('Bumblebots (reducer)', () => {
       const update = {
         type: SOCKET_INCOMING,
         name: 'BotOne',
-        orders: { A: 'UP' },
+        orders: { A: 'UL' },
       };
 
       const reduced = bumblebots.reducer({ state: state1, orders: {} }, update);
       const { state: state2, orders, outgoing } = reduced;
       expect(state1).toEqual(state2);
       expect(outgoing).toEqual({});
-      expect(orders).toEqual({ BotOne: { A: 'UP' } });
+      expect(orders).toEqual({ BotOne: { A: 'UL' } });
     });
 
     it('ignores an invalid order request', () => {
@@ -103,11 +103,11 @@ describe('Bumblebots (reducer)', () => {
           },
         },
       };
-      const orders1 = { BotOne: { A: 'UP' } };
+      const orders1 = { BotOne: { A: 'UL' } };
       const update = {
         type: SOCKET_INCOMING,
         name: 'BotTwo',
-        orders: { Z: 'DOWN' },
+        orders: { Z: 'DR' },
       };
 
       const reduced = bumblebots.reducer(
@@ -117,8 +117,8 @@ describe('Bumblebots (reducer)', () => {
       expect(state1).toEqual(state2);
       expect(outgoing).toEqual({});
       expect(orders2).toEqual({
-        BotOne: { A: 'UP' },
-        BotTwo: { Z: 'DOWN' },
+        BotOne: { A: 'UL' },
+        BotTwo: { Z: 'DR' },
       });
     });
 
@@ -138,14 +138,14 @@ describe('Bumblebots (reducer)', () => {
       const update = {
         type: SOCKET_INCOMING,
         name: 'BotOne',
-        orders: { A: 'DOWN', B: 'WHAT' },
+        orders: { A: 'DR', B: 'WHAT' },
       };
 
       const reduced = bumblebots.reducer({ state: state1, orders: {} }, update);
       const { state: state2, orders, outgoing } = reduced;
       expect(state1).toEqual(state2);
       expect(outgoing).toEqual({});
-      expect(orders).toEqual({ BotOne: { A: 'DOWN' } });
+      expect(orders).toEqual({ BotOne: { A: 'DR' } });
     });
   });
 
@@ -166,8 +166,8 @@ describe('Bumblebots (reducer)', () => {
         },
       };
       const orders1 = {
-        BotOne: { A: 'UP' },
-        BotTwo: { Z: 'RIGHT' },
+        BotOne: { A: 'UL' },
+        BotTwo: { Z: 'R' },
       };
 
       const reduced = bumblebots.reducer(
@@ -184,7 +184,7 @@ describe('Bumblebots (reducer)', () => {
 
       expect(state2.drones).toEqual({
         BotOne: {
-          A: { position: [6, 7] },
+          A: { position: [6, 6] },
           B: { position: [2, 7] },
         },
         BotTwo: {
@@ -206,8 +206,8 @@ describe('Bumblebots (reducer)', () => {
         },
       };
       const orders1 = {
-        BotOne: { A: 'DOWN' },
-        BotTwo: { Z: 'UP' },
+        BotOne: { A: 'DL' },
+        BotTwo: { Z: 'UR' },
       };
 
       const { state: state2 } = bumblebots.reducer(
@@ -233,7 +233,7 @@ describe('Bumblebots (reducer)', () => {
         },
       };
       const orders1 = {
-        BotTwo: { Z: 'UP' },
+        BotTwo: { Z: 'UR' },
       };
 
       const { state: state2 } = bumblebots.reducer(
@@ -259,8 +259,8 @@ describe('Bumblebots (reducer)', () => {
         },
       };
       const orders1 = {
-        BotOne: { A: 'UP' },
-        BotTwo: { Z: 'UP' },
+        BotOne: { A: 'UR' },
+        BotTwo: { Z: 'UR' },
       };
 
       const { state: state2 } = bumblebots.reducer(
@@ -282,18 +282,18 @@ describe('Bumblebots (reducer)', () => {
             B: { position: [6, 7] },
             C: { position: [6, 8] },
             D: { position: [6, 9] },
-            E: { position: [7, 9] },
+            E: { position: [7, 10] },
           },
           BotTwo: {},
         },
       };
       const orders1 = {
         BotOne: {
-          A: 'UP',
-          B: 'RIGHT',
-          C: 'RIGHT',
-          D: 'DOWN',
-          E: 'DOWN',
+          A: 'UR',
+          B: 'R',
+          C: 'R',
+          D: 'DR',
+          E: 'DL',
         },
       };
 
@@ -306,8 +306,8 @@ describe('Bumblebots (reducer)', () => {
           A: { position: [6, 7] },
           B: { position: [6, 8] },
           C: { position: [6, 9] },
-          D: { position: [7, 9] },
-          E: { position: [8, 9] },
+          D: { position: [7, 10] },
+          E: { position: [8, 10] },
         },
         BotTwo: {},
       });
@@ -322,17 +322,17 @@ describe('Bumblebots (reducer)', () => {
             B: { position: [6, 7] },
             C: { position: [6, 8] },
             D: { position: [6, 9] },
-            E: { position: [7, 9] },
+            E: { position: [7, 10] },
           },
           BotTwo: {},
         },
       };
       const orders1 = {
         BotOne: {
-          A: 'UP',
-          B: 'RIGHT',
-          C: 'RIGHT',
-          D: 'DOWN',
+          A: 'UR',
+          B: 'R',
+          C: 'R',
+          D: 'DR',
         },
       };
 
@@ -346,7 +346,7 @@ describe('Bumblebots (reducer)', () => {
           B: { position: [6, 7] },
           C: { position: [6, 8] },
           D: { position: [6, 9] },
-          E: { position: [7, 9] },
+          E: { position: [7, 10] },
         },
         BotTwo: {},
       });
@@ -361,17 +361,17 @@ describe('Bumblebots (reducer)', () => {
             B: { position: [6, 7] },
             C: { position: [6, 8] },
             D: { position: [6, 9] },
-            E: { position: [7, 9] },
+            E: { position: [7, 10] },
           },
           BotTwo: {},
         },
       };
       const orders1 = {
         BotOne: {
-          A: 'UP',
-          B: 'RIGHT',
-          C: 'RIGHT',
-          E: 'DOWN',
+          A: 'UR',
+          B: 'R',
+          D: 'DR',
+          E: 'DL',
         },
       };
 
@@ -384,8 +384,8 @@ describe('Bumblebots (reducer)', () => {
           A: { position: [7, 7] },
           B: { position: [6, 7] },
           C: { position: [6, 8] },
-          D: { position: [6, 9] },
-          E: { position: [8, 9] },
+          D: { position: [7, 10] },
+          E: { position: [8, 10] },
         },
         BotTwo: {},
       });
@@ -398,18 +398,22 @@ describe('Bumblebots (reducer)', () => {
           BotOne: {
             A: { position: [7, 7] },
             B: { position: [6, 7] },
-            C: { position: [6, 6] },
-            D: { position: [7, 6] },
+            C: { position: [6, 8] },
+            D: { position: [7, 9] },
+            E: { position: [8, 9] },
+            F: { position: [8, 8] },
           },
           BotTwo: {},
         },
       };
       const orders1 = {
         BotOne: {
-          A: 'UP',
-          B: 'LEFT',
-          C: 'DOWN',
-          D: 'RIGHT',
+          A: 'UR',
+          B: 'R',
+          C: 'DR',
+          D: 'DL',
+          E: 'L',
+          F: 'UL',
         },
       };
 
@@ -420,9 +424,11 @@ describe('Bumblebots (reducer)', () => {
       expect(state2.drones).toEqual({
         BotOne: {
           A: { position: [6, 7] },
-          B: { position: [6, 6] },
-          C: { position: [7, 6] },
-          D: { position: [7, 7] },
+          B: { position: [6, 8] },
+          C: { position: [7, 9] },
+          D: { position: [8, 9] },
+          E: { position: [8, 8] },
+          F: { position: [7, 7] },
         },
         BotTwo: {},
       });
@@ -442,10 +448,10 @@ describe('Bumblebots (reducer)', () => {
       };
       const orders1 = {
         BotOne: {
-          A: 'DOWN',
+          A: 'DL',
         },
         BotTwo: {
-          Z: 'UP',
+          Z: 'UR',
         },
       };
 
