@@ -18,7 +18,7 @@ Before playing games, a new bot must first be registered with the server, which 
 > cat request.json
 {"query": "
   mutation {
-    registerBot(name: \"MyAwesomeBot\", gameType: \"noughtsandcrosses\", owner: \"David\") {
+    registerBot(gameType: NOUGHTS_AND_CROSSES, name: \"MyAwesomeBot\", owner: \"David\") {
       password
       bot {
         name
@@ -39,9 +39,7 @@ Before playing games, a new bot must first be registered with the server, which 
       "bot": {
         "name": "MyAwesomeBot",
         "owner": "David",
-        "gameType": {
-          "name": "noughtsandcrosses"
-        },
+        "gameType": NOUGHTS_AND_CROSSES,
         "dateRegistered": "Sun Aug 06 2017 19:04:03 GMT+0100 (GMT Daylight Time)"
       }
     }
@@ -55,7 +53,7 @@ To play a game, the bot should connect to the server via a (secure) WebSocket an
 ```javascript
 // To the server:
 {
-  "gameType": "noughtsandcrosses",
+  "gameType": "NOUGHTS_AND_CROSSES",
   "name": "MyAwesomeBot",
   "password": "8ad86f2934f346abf60ee7c192c96fbc838a54273c4c092de7ae97153b84d934"
 }
@@ -63,7 +61,7 @@ To play a game, the bot should connect to the server via a (secure) WebSocket an
 // From the server:
 {
   "authentication": "OK",
-  "gameType": "noughtsandcrosses",
+  "gameType": "NOUGHTS_AND_CROSSES",
   "name": "MyAwesomeBot"
 }
 ```
@@ -85,7 +83,7 @@ To play a bot in a contest, the bot should add the name of a contest to its auth
 ```javascript
 // To the server:
 {
-  "gameType": "noughtsandcrosses",
+  "gameType": "NOUGHTS_AND_CROSSES",
   "name": "MyAwesomeBot",
   "password": "8ad86f2934f346abf60ee7c192c96fbc838a54273c4c092de7ae97153b84d934",
   "contest": "EpicTournament"
@@ -94,7 +92,7 @@ To play a bot in a contest, the bot should add the name of a contest to its auth
 // From the server:
 {
   "authentication": "OK",
-  "gameType": "noughtsandcrosses",
+  "gameType": "NOUGHTS_AND_CROSSES",
   "name": "MyAwesomeBot",
   "contest": "EpicTournament"
 }
@@ -131,7 +129,7 @@ The end-to-end tests are run with `npm run e2e`. This requires MongoDB to be ins
 ### APIs
 
 All non-websocket API requests are served by the [GraphQL](http://graphql.org/learn/) API. 
-The interactive tool GraphiQL is located [here](https://blunderdome-server.herokuapp.com/graphql?query%3D%2523%2520Welcome%2520to%2520GraphiQL%250A%2523%250A%2523%2520GraphiQL%2520is%2520an%2520in-browser%2520tool%2520for%2520writing%252C%2520validating%252C%2520and%250A%2523%2520testing%2520GraphQL%2520queries.%250A%2523%250A%2523%2520Type%2520queries%2520into%2520this%2520side%2520of%2520the%2520screen%252C%2520and%2520you%2520will%2520see%2520intelligent%250A%2523%2520typeaheads%2520aware%2520of%2520the%2520current%2520GraphQL%2520type%2520schema%2520and%2520live%2520syntax%2520and%250A%2523%2520validation%2520errors%2520highlighted%2520within%2520the%2520text.%250A%2523%250A%2523%2520GraphQL%2520queries%2520typically%2520start%2520with%2520a%2520%2522%257B%2522%2520character.%2520Lines%2520that%2520starts%250A%2523%2520with%2520a%2520%2523%2520are%2520ignored.%250A%2523%250A%2523%2520An%2520example%2520GraphQL%2520query%2520might%2520look%2520like%253A%250A%2523%250A%2523%2520%2520%2520%2520%2520%257B%250A%2523%2520%2520%2520%2520%2520%2520%2520field%28arg%253A%2520%2522value%2522%29%2520%257B%250A%2523%2520%2520%2520%2520%2520%2520%2520%2520%2520subField%250A%2523%2520%2520%2520%2520%2520%2520%2520%257D%250A%2523%2520%2520%2520%2520%2520%257D%250A%2523%250A%2523%2520Keyboard%2520shortcuts%253A%250A%2523%250A%2523%2520%2520%2520%2520%2520%2520%2520Run%2520Query%253A%2520%2520Ctrl-Enter%2520%28or%2520press%2520the%2520play%2520button%2520above%29%250A%2523%250A%2523%2520%2520%2520Auto%2520Complete%253A%2520%2520Ctrl-Space%2520%28or%2520just%2520start%2520typing%29%250A%2523%250A%2523%250A%2523%2520Also%252C%2520there%2527s%2520a%2520bug%2520where%2520the%2520query%2520fails%2520when%2520this%2520page%2520is%2520loaded%2520via%2520a%2520direct%2520link.%2520%250A%2523%2520Adding%2520and%2520removing%2520some%2520whitespace%2520and%2520running%2520the%2520query%2520again%2520fixes%2520this.%250A%250A%257B%250A%2520%2520gameType%28name%253A%2520%2522noughtsandcrosses%2522%29%2520%257B%250A%2520%2520%2520%2520name%250A%250A%2520%2520%2520%2520contest%28name%253A%2520%2522blunderdome%2522%29%2520%257B%250A%2520%2520%2520%2520%2520%2520name%250A%250A%2520%2520%2520%2520%2520%2520games%28filters%253A%2520%257Bplayers%253A%2520%255B%2522IdiotBot%2522%252C%2520%2522ExpertBot%2522%255D%257D%29%2520%257B%250A%2520%2520%2520%2520%2520%2520%2520%2520...%2520on%2520NoughtsAndCrosses%2520%257B%250A%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520victor%2520%257B%250A%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520id%250A%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%257D%250A%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520reason%250A%2520%2520%2520%2520%2520%2520%2520%2520%257D%250A%2520%2520%2520%2520%2520%2520%257D%250A%250A%2520%2520%2520%2520%2520%2520ambitious%253A%2520rankings%2520%257B%250A%2520%2520%2520%2520%2520%2520%2520%2520bot%2520%257B%250A%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520id%250A%2520%2520%2520%2520%2520%2520%2520%2520%257D%250A%2520%2520%2520%2520%2520%2520%2520%2520score%250A%2520%2520%2520%2520%2520%2520%2520%2520wins%250A%2520%2520%2520%2520%2520%2520%2520%2520draws%250A%2520%2520%2520%2520%2520%2520%2520%2520losses%250A%2520%2520%2520%2520%2520%2520%257D%250A%2520%2520%2520%2520%2520%2520%250A%2520%2520%2520%2520%2520%2520balanced%253A%2520rankings%28method%253A%2520%2522balanced%2522%29%2520%257B%250A%2520%2520%2520%2520%2520%2520%2520%2520bot%2520%257B%250A%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520id%250A%2520%2520%2520%2520%2520%2520%2520%2520%257D%250A%2520%2520%2520%2520%2520%2520%2520%2520score%250A%2520%2520%2520%2520%2520%2520%257D%250A%2520%2520%2520%2520%2520%2520%250A%2520%2520%2520%2520%2520%2520punitive%253A%2520rankings%28method%253A%2520%2522punitive%2522%29%2520%257B%250A%2520%2520%2520%2520%2520%2520%2520%2520bot%2520%257B%250A%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520id%250A%2520%2520%2520%2520%2520%2520%2520%2520%257D%250A%2520%2520%2520%2520%2520%2520%2520%2520score%250A%2520%2520%2520%2520%2520%2520%257D%250A%2520%2520%2520%2520%257D%250A%2520%2520%257D%250A%257D%26operationName%3Dnull).
+The interactive tool GraphiQL is located [here](https://blunderdome-server.herokuapp.com/graphql).
 
 ## Games
 
