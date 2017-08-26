@@ -154,7 +154,7 @@ export function sideEffects(incoming$) {
 }
 
 export function getDbRecord(props) {
-  const gameType = 'noughtsandcrosses';
+  const gameType = 'NOUGHTS_AND_CROSSES';
   const { gameId, startTime, contest, state } = props;
 
   return _.extend(

@@ -81,19 +81,19 @@ export function restartServerAndClearDb(done) {
       ])
       .then(() => Promise.all([
         db.collection('bots').insertOne({
-          gameType: "noughtsandcrosses",
+          gameType: "NOUGHTS_AND_CROSSES",
           name: "BotOne",
           password : "abc123",
           owner : "Anonymous",
         }),
         db.collection('bots').insertOne({
-          gameType: "noughtsandcrosses",
+          gameType: "NOUGHTS_AND_CROSSES",
           name: "BotTwo",
           password : "321cba",
           owner : "Anonymous",
         }),
         db.collection('bots').insertOne({
-          gameType: "noughtsandcrosses",
+          gameType: "NOUGHTS_AND_CROSSES",
           name: "BotThree",
           password : "iozz2",
           owner : "Me",

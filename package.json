@@ -12,7 +12,7 @@
     "watchtest": "jest --watch",
     "coverage": "opn coverage/lcov-report/index.html",
     "codecov": "codecov",
-    "e2e": "mocha --compilers js:babel-core/register --require babel-polyfill e2e/*spec.js"
+    "e2e": "mocha --bail --compilers js:babel-core/register --require babel-polyfill e2e/*spec.js"
   },
   "jest": {
     "collectCoverage": true,
@@ -21,6 +21,7 @@
     ],
     "testPathIgnorePatterns": [
       "<rootDir>/build/",
+      "<rootDir>/e2e/",
       "<rootDir>/node_modules/"
     ],
     "verbose": true
@@ -49,7 +50,6 @@
     "marked": "^0.3.6",
     "merge": "^1.2.0",
     "mongodb": "^2.2.28",
-    "require-all": "^2.2.0",
     "rxjs": "^5.4.0",
     "source-map-support": "^0.4.15",
     "underscore": "^1.8.3",

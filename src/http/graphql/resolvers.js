@@ -2,8 +2,6 @@ import _ from 'underscore';
 import contestResolvers from './contestResolvers';
 import { registerBot } from './mutations';
 
-const gameTypes = ['noughtsandcrosses'];
-
 const baseGameResolver = {
   id: ({ _id }) => _id,
 
@@ -37,7 +35,7 @@ const resolvers = {
 
   Game: {
     __resolveType({ gameType }) {
-      if (gameType === 'noughtsandcrosses') return 'NoughtsAndCrossesGame';
+      if (gameType === 'NOUGHTS_AND_CROSSES') return 'NoughtsAndCrossesGame';
       return null;
     },
   },
@@ -52,16 +50,16 @@ const resolvers = {
 
   NoughtsAndCrossesMarks: {
     X: (marks, _, { Bot }) => Bot.load(
-      { gameType: 'noughtsandcrosses', name: marks.X }
+      { gameType: 'NOUGHTS_AND_CROSSES', name: marks.X }
     ),
     O: (marks, _, { Bot }) => Bot.load(
-      { gameType: 'noughtsandcrosses', name: marks.O }
+      { gameType: 'NOUGHTS_AND_CROSSES', name: marks.O }
     ),
   },
 
   NoughtsAndCrossesTurn: {
     bot: ({ name }, _, { Bot }) => Bot.load(
-      { gameType: 'noughtsandcrosses', name }
+      { gameType: 'NOUGHTS_AND_CROSSES', name }
     ),
   },
 };

@@ -26,7 +26,7 @@ describe('registering bots', function() {
   it('registers a bot', async () => {
     const body = await graphql(`
       mutation {
-        registerBot(gameType: noughtsandcrosses, name: "BotFour", owner: "Me") {
+        registerBot(gameType: NOUGHTS_AND_CROSSES, name: "BotFour", owner: "Me") {
           password
           bot {
             name
@@ -52,7 +52,7 @@ describe('registering bots', function() {
     try {
       const botData = await db.collection('bots').findOne({ name: 'BotFour' });
       expect(botData).to.be.ok;
-      expect(botData.gameType).to.equal('noughtsandcrosses');
+      expect(botData.gameType).to.equal('NOUGHTS_AND_CROSSES');
       expect(botData.name).to.equal('BotFour');
       expect(botData.owner).to.equal('Me');
       expect(botData.password).to.be.ok;
@@ -64,7 +64,7 @@ describe('registering bots', function() {
   it('rejects registration if the bot name is taken', async () => {
     const body = await graphql(`
       mutation {
-        registerBot(gameType: noughtsandcrosses, name: "BotOne", owner: "Me") {
+        registerBot(gameType: NOUGHTS_AND_CROSSES, name: "BotOne", owner: "Me") {
           password
           bot {
             name
@@ -86,7 +86,7 @@ describe('registering bots', function() {
   it('rejects registration if the owner is not specified', async () => {
     const response = await graphql(`
       mutation {
-        registerBot(gameType: noughtsandcrosses, name: "BotFour") {
+        registerBot(gameType: NOUGHTS_AND_CROSSES, name: "BotFour") {
           password
           bot {
             name

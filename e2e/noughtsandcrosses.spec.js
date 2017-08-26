@@ -46,12 +46,12 @@ export async function authenticateBots(contest) {
   const auth1 = await sendWithResponse(sockets.BotOne, _.pick({
     name: 'BotOne',
     password: 'abc123',
-    gameType: 'noughtsandcrosses',
+    gameType: 'NOUGHTS_AND_CROSSES',
     contest,
   }, _.identity));
   expect(auth1).to.deep.equal(_.pick({
     authentication: 'OK',
-    gameType: 'noughtsandcrosses',
+    gameType: 'NOUGHTS_AND_CROSSES',
     name: 'BotOne',
     contest,
   }, _.identity));
@@ -59,12 +59,12 @@ export async function authenticateBots(contest) {
   const auth2 = await sendWithResponse(sockets.BotTwo, _.pick({
     name: 'BotTwo',
     password: '321cba',
-    gameType: 'noughtsandcrosses',
+    gameType: 'NOUGHTS_AND_CROSSES',
     contest,
   }, _.identity));
   expect(auth2).to.deep.equal(_.pick({
     authentication: 'OK',
-    gameType: 'noughtsandcrosses',
+    gameType: 'NOUGHTS_AND_CROSSES',
     name: 'BotTwo',
     contest,
   }, _.identity));

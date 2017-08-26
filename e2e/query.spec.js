@@ -29,7 +29,7 @@ describe('query', function() {
   it('queries bots', async () => {
     const body = await graphql(`
       query {
-        bots(gameType: noughtsandcrosses) {
+        bots(gameType: NOUGHTS_AND_CROSSES) {
           name
           gameType
           owner
@@ -41,17 +41,17 @@ describe('query', function() {
     expect(body.data.bots).to.deep.have.members([
       {
         name: 'BotOne',
-        gameType: 'noughtsandcrosses',
+        gameType: 'NOUGHTS_AND_CROSSES',
         owner: 'Anonymous',
       },
       {
         name: 'BotTwo',
-        gameType: 'noughtsandcrosses',
+        gameType: 'NOUGHTS_AND_CROSSES',
         owner: 'Anonymous',
       },
       {
         name: 'BotThree',
-        gameType: 'noughtsandcrosses',
+        gameType: 'NOUGHTS_AND_CROSSES',
         owner: 'Me',
       },
     ]);
@@ -70,7 +70,7 @@ describe('query', function() {
     // Next, look up the game via a GraphQL query.
     const body = await graphql(`
       query {
-        games(gameType: noughtsandcrosses) {
+        games(gameType: NOUGHTS_AND_CROSSES) {
           __typename
           ...on NoughtsAndCrossesGame {
             bots {
@@ -103,7 +103,7 @@ describe('query', function() {
         { name: 'BotOne' },
         { name: 'BotTwo' },
       ],
-      gameType: 'noughtsandcrosses',
+      gameType: 'NOUGHTS_AND_CROSSES',
       result: {
         reason: 'complete',
         victor: { name: 'BotOne' },
@@ -180,7 +180,7 @@ describe('query', function() {
     // Next, look up the contest via a GraphQL query.
     const body = await graphql(`
       query {
-        contest(gameType: noughtsandcrosses, name: "myContest") {
+        contest(gameType: NOUGHTS_AND_CROSSES, name: "myContest") {
           name
           gameType
           rankings {
@@ -210,7 +210,7 @@ describe('query', function() {
 
     expect(body.data.contest).to.deep.equal({
       name: 'myContest',
-      gameType: 'noughtsandcrosses',
+      gameType: 'NOUGHTS_AND_CROSSES',
       rankings: [
         {
           bot: { name: 'BotOne' },

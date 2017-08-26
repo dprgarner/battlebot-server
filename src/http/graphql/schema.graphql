@@ -24,7 +24,7 @@ type Mutation {
 
 # The type of the game.
 enum GameType {
-  noughtsandcrosses
+  NOUGHTS_AND_CROSSES
 }
 
 # A bot type.

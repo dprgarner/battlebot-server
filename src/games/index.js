@@ -1,10 +1,5 @@
-import requireAll from 'require-all';
+import * as NOUGHTS_AND_CROSSES from './noughtsAndCrosses';
 
-export default requireAll({
-  dirname: __dirname,
-  filter: (filename) => (
-    filename != 'index.js' &&
-    !filename.endsWith('.test.js') &&
-    filename.split('.')[0]
-  ),
-});
+export default {
+  NOUGHTS_AND_CROSSES,
+}

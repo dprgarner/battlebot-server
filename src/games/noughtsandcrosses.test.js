@@ -1,4 +1,4 @@
-import * as noughtsAndCrosses from './noughtsandcrosses';
+import * as noughtsAndCrosses from './noughtsAndCrosses';
 
 const midGameState = {
   bots: ['botA', 'botB'],
