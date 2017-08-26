@@ -14,10 +14,8 @@ import {
 const MongoClientPromise = BluebirdPromise.promisifyAll(MongoClient);
 
 describe('registering bots', function() {
-  /*
-  Slightly crude end-to-end test designed to check that everything works.
-  Requires MongoDB to be installed locally.
-  */
+  // Check the GraphQL mutations that register bots.
+  // Requires MongoDB to be installed locally.
   this.timeout(5000);
 
   before(bundleAndStartMongo);

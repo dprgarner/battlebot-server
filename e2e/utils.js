@@ -96,7 +96,7 @@ export function restartServerAndClearDb(done) {
           gameType: "noughtsandcrosses",
           name: "BotThree",
           password : "iozz2",
-          owner : "Anonymous",
+          owner : "Me",
         }),
       ]))
       .then(() => db.close().then(() => log('Database reset')))

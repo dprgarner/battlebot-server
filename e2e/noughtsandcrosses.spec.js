@@ -40,7 +40,7 @@ function sendWithResponse(ws, outMsg) {
   });
 }
 
-async function authenticateBots() {
+export async function authenticateBots() {
   const sockets = {
     BotOne: new WebSocket('ws://localhost:4444'),
     BotTwo: new WebSocket('ws://localhost:4444'),
@@ -79,7 +79,7 @@ async function authenticateBots() {
   return sockets;
 }
 
-async function sendTurn(
+export async function sendTurn(
   socket,
   mark,
   space,
@@ -97,7 +97,7 @@ async function sendTurn(
 
 describe('playing noughts and crosses games', function() {
   /*
-  Slightly crude end-to-end test designed to check that everything works.
+  Slightly crude end-to-end test designed to check that a game can be played.
   Requires MongoDB to be installed locally.
   */
   this.timeout(5000);
@@ -121,16 +121,17 @@ describe('playing noughts and crosses games', function() {
 
     await waitFor(50);
 
-    return MongoClientPromise.connect('mongodb://localhost:27017/test_db')
-      .then(db => db.collection('games').findOne({})
-        .then((game) => {
-          expect(game).to.be.ok;
-          expect(game.bots).to.deep.equal(['BotOne', 'BotTwo']);
-          expect(game.result.reason).to.equal('complete');
-        })
-        .then(() => db.close())
-        .catch(err => db.close().then(() => { console.error(err); throw err; }))
-      );
+    const db = await MongoClientPromise.connect(
+      'mongodb://localhost:27017/test_db'
+    )
+    try {
+      const game = await db.collection('games').findOne({});
+      expect(game).to.be.ok;
+      expect(game.bots).to.deep.equal(['BotOne', 'BotTwo']);
+      expect(game.result.reason).to.equal('complete');
+    } finally {
+      await db.close();
+    }
   });
 
   it('tells a user if their move is bad', async () => {
@@ -155,17 +156,18 @@ describe('playing noughts and crosses games', function() {
     sockets.BotTwo.close();
     await waitFor(50);
 
-    return MongoClientPromise.connect('mongodb://localhost:27017/test_db')
-      .then(db => db.collection('games').findOne({})
-        .then((game) => {
-          expect(game).to.be.ok;
-          expect(game.bots).to.deep.equal(['BotOne', 'BotTwo']);
-          expect(game.result.victor).to.equal('BotOne');
-          expect(game.result.reason).to.equal('disconnect');
-        })
-        .then(() => db.close())
-        .catch(err => db.close().then(() => { console.error(err); throw err; }))
-      );
+    const db = await MongoClientPromise.connect(
+      'mongodb://localhost:27017/test_db'
+    )
+    try {
+      const game = await db.collection('games').findOne({});
+      expect(game).to.be.ok;
+      expect(game.bots).to.deep.equal(['BotOne', 'BotTwo']);
+      expect(game.result.victor).to.equal('BotOne');
+      expect(game.result.reason).to.equal('disconnect');
+    } finally {
+      await db.close();
+    }
   });
 
   it('rules against a bot which times out', async function () {
@@ -177,17 +179,18 @@ describe('playing noughts and crosses games', function() {
 
     await waitFor(TIMEOUT + 50);
 
-    return MongoClientPromise.connect('mongodb://localhost:27017/test_db')
-      .then(db => db.collection('games').findOne({})
-        .then((game) => {
-          expect(game).to.be.ok;
-          expect(game.bots).to.deep.equal(['BotOne', 'BotTwo']);
-          expect(game.result.victor).to.equal('BotOne');
-          expect(game.result.reason).to.equal('timeout');
-        })
-        .then(() => db.close())
-        .catch(err => db.close().then(() => { console.error(err); throw err; }))
-      );
+    const db = await MongoClientPromise.connect(
+      'mongodb://localhost:27017/test_db'
+    )
+    try {
+      const game = await db.collection('games').findOne({});
+      expect(game).to.be.ok;
+      expect(game.bots).to.deep.equal(['BotOne', 'BotTwo']);
+      expect(game.result.victor).to.equal('BotOne');
+      expect(game.result.reason).to.equal('timeout');
+    } finally {
+      await db.close();
+    }
   });
 
   it('rules against a bot which makes multiple invalid moves', async () => {
