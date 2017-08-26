@@ -232,4 +232,25 @@ describe('Bumblebots (general)', () => {
       expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
     });
   });
+
+  it('returns false if moving into a claimed area', () => {
+    const state = {
+      ...initialState,
+      drones: {
+        BotOne: {
+          A: { position: [12, 10] },
+        },
+        BotTwo: {
+          Z: { position: [2, 4] },
+        },
+      },
+    };
+
+    let update;
+    update = { name: 'BotOne', orders: { A: 'DL' }};
+    expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
+
+    update = { name: 'BotOne', orders: { Z: 'UR' }};
+    expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
+  });
 });
