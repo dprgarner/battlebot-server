@@ -9,6 +9,7 @@ import {
   killMongo,
   log,
   graphql,
+  waitFor,
 } from './utils';
 
 import { authenticateBots, sendTurn } from './noughtsandcrosses.spec'
@@ -170,5 +171,124 @@ describe('query', function() {
         },
       ],
     }]);
+  });
+
+  it('queries contests', async () => {
+    // First, play some full games.
+    const sockets1 = await authenticateBots('myContest');
+    await sendTurn(sockets1.BotOne, 'X', [0, 0]);
+    await sendTurn(sockets1.BotTwo, 'O', [1, 1]);
+    await sendTurn(sockets1.BotOne, 'X', [1, 0]);
+    await sendTurn(sockets1.BotTwo, 'O', [0, 2]);
+    await sendTurn(sockets1.BotOne, 'X', [2, 0], true, true);
+
+    const sockets2 = await authenticateBots('myContest');
+    await sendTurn(sockets2.BotOne, 'X', [0, 0]);
+    await sendTurn(sockets2.BotTwo, 'O', [1, 1]);
+    await sendTurn(sockets2.BotOne, 'X', [1, 0]);
+    await sendTurn(sockets2.BotTwo, 'O', [2, 0]);
+    await sendTurn(sockets2.BotOne, 'X', [0, 2]);
+    await sendTurn(sockets2.BotTwo, 'O', [0, 1]);
+    await sendTurn(sockets2.BotOne, 'X', [2, 1]);
+    await sendTurn(sockets2.BotTwo, 'O', [2, 2]);
+    await sendTurn(sockets2.BotOne, 'X', [1, 2], true, true);
+
+    // Not in the contest
+    const sockets3 = await authenticateBots();
+    await sendTurn(sockets3.BotOne, 'X', [0, 0]);
+    await sendTurn(sockets3.BotTwo, 'O', [1, 1]);
+    await sendTurn(sockets3.BotOne, 'X', [1, 0]);
+    await sendTurn(sockets3.BotTwo, 'O', [0, 2]);
+    await sendTurn(sockets3.BotOne, 'X', [2, 0], true, true);
+
+    await waitFor(50);
+
+    // Next, look up the contest via a GraphQL query.
+    const body = await graphql(`
+      query {
+        gameType(name: "noughtsandcrosses") {
+          contest(name: "myContest") {
+            name
+            gameType {
+              name
+            }
+            rankings {
+              bot {
+                name
+              }
+              wins
+              draws
+              losses
+              played
+              score
+            }
+            games {
+              __typename
+              ...on NoughtsAndCrosses {
+                contest
+                bots {
+                  name
+                }
+                result {
+                  victor {
+                    name
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `)
+    log(JSON.stringify(body, null, 2));
+
+    expect(body.data.gameType.contest).to.deep.equal({
+      name: "myContest",
+      gameType: {
+        name: "noughtsandcrosses"
+      },
+      rankings: [
+        {
+          bot: { name: 'BotOne' },
+          wins: 1,
+          draws: 1,
+          losses: 0,
+          played: 2,
+          score: 4,
+        },
+        {
+          bot: { name: 'BotTwo' },
+          wins: 0,
+          draws: 1,
+          losses: 1,
+          played: 2,
+          score: 1,
+        },
+      ],
+      games: [
+        {
+          __typename: 'NoughtsAndCrosses',
+          contest: "myContest",
+          bots: [
+            { name: 'BotOne' },
+            { name: 'BotTwo' },
+          ],
+          result: {
+            victor: null,
+          },
+        },
+        {
+          __typename: 'NoughtsAndCrosses',
+          contest: "myContest",
+          bots: [
+            { name: 'BotOne' },
+            { name: 'BotTwo' },
+          ],
+          result: {
+            victor: { name: 'BotOne' },
+          },
+        },
+      ],
+    });
   });
 });

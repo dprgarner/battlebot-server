@@ -114,6 +114,12 @@ export function killMongo() {
   this.mongod.kill();
 }
 
+export function waitFor(time) {
+  return new Promise((resolve, reject) => {
+    setTimeout(resolve, time);
+  });
+}
+
 export function graphql(query, resolveWithFullResponse) {
   return rp({
     method: 'POST',

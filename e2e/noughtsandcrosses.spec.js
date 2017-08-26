@@ -11,6 +11,7 @@ import {
   killMongo,
   log,
   graphql,
+  waitFor,
 } from './utils';
 
 const MongoClientPromise = BluebirdPromise.promisifyAll(MongoClient);
@@ -27,12 +28,6 @@ function waitForMessage(ws) {
   });
 }
 
-function waitFor(time) {
-  return new Promise((resolve, reject) => {
-    setTimeout(resolve, time);
-  });
-}
-
 function sendWithResponse(ws, outMsg) {
   return new Promise((resolve, reject) => {
     ws.send(JSON.stringify(outMsg));
@@ -40,7 +35,7 @@ function sendWithResponse(ws, outMsg) {
   });
 }
 
-export async function authenticateBots() {
+export async function authenticateBots(contest) {
   const sockets = {
     BotOne: new WebSocket('ws://localhost:4444'),
     BotTwo: new WebSocket('ws://localhost:4444'),
@@ -48,27 +43,31 @@ export async function authenticateBots() {
 
   await Promise.all(Object.values(sockets).map(waitForOpen));
 
-  const auth1 = await sendWithResponse(sockets.BotOne, {
+  const auth1 = await sendWithResponse(sockets.BotOne, _.pick({
     name: 'BotOne',
     password: 'abc123',
     gameType: 'noughtsandcrosses',
-  });
-  expect(auth1).to.deep.equal({
+    contest,
+  }, _.identity));
+  expect(auth1).to.deep.equal(_.pick({
     authentication: 'OK',
     gameType: 'noughtsandcrosses',
     name: 'BotOne',
-  });
+    contest,
+  }, _.identity));
 
-  const auth2 = await sendWithResponse(sockets.BotTwo, {
+  const auth2 = await sendWithResponse(sockets.BotTwo, _.pick({
     name: 'BotTwo',
     password: '321cba',
     gameType: 'noughtsandcrosses',
-  });
-  expect(auth2).to.deep.equal({
+    contest,
+  }, _.identity));
+  expect(auth2).to.deep.equal(_.pick({
     authentication: 'OK',
     gameType: 'noughtsandcrosses',
     name: 'BotTwo',
-  });
+    contest,
+  }, _.identity));
 
   const initialStates = await Promise.all([
     waitForMessage(sockets.BotOne),
