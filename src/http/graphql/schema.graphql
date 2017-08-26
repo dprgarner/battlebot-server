@@ -5,13 +5,14 @@ type Query {
   gameType(name: ID!): GameType
 }
 
+# The root-level mutation.
 type Mutation {
-  registerBot(name: ID!, owner: String!, gameType: ID!): CreateBot
+  # The mutation to register a new bot.
+  registerBot(name: ID!, owner: String!, gameType: ID!): CreatedBot
 }
 
 # Returned when a bot is first registered.
-type CreateBot {
-  # error: String
+type CreatedBot {
   password: String!
   bot: Bot
 }
@@ -123,7 +124,7 @@ type NoughtsAndCrosses {
   gameType: GameType!
 
   # The contest that this game was played in, if any.
-  contest: ID
+  contest: Contest
 
   # The result of a completed game. Defaults to null if the game is not
   # complete.

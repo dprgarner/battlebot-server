@@ -36,7 +36,6 @@ describe('query', function() {
               name
             }
             owner
-            dateRegistered
           }
         }
       }
@@ -45,28 +44,25 @@ describe('query', function() {
 
     expect(body.data.gameType.bots).to.deep.have.members([
       {
-        "name": "BotOne",
-        "gameType": {
-          "name": "noughtsandcrosses"
+        name: 'BotOne',
+        gameType: {
+          name: 'noughtsandcrosses'
         },
-        "owner": "Anonymous",
-        "dateRegistered": null,
+        owner: 'Anonymous',
       },
       {
-        "name": "BotTwo",
-        "gameType": {
-          "name": "noughtsandcrosses"
+        name: 'BotTwo',
+        gameType: {
+          name: 'noughtsandcrosses'
         },
-        "owner": "Anonymous",
-        "dateRegistered": null,
+        owner: 'Anonymous',
       },
       {
-        "name": "BotThree",
-        "gameType": {
-          "name": "noughtsandcrosses"
+        name: 'BotThree',
+        gameType: {
+          name: 'noughtsandcrosses'
         },
-        "owner": "Me",
-        "dateRegistered": null,
+        owner: 'Me',
       },
     ]);
   });
@@ -91,30 +87,20 @@ describe('query', function() {
               bots {
                 name
               }
-              gameType {
-                name
-              }
+              gameType { name }
               result {
-                victor {
-                  name
-                }
                 reason
+                victor { name }
               }
               board
               marks {
-                X {
-                  name
-                }
-                O {
-                  name
-                }
+                X { name }
+                O { name }
               }
               turns {
-                space
+                bot { name }
                 mark
-                bot {
-                  name
-                }
+                space
               }
             }
           }
@@ -209,13 +195,9 @@ describe('query', function() {
         gameType(name: "noughtsandcrosses") {
           contest(name: "myContest") {
             name
-            gameType {
-              name
-            }
+            gameType { name }
             rankings {
-              bot {
-                name
-              }
+              bot { name }
               wins
               draws
               losses
@@ -225,14 +207,12 @@ describe('query', function() {
             games {
               __typename
               ...on NoughtsAndCrosses {
-                contest
+                contest { name }
                 bots {
                   name
                 }
                 result {
-                  victor {
-                    name
-                  }
+                  victor { name }
                 }
               }
             }
@@ -243,10 +223,8 @@ describe('query', function() {
     log(JSON.stringify(body, null, 2));
 
     expect(body.data.gameType.contest).to.deep.equal({
-      name: "myContest",
-      gameType: {
-        name: "noughtsandcrosses"
-      },
+      name: 'myContest',
+      gameType: { name: 'noughtsandcrosses' },
       rankings: [
         {
           bot: { name: 'BotOne' },
@@ -268,7 +246,7 @@ describe('query', function() {
       games: [
         {
           __typename: 'NoughtsAndCrosses',
-          contest: "myContest",
+          contest: { name: 'myContest' },
           bots: [
             { name: 'BotOne' },
             { name: 'BotTwo' },
@@ -279,7 +257,7 @@ describe('query', function() {
         },
         {
           __typename: 'NoughtsAndCrosses',
-          contest: "myContest",
+          contest: { name: 'myContest' },
           bots: [
             { name: 'BotOne' },
             { name: 'BotTwo' },

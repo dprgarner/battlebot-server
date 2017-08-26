@@ -12,6 +12,8 @@ const baseGameResolver = {
   ),
 
   result: ({ gameType, result }) => (result && _.extend({ gameType }, result)),
+
+  contest: ({ gameType, contest }) => ({ gameType, contest }),
 };
 
 const resolvers = {
@@ -70,4 +72,4 @@ const resolvers = {
   },
 };
 
-export default {...resolvers, ...contestResolvers};
+export default { ...resolvers, ...contestResolvers };
