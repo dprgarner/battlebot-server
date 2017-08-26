@@ -12,7 +12,7 @@
     "watchtest": "jest --watch",
     "coverage": "opn coverage/lcov-report/index.html",
     "codecov": "codecov",
-    "e2e": "mocha e2e/index.js"
+    "e2e": "mocha --compilers js:babel-core/register --require babel-polyfill e2e/*spec.js"
   },
   "jest": {
     "collectCoverage": true,
@@ -57,6 +57,7 @@
   },
   "devDependencies": {
     "babel-jest": "^20.0.3",
+    "babel-polyfill": "^6.26.0",
     "chai": "^4.1.1",
     "codeclimate-test-reporter": "^0.5.0",
     "codecov": "^2.2.0",
