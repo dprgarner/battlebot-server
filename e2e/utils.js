@@ -14,38 +14,44 @@ export function log(msg) {
 }
 
 export function bundleAndStartMongo(done) {
-  this.timeout(50000);
-  this.mongod = spawn('mongod');
+  this.timeout(5000);
 
-  this.mongod.stderr.on('data', (data) => {
-    console.error(`MongoDB error: ${data}`);
-  });
+  MongoClientPromise.connect('mongodb://localhost:27017/test_db')
+  .catch(e => {
+    this.mongod = spawn('mongod');
 
-  this.mongod.on('close', (code) => {
-    log(`mongod exited with code ${code}`);
-  });
+    this.mongod.stderr.on('data', (data) => {
+      console.error(`MongoDB error: ${data}`);
+      done(e);
+    });
 
-  const isWin = /^win/.test(process.platform);
-  const babelFile = isWin ? 'babel.cmd': 'babel';
+    this.mongod.on('close', (code) => {
+      log(`mongod exited with code ${code}`);
+    });
+  })
+  .then(() => {
+    const isWin = /^win/.test(process.platform);
+    const babelFile = isWin ? 'babel.cmd': 'babel';
 
-  this.babel = spawn(
-    path.join(__dirname, '..', 'node_modules', '.bin', babelFile),
-    [
-      'src',
-      '--out-dir', 'build',
-      '--ignore', 'test.js',
-      '--copy-files',
-      '--source-maps', 'inline',
-    ]
-  );
+    this.babel = spawn(
+      path.join(__dirname, '..', 'node_modules', '.bin', babelFile),
+      [
+        'src',
+        '--out-dir', 'build',
+        '--ignore', 'test.js',
+        '--copy-files',
+        '--source-maps', 'inline',
+      ]
+    );
 
-  this.babel.stderr.on('data', (data) => {
-    console.error(`Babel error: ${data}`);
-  });
+    this.babel.stderr.on('data', (data) => {
+      console.error(`Babel error: ${data}`);
+    });
 
-  this.babel.once('close', (code) => {
-    if (code) return done(code);
-    done();
+    this.babel.once('close', (code) => {
+      if (code) return done(code);
+      done();
+    });
   });
 }
 
@@ -111,7 +117,7 @@ export function killServer() {
 }
 
 export function killMongo() {
-  this.mongod.kill();
+  this.mongod && this.mongod.kill();
 }
 
 export function waitFor(time) {
