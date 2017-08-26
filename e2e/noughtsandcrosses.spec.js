@@ -40,7 +40,7 @@ function sendWithResponse(ws, outMsg) {
   });
 }
 
-async function authenticateBots(argument) {
+async function authenticateBots() {
   const sockets = {
     BotOne: new WebSocket('ws://localhost:4444'),
     BotTwo: new WebSocket('ws://localhost:4444'),
@@ -70,13 +70,26 @@ async function authenticateBots(argument) {
     name: 'BotTwo',
   });
 
+  const initialStates = await Promise.all([
+    waitForMessage(sockets.BotOne),
+    waitForMessage(sockets.BotTwo),
+  ]);
+  expect(initialStates[0]).to.deep.equal(initialStates[1]);
+
   return sockets;
 }
 
-async function sendTurn(socket, mark, space, valid=true, result=false) {
+async function sendTurn(
+  socket,
+  mark,
+  space,
+  valid=true,
+  result=false,
+  noTurn=false,
+) {
   const ply = await sendWithResponse(socket, { mark, space });
   log(ply);
-  expect(ply.turn.valid).to.equal(valid);
+  if (!noTurn) expect(ply.turn.valid).to.equal(valid);
   expect(!!ply.state.result).to.equal(result);
   await waitFor(50);
   return ply;
@@ -96,12 +109,6 @@ describe('playing noughts and crosses games', function() {
 
   it('plays and saves a game successfully', async () => {
     const sockets = await authenticateBots();
-
-    const initialStates = await Promise.all([
-      waitForMessage(sockets.BotOne),
-      waitForMessage(sockets.BotTwo),
-    ]);
-    expect(initialStates[0]).to.deep.equal(initialStates[1]);
 
     await sendTurn(sockets.BotOne, 'X', [0, 0])
     await sendTurn(sockets.BotTwo, 'O', [1, 1])
@@ -129,57 +136,21 @@ describe('playing noughts and crosses games', function() {
   it('tells a user if their move is bad', async () => {
     const sockets = await authenticateBots();
 
-    const initialStates = await Promise.all([
-      waitForMessage(sockets.BotOne),
-      waitForMessage(sockets.BotTwo),
-    ]);
-    expect(initialStates[0]).to.deep.equal(initialStates[1]);
-
     // Not BotTwo's turn
-    const attempt1 = await sendWithResponse(
-      sockets.BotTwo, { mark: 'X', space: [0, 0] }
-    );
-    expect(attempt1.turn.valid).to.not.be.ok;
-    expect(attempt1.state.result).to.not.be.ok;
-    log(attempt1.turn);
+    await sendTurn(sockets.BotTwo, 'X', [0, 0], false)
 
-    await waitFor(50);
     // Not on the board
-    const attempt2 = await sendWithResponse(
-      sockets.BotOne, { mark: 'X', space: [-1, 1] }
-    );
-    expect(attempt2.turn.valid).to.not.be.ok;
-    expect(attempt2.turn.space).to.deep.equal([-1, 1]);
-    expect(attempt2.state.result).to.not.be.ok;
-    log(attempt2.turn);
+    await sendTurn(sockets.BotOne, 'X', [-1, 1], false)
 
-    await waitFor(50);
     // A valid turn
-    const ply = await sendWithResponse(
-      sockets.BotOne, { mark: 'X', space: [0, 0] }
-    );
-    expect(ply.turn.valid).to.be.ok;
-    expect(ply.state.result).to.not.be.ok;
-    log(ply.turn);
+    await sendTurn(sockets.BotOne, 'X', [0, 0], true)
 
-    await waitFor(50);
     // Already occupied square
-    const attempt3 = await sendWithResponse(
-      sockets.BotTwo, { mark: 'O', space: [0, 0] }
-    );
-    expect(attempt3.turn.valid).to.not.be.ok;
-    expect(attempt3.turn.space).to.deep.equal([0, 0]);
-    expect(attempt3.state.result).to.not.be.ok;
-    log(attempt3.turn);
+    await sendTurn(sockets.BotTwo, 'O', [0, 0], false)
   });
 
   it('rules against a bot which disconnects', async () => {
     const sockets = await authenticateBots();
-
-    await Promise.all([
-      waitForMessage(sockets.BotOne),
-      waitForMessage(sockets.BotTwo),
-    ]);
 
     sockets.BotTwo.close();
     await waitFor(50);
@@ -202,17 +173,7 @@ describe('playing noughts and crosses games', function() {
     const TIMEOUT = 5000;
     const sockets = await authenticateBots();
 
-    await Promise.all([
-      waitForMessage(sockets.BotOne),
-      waitForMessage(sockets.BotTwo),
-    ]);
-
-    const ply = await sendWithResponse(
-      sockets.BotOne, { mark: 'X', space: [0, 0] }
-    );
-    expect(ply.turn.valid).to.be.ok;
-    expect(ply.state.result).to.not.be.ok;
-    log(ply.state.board);
+    await sendTurn(sockets.BotOne, 'X', [0, 0]);
 
     await waitFor(TIMEOUT + 50);
 
@@ -232,27 +193,13 @@ describe('playing noughts and crosses games', function() {
   it('rules against a bot which makes multiple invalid moves', async () => {
     const sockets = await authenticateBots();
 
-    await Promise.all([
-      waitForMessage(sockets.BotOne),
-      waitForMessage(sockets.BotTwo),
-    ]);
-
     let attempt;
     // Not BotTwo's turn
     for (var i = 0; i < 3; i++) {
       await waitFor(50);
-      attempt = await sendWithResponse(
-        sockets.BotTwo, { mark: 'X', space: [0, 0] }
-      );
+      attempt = await sendTurn(sockets.BotTwo, 'X', [0, 0], false, i == 2, i == 2);
       log(attempt.turn);
-      if (i !== 2) {
-        expect(attempt.turn.valid).to.not.be.ok;
-        expect(attempt.state.result).to.not.be.ok;
-      } else {
-        expect(attempt.turn).to.not.be.ok;
-        expect(attempt.state.result).to.be.ok;
-        expect(attempt.state.result.victor).to.equal('BotOne');
-      }
     }
+    expect(attempt.state.result.victor).to.equal('BotOne');
   });
 });
