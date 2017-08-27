@@ -9,7 +9,7 @@ import {
   BUMBLEBOTS_TICK,
   BUMBLEBOTS_TURN_LIMIT,
   BUMBLEBOTS_FULL_TIME,
-} from './const';
+} from './consts';
 
 describe('Bumblebots (reducer)', () => {
   describe('queuing orders', () => {

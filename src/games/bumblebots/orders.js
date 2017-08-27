@@ -5,7 +5,7 @@ import {
   POSSIBLE_MOVES,
   BUMBLEBOTS_SPACE_EMPTY,
   BUMBLEBOTS_SPACE_TARGET,
-} from './const';
+} from './consts';
 
 function validateDroneOrder(state, name, order, droneId) {
   // Checks whether the move is in the correct format and not moving somewhere

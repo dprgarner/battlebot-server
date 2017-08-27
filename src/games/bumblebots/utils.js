@@ -9,7 +9,7 @@ import {
   BUMBLEBOTS_SPACE_TARGET,
   BUMBLEBOTS_SPACE_CLAIMED_0,
   BUMBLEBOTS_SPACE_CLAIMED_1,
-} from './const';
+} from './consts';
 
 const GOOD_ADJECTIVES = fs.readFileSync(
   path.join(__dirname, './goodAdjectives.txt'),

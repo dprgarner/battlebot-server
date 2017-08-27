@@ -3,7 +3,7 @@ import _ from 'underscore';
 import * as bumblebots from '.';
 import * as orders from './orders';
 import * as utils from './utils';
-import { BUMBLEBOTS_TICK } from './const';
+import { BUMBLEBOTS_TICK } from './consts';
 import { initialState } from './testUtils';
 
 describe('Bumblebots orders', () => {

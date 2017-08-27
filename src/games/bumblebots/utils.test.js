@@ -1,6 +1,6 @@
 import { parseHexBoard, renderHexBoard } from './utils';
 
-import { BUMBLEBOTS_SPACE_CLAIMED_0, BUMBLEBOTS_SPACE_CLAIMED_1 } from './const';
+import { BUMBLEBOTS_SPACE_CLAIMED_0, BUMBLEBOTS_SPACE_CLAIMED_1 } from './consts';
 
 describe('Bumblebots utils', () => {
   describe('parsing', () => {

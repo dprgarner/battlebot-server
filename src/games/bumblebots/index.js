@@ -8,18 +8,7 @@ import { parseHexBoard, generateGoodName, generateBadName } from './utils';
 
 import { generateRandomEvents } from './random';
 
-import {
-  BUMBLEBOTS_TICK,
-  BUMBLEBOTS_FULL_TIME,
-  BUMBLEBOTS_TICK_TIME,
-  BUMBLEBOTS_TURN_LIMIT,
-  BUMBLEBOTS_SPAWN_DELAY,
-  BUMBLEBOTS_SPACE_WALL,
-  BUMBLEBOTS_SPACE_TARGET,
-  BUMBLEBOTS_SPACE_CLAIMED_0,
-  BUMBLEBOTS_SPACE_CLAIMED_1,
-  POSSIBLE_MOVES,
-} from './const';
+import * as consts from './consts';
 
 export function createOutgoing(state) {
   return _.object(state.bots.map(name => [name, _.pick(
@@ -71,8 +60,8 @@ export function createInitialUpdate(bots) {
   const state = {
     bots,
     territory: {
-      [bots[0]]: BUMBLEBOTS_SPACE_CLAIMED_0,
-      [bots[1]]: BUMBLEBOTS_SPACE_CLAIMED_1,
+      [bots[0]]: consts.BUMBLEBOTS_SPACE_CLAIMED_0,
+      [bots[1]]: consts.BUMBLEBOTS_SPACE_CLAIMED_1,
     },
     maxDrones,
     board: parseHexBoard(`
@@ -123,17 +112,17 @@ export function createInitialUpdate(bots) {
 }
 
 export function sideEffects(incoming$) {
-  return Rx.Observable.interval(BUMBLEBOTS_TICK_TIME)
+  return Rx.Observable.interval(consts.BUMBLEBOTS_TICK_TIME)
     .skip(1)
-    .take(BUMBLEBOTS_TURN_LIMIT)
-    .map(turnNumber => ({ type: BUMBLEBOTS_TICK, turnNumber }));
+    .take(consts.BUMBLEBOTS_TURN_LIMIT)
+    .map(turnNumber => ({ type: consts.BUMBLEBOTS_TICK, turnNumber }));
 }
 
 export function resolveTargets(board, drones, score) {
   const dronesReachingTarget = [];
   _.each(drones, (dronesByName, name) => {
     _.each(dronesByName, ({ position }, droneId) => {
-      if (board[position[0]][position[1]] === BUMBLEBOTS_SPACE_TARGET) {
+      if (board[position[0]][position[1]] === consts.BUMBLEBOTS_SPACE_TARGET) {
         dronesReachingTarget.push({ name, droneId, position });
       }
     });
@@ -151,7 +140,7 @@ export function reducer({ state, orders }, update) {
     return { state, outgoing: {}, orders };
   }
 
-  if (update.type === BUMBLEBOTS_TICK) {
+  if (update.type === consts.BUMBLEBOTS_TICK) {
     let { board, drones, score, turns } = state;
 
     // Get new drone positions
@@ -166,17 +155,17 @@ export function reducer({ state, orders }, update) {
       );
       score = { ...score, [name]: score[name] + 1 };
       board = clone(board);
-      _.each(POSSIBLE_MOVES, move => {
+      _.each(consts.POSSIBLE_MOVES, move => {
         board[position[0] + move[0]][position[1] + move[1]] = (
           board[position[0] + move[0]][position[1] + move[1]] ||
           state.territory[name]
         );
-        board[position[0]][position[1]] = BUMBLEBOTS_SPACE_WALL;
+        board[position[0]][position[1]] = consts.BUMBLEBOTS_SPACE_WALL;
       });
     });
 
     // Perform any random events. TODO
-    // const events = generateRandomEvents(state);
+    const events = generateRandomEvents(state);
 
     // Add the turn to the history.
     turns = [
@@ -186,7 +175,7 @@ export function reducer({ state, orders }, update) {
 
     // If the game is over, declare a winner.
     let result = null;
-    if (update.turnNumber === BUMBLEBOTS_TURN_LIMIT) {
+    if (update.turnNumber === consts.BUMBLEBOTS_TURN_LIMIT) {
       let victor = null;
       if (score[state.bots[0]] > score[state.bots[1]]) {
         victor = state.bots[0];
@@ -194,7 +183,7 @@ export function reducer({ state, orders }, update) {
       if (score[state.bots[0]] < score[state.bots[1]]) {
         victor = state.bots[1];
       }
-      result = { victor, reason: BUMBLEBOTS_FULL_TIME };
+      result = { victor, reason: consts.BUMBLEBOTS_FULL_TIME };
     }
 
     state = {

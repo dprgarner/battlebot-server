@@ -2,7 +2,7 @@ import {
   BUMBLEBOTS_SETUP_TIME,
   BUMBLEBOTS_COOLDOWN_TIME,
   BUMBLEBOTS_TARGET_PROBABILITY,
-} from './const';
+} from './consts';
 
 export function generateRandomEvents(state) {
   const { turnNumber, board } = state;
