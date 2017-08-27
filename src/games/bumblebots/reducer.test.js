@@ -1,9 +1,9 @@
 import _ from 'underscore';
 
-import * as bumblebots from './bumblebots';
-import * as bumblebotsUtils from './bumblebotsUtils';
+import * as bumblebots from '.';
+import * as utils from './utils';
 
-import { SOCKET_INCOMING } from '../const';
+import { SOCKET_INCOMING } from '../../const';
 
 
 `
@@ -38,7 +38,7 @@ import { SOCKET_INCOMING } from '../const';
 
 const initialState = {
   bots: ['BotOne', 'BotTwo'],
-  board: bumblebotsUtils.parseHexBoard(`
+  board: utils.parseHexBoard(`
            # # # # # # # #
           # . . + + + . . #
          # . . . . . . . . #
@@ -60,8 +60,8 @@ const initialState = {
     BotTwo: {},
   },
   territory: {
-    BotOne: bumblebotsUtils.BUMBLEBOTS_SPACE_CLAIMED_0,
-    BotTwo: bumblebotsUtils.BUMBLEBOTS_SPACE_CLAIMED_1,
+    BotOne: utils.BUMBLEBOTS_SPACE_CLAIMED_0,
+    BotTwo: utils.BUMBLEBOTS_SPACE_CLAIMED_1,
   },
   score: {
     BotOne: 0,
@@ -505,7 +505,7 @@ describe('Bumblebots (reducer)', () => {
 
   describe('obtaining a target', () => {
     it('notes which bots have reached a target (flower)', () => {
-      const board = bumblebotsUtils.parseHexBoard(`
+      const board = utils.parseHexBoard(`
                # # # # # # # #
               # . . + + + . . #
              # . . . . . . . . #

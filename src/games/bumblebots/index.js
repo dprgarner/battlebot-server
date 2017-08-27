@@ -1,14 +1,14 @@
 import _ from 'underscore';
 import Rx from 'rxjs';
 
-import { SOCKET_INCOMING } from '../const';
-import { sanitiseOrdersUpdate, resolveDroneMoves } from './bumblebotsOrders';
+import { SOCKET_INCOMING } from '../../const';
+import { sanitiseOrdersUpdate, resolveDroneMoves } from './orders';
 import {
   parseHexBoard,
   generateGoodName,
   generateBadName,
   BUMBLEBOTS_SPACE_TARGET,
-} from './bumblebotsUtils';
+} from './utils';
 
 export const BUMBLEBOTS_TICK = 'BUMBLEBOTS_TICK';
 export const BUMBLEBOTS_FULL_TIME = 'BUMBLEBOTS_FULL_TIME';

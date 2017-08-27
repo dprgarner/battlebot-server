@@ -1,13 +1,13 @@
 import _ from 'underscore';
 
-import * as bumblebots from './bumblebots';
-import * as bumblebotsOrders from './bumblebotsOrders';
-import * as bumblebotsUtils from './bumblebotsUtils';
-import { SOCKET_INCOMING } from '../const';
+import * as bumblebots from '.';
+import * as orders from './orders';
+import * as utils from './utils';
+import { SOCKET_INCOMING } from '../../const';
 
 const initialState = {
   bots: ['BotOne', 'BotTwo'],
-  board: bumblebotsUtils.parseHexBoard(`
+  board: utils.parseHexBoard(`
            # # # # # # # #
           # . . + + + . . #
          # . . . . . . . . #
@@ -29,8 +29,8 @@ const initialState = {
     BotTwo: {},
   },
   territory: {
-    BotOne: bumblebotsUtils.BUMBLEBOTS_SPACE_CLAIMED_0,
-    BotTwo: bumblebotsUtils.BUMBLEBOTS_SPACE_CLAIMED_1,
+    BotOne: utils.BUMBLEBOTS_SPACE_CLAIMED_0,
+    BotTwo: utils.BUMBLEBOTS_SPACE_CLAIMED_1,
   },
   score: {
     BotOne: 0,
@@ -45,13 +45,13 @@ describe('Bumblebots (general)', () => {
   describe('parsing', () => {
     beforeAll(() => {
       // Sanity check.
-      expect(bumblebotsUtils.BUMBLEBOTS_SPACE_CLAIMED_0).toEqual(5)
-      expect(bumblebotsUtils.BUMBLEBOTS_SPACE_CLAIMED_1).toEqual(6)
+      expect(utils.BUMBLEBOTS_SPACE_CLAIMED_0).toEqual(5)
+      expect(utils.BUMBLEBOTS_SPACE_CLAIMED_1).toEqual(6)
     });
 
     it('parses string-boards to int-boards', () => {
 
-      const parsedBoard = bumblebotsUtils.parseHexBoard(`
+      const parsedBoard = utils.parseHexBoard(`
                # # # # # # # #
               # . . + + + . . #
              # . . . . . . . . #
@@ -89,7 +89,7 @@ describe('Bumblebots (general)', () => {
     });
 
     it('renders int-boards as strings', () => {
-      const renderedBoard = bumblebotsUtils.renderHexBoard([
+      const renderedBoard = utils.renderHexBoard([
         [1, 1, 1, 1, 1, 1, 1, 1],
         [1, 0, 0, 5, 5, 5, 0, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -146,35 +146,35 @@ describe('Bumblebots (general)', () => {
       let update;
 
       update = { name: 'BotOne', orders: { A: 'DL' } };
-      expect(bumblebotsOrders.sanitiseOrdersUpdate(state, update))
+      expect(orders.sanitiseOrdersUpdate(state, update))
         .toEqual(update.orders);
 
       update = { name: 'BotOne', orders: { A: 'DR' } };
-      expect(bumblebotsOrders.sanitiseOrdersUpdate(state, update))
+      expect(orders.sanitiseOrdersUpdate(state, update))
         .toEqual(update.orders);
 
       update = { name: 'BotOne', orders: { A: 'L' } };
-      expect(bumblebotsOrders.sanitiseOrdersUpdate(state, update))
+      expect(orders.sanitiseOrdersUpdate(state, update))
         .toEqual(update.orders);
 
       update = { name: 'BotOne', orders: { A: 'R' } };
-      expect(bumblebotsOrders.sanitiseOrdersUpdate(state, update))
+      expect(orders.sanitiseOrdersUpdate(state, update))
         .toEqual(update.orders);
 
       update = { name: 'BotTwo', orders: { Z: 'UL' } };
-      expect(bumblebotsOrders.sanitiseOrdersUpdate(state, update))
+      expect(orders.sanitiseOrdersUpdate(state, update))
         .toEqual(update.orders);
 
       update = { name: 'BotTwo', orders: { Z: 'UR' } };
-      expect(bumblebotsOrders.sanitiseOrdersUpdate(state, update))
+      expect(orders.sanitiseOrdersUpdate(state, update))
         .toEqual(update.orders);
 
       update = { name: 'BotTwo', orders: { Z: 'L' } };
-      expect(bumblebotsOrders.sanitiseOrdersUpdate(state, update))
+      expect(orders.sanitiseOrdersUpdate(state, update))
         .toEqual(update.orders);
 
       update = { name: 'BotTwo', orders: { Z: 'R' } };
-      expect(bumblebotsOrders.sanitiseOrdersUpdate(state, update))
+      expect(orders.sanitiseOrdersUpdate(state, update))
         .toEqual(update.orders);
     });
 
@@ -191,7 +191,7 @@ describe('Bumblebots (general)', () => {
         },
       };
       const update = { name: 'BotOne', orders: { Z: 'R' } };
-      expect(bumblebotsOrders.sanitiseOrdersUpdate(state, update)).toEqual({});
+      expect(orders.sanitiseOrdersUpdate(state, update)).toEqual({});
     });
 
     it('returns false if inputting a string which is not a direction', () => {
@@ -207,7 +207,7 @@ describe('Bumblebots (general)', () => {
         },
       };
       const update = { name: 'BotOne', orders: { A: 'ASDF' } };
-      expect(bumblebotsOrders.sanitiseOrdersUpdate(state, update)).toEqual({});
+      expect(orders.sanitiseOrdersUpdate(state, update)).toEqual({});
     });
 
     it('returns false if moving into an invalid hex', () => {
@@ -226,19 +226,19 @@ describe('Bumblebots (general)', () => {
 
       let update;
       update = { name: 'BotOne', orders: { A: 'U' }};
-      expect(bumblebotsOrders.sanitiseOrdersUpdate(state, update)).toEqual({});
+      expect(orders.sanitiseOrdersUpdate(state, update)).toEqual({});
 
       update = { name: 'BotOne', orders: { B: 'UL' } };
-      expect(bumblebotsOrders.sanitiseOrdersUpdate(state, update)).toEqual({});
+      expect(orders.sanitiseOrdersUpdate(state, update)).toEqual({});
 
       update = { name: 'BotOne', orders: { B: 'L' } };
-      expect(bumblebotsOrders.sanitiseOrdersUpdate(state, update)).toEqual({});
+      expect(orders.sanitiseOrdersUpdate(state, update)).toEqual({});
 
       update = { name: 'BotOne', orders: { B: 'DL' } };
-      expect(bumblebotsOrders.sanitiseOrdersUpdate(state, update)).toEqual({});
+      expect(orders.sanitiseOrdersUpdate(state, update)).toEqual({});
 
       update = { name: 'BotTwo', orders: { Z: 'D' } };
-      expect(bumblebotsOrders.sanitiseOrdersUpdate(state, update)).toEqual({});
+      expect(orders.sanitiseOrdersUpdate(state, update)).toEqual({});
     });
 
     it('returns false if moving into a claimed area', () => {
@@ -256,10 +256,10 @@ describe('Bumblebots (general)', () => {
 
       let update;
       update = { name: 'BotOne', orders: { A: 'DL' }};
-      expect(bumblebotsOrders.sanitiseOrdersUpdate(state, update)).toEqual({});
+      expect(orders.sanitiseOrdersUpdate(state, update)).toEqual({});
 
       update = { name: 'BotOne', orders: { Z: 'UR' }};
-      expect(bumblebotsOrders.sanitiseOrdersUpdate(state, update)).toEqual({});
+      expect(orders.sanitiseOrdersUpdate(state, update)).toEqual({});
     });
   });
 
