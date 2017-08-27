@@ -6,7 +6,7 @@ import { SOCKET_INCOMING } from 'battlebots/const';
 import { sanitiseOrdersUpdate, resolveDroneMoves } from './orders';
 import { parseHexBoard, generateGoodName, generateBadName } from './utils';
 
-import { generateRandomEvents } from './random';
+import { generateTargetEvent, getDroneNames } from './random';
 
 import * as consts from './consts';
 
@@ -46,16 +46,8 @@ export function getDbRecord(props) {
 }
 
 export function createInitialUpdate(bots) {
-  const droneNames = [[], []];
   const maxDrones = 3;
-  for (let i = 0; i < maxDrones; i++) {
-    const name = generateGoodName(droneNames[0]);
-    droneNames[0].push(name);
-  }
-  for (let i = 0; i < maxDrones; i++) {
-    const name = generateBadName(droneNames[1]);
-    droneNames[1].push(name);
-  }
+  const droneNames = getDroneNames(maxDrones);
 
   const state = {
     bots,
@@ -164,8 +156,12 @@ export function reducer({ state, orders }, update) {
       });
     });
 
-    // Perform any random events. TODO
-    const events = generateRandomEvents(state);
+    // Randomly add new targets (flowers).
+    const newTarget = generateTargetEvent(state);
+    if (newTarget) {
+      board = clone(board);
+      board[newTarget[0]][newTarget[1]] = consts.BUMBLEBOTS_SPACE_TARGET;
+    }
 
     // Add the turn to the history.
     turns = [

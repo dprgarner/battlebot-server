@@ -1,6 +1,3 @@
-import fs from 'fs';
-import path from 'path';
-
 import _ from 'underscore';
 
 import {
@@ -10,21 +7,6 @@ import {
   BUMBLEBOTS_SPACE_CLAIMED_0,
   BUMBLEBOTS_SPACE_CLAIMED_1,
 } from './consts';
-
-const GOOD_ADJECTIVES = fs.readFileSync(
-  path.join(__dirname, './goodAdjectives.txt'),
-  'utf8',
-).trim().split('\n');
-
-const BAD_ADJECTIVES = fs.readFileSync(
-  path.join(__dirname, './badAdjectives.txt'),
-  'utf8',
-).trim().split('\n');
-
-const NAMES = fs.readFileSync(
-  path.join(__dirname, './names.txt'),
-  'utf8',
-).trim().split('\n');
 
 const CHAR_TO_INT = {
   '.': BUMBLEBOTS_SPACE_EMPTY,
@@ -85,24 +67,4 @@ export function renderHexBoard(rows) {
     stringRows[i] = ' '.repeat(addPadding) + stringRows[i];
   }
   return `\n${stringRows.join('\n')}\n`;
-}
-
-function randomChoice(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-export function generateGoodName(existingNames) {
-  const name = randomChoice(GOOD_ADJECTIVES) + randomChoice(NAMES);
-  if (existingNames && existingNames.includes(name)) {
-    return generateName(existingNames);
-  }
-  return name;
-}
-
-export function generateBadName(existingNames) {
-  const name = randomChoice(BAD_ADJECTIVES) + randomChoice(NAMES);
-  if (existingNames && existingNames.includes(name)) {
-    return generateName(existingNames);
-  }
-  return name;
 }
