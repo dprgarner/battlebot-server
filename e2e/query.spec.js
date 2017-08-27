@@ -9,7 +9,7 @@ import {
   killMongo,
   log,
   graphql,
-  waitFor,
+  wait,
 } from './utils';
 
 import { authenticateBots, sendTurn } from './noughtsandcrosses.spec'
@@ -175,7 +175,7 @@ describe('query', function() {
     await sendTurn(sockets3.BotTwo, 'O', [0, 2]);
     await sendTurn(sockets3.BotOne, 'X', [2, 0], true, true);
 
-    await waitFor(50);
+    await wait(50);
 
     // Next, look up the contest via a GraphQL query.
     const body = await graphql(`

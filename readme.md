@@ -216,5 +216,6 @@ Next game:
 - Create an out-stream for spectator updates
 - Simple spectator stream page (dump JSON for now)
 -- Maybe try GraphQL subscriptions and Apollo because it's hip and trendy
--- Closed information updates
-- Start with Rock-Paper-Scissors?
+-- Closed information updates?
+- Randomly-spawning maze?
+- Random item drops (flower-blooms)?

@@ -11,7 +11,7 @@ import {
   killMongo,
   log,
   graphql,
-  waitFor,
+  wait,
 } from './utils';
 
 const MongoClientPromise = BluebirdPromise.promisifyAll(MongoClient);
@@ -90,7 +90,7 @@ export async function sendTurn(
   log(ply);
   if (!noTurn) expect(ply.turn.valid).to.equal(valid);
   expect(!!ply.state.result).to.equal(result);
-  await waitFor(50);
+  await wait(50);
   return ply;
 }
 
@@ -118,7 +118,7 @@ describe('playing noughts and crosses games', function() {
     expect(lastTurn.state.result.victor).to.equal('BotOne');
     log(lastTurn.state.board);
 
-    await waitFor(50);
+    await wait(50);
 
     const db = await MongoClientPromise.connect(
       'mongodb://localhost:27017/test_db'
@@ -153,7 +153,7 @@ describe('playing noughts and crosses games', function() {
     const sockets = await authenticateBots();
 
     sockets.BotTwo.close();
-    await waitFor(50);
+    await wait(50);
 
     const db = await MongoClientPromise.connect(
       'mongodb://localhost:27017/test_db'
@@ -176,7 +176,7 @@ describe('playing noughts and crosses games', function() {
 
     await sendTurn(sockets.BotOne, 'X', [0, 0]);
 
-    await waitFor(TIMEOUT + 50);
+    await wait(TIMEOUT + 50);
 
     const db = await MongoClientPromise.connect(
       'mongodb://localhost:27017/test_db'
@@ -198,7 +198,7 @@ describe('playing noughts and crosses games', function() {
     let attempt;
     // Not BotTwo's turn
     for (var i = 0; i < 3; i++) {
-      await waitFor(50);
+      await wait(50);
       attempt = await sendTurn(sockets.BotTwo, 'X', [0, 0], false, i == 2, i == 2);
       log(attempt.turn);
     }

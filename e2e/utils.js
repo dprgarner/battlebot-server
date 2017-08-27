@@ -55,8 +55,44 @@ export function bundleAndStartMongo(done) {
   });
 }
 
-export function restartServerAndClearDb(done) {
-  this.timeout(3000);
+async function clearDb() {
+  const db = await MongoClientPromise.connect(
+    'mongodb://localhost:27017/test_db'
+  );
+
+  try {
+    await Promise.all([
+      db.collection('bots').deleteMany({}),
+      db.collection('games').deleteMany({}),
+    ]);
+    await Promise.all([
+      db.collection('bots').insertOne({
+        gameType: 'NOUGHTS_AND_CROSSES',
+        name: 'BotOne',
+        password : 'abc123',
+        owner : 'Anonymous',
+      }),
+      db.collection('bots').insertOne({
+        gameType: 'NOUGHTS_AND_CROSSES',
+        name: 'BotTwo',
+        password : '321cba',
+        owner : 'Anonymous',
+      }),
+      db.collection('bots').insertOne({
+        gameType: 'NOUGHTS_AND_CROSSES',
+        name: 'BotThree',
+        password : 'iozz2',
+        owner : 'Me',
+      }),
+    ]);
+    log('Database reset');
+  } finally {
+    await db.close();
+  }
+}
+
+export function restartServerAndClearDb() {
+  this.timeout(3500);
   this.server = spawn(
     'node',
     [path.join(__dirname, '..', 'build', 'index.js')],
@@ -79,36 +115,13 @@ export function restartServerAndClearDb(done) {
     log(`Server exited with code ${code}`);
   });
 
-  MongoClientPromise.connect('mongodb://localhost:27017/test_db')
-    .then(db =>
-      Promise.all([
-        db.collection('bots').deleteMany({}),
-        db.collection('games').deleteMany({}),
-      ])
-      .then(() => Promise.all([
-        db.collection('bots').insertOne({
-          gameType: "NOUGHTS_AND_CROSSES",
-          name: "BotOne",
-          password : "abc123",
-          owner : "Anonymous",
-        }),
-        db.collection('bots').insertOne({
-          gameType: "NOUGHTS_AND_CROSSES",
-          name: "BotTwo",
-          password : "321cba",
-          owner : "Anonymous",
-        }),
-        db.collection('bots').insertOne({
-          gameType: "NOUGHTS_AND_CROSSES",
-          name: "BotThree",
-          password : "iozz2",
-          owner : "Me",
-        }),
-      ]))
-      .then(() => db.close().then(() => log('Database reset')))
-      .catch(err => db.close().then(() => { console.error(err); throw err; }))
-    );
+  return Promise.all([
+    clearDb(),
+    // Poll the page until it starts.
+    waitFor(() => rp('http://localhost:4444'), 3000),
+  ])
 
+  // Wait until the server is responding
   setTimeout(done, 1000);
 }
 
@@ -120,10 +133,34 @@ export function killMongo() {
   this.mongod && this.mongod.kill();
 }
 
-export function waitFor(time) {
+export function wait(time) {
   return new Promise((resolve, reject) => {
     setTimeout(resolve, time);
   });
+}
+
+function waitFor(assertion, timeout=2000) {
+    // Attempt an assertion repeatedly until it passes or times out. The
+    // argument 'assertion' can be a synchronous function which throws an
+    // error, or a promise generator.
+
+    const startTime = Date.now();
+    const cutoffTime = Date.now() + timeout;
+    const interval = 100;
+
+    function tryAgain() {
+        // Wait a short interval, and then attempt the assertion again.
+        return new Promise(resolve => setTimeout(resolve, interval))
+        .then(assertion)
+        .catch(e => {
+          if (Date.now() > cutoffTime) throw e;
+          return tryAgain();
+        });
+    }
+
+    return Promise.resolve()
+      .then(assertion)
+      .catch(tryAgain);
 }
 
 export function graphql(query, resolveWithFullResponse) {
