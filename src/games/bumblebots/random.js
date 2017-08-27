@@ -4,18 +4,15 @@ import path from 'path';
 import _ from 'underscore';
 import clone from 'clone';
 
-import {
-  BUMBLEBOTS_SPACE_EMPTY,
-  BUMBLEBOTS_SETUP_TIME,
-  BUMBLEBOTS_TURN_LIMIT,
-  BUMBLEBOTS_COOLDOWN_TIME,
-  BUMBLEBOTS_TARGET_PROBABILITY,
-} from './consts';
+import * as consts from './consts';
 
 function randomChoice(arr) {
   if (arr && arr.length) return arr[Math.floor(Math.random() * arr.length)];
 }
 
+//
+// Target-generation
+//
 export function getPotentialTargets(board, drones) {
   const sites = [];
   const size = board.length;
@@ -29,7 +26,7 @@ export function getPotentialTargets(board, drones) {
 
   for (let i = 0; i < size; i++) {
     for (let j = 0; j < size; j++) {
-      if (board[i][j] === BUMBLEBOTS_SPACE_EMPTY) {
+      if (board[i][j] === consts.BUMBLEBOTS_SPACE_EMPTY) {
         sites.push([i, j]);
       }
     }
@@ -41,18 +38,20 @@ export function getPotentialTargets(board, drones) {
 export function generateTargetEvent(state) {
   const { turnNumber, board } = state;
   if (
-    turnNumber > BUMBLEBOTS_SETUP_TIME &&
-    turnNumber < (BUMBLEBOTS_TURN_LIMIT - BUMBLEBOTS_COOLDOWN_TIME)
+    turnNumber > consts.BUMBLEBOTS_SETUP_TIME &&
+    turnNumber < (consts.BUMBLEBOTS_TURN_LIMIT - consts.BUMBLEBOTS_COOLDOWN_TIME)
   ) {
     // Generate a new target, if there is space.
-    if (Math.random() < BUMBLEBOTS_TARGET_PROBABILITY) {
+    if (Math.random() < consts.BUMBLEBOTS_TARGET_PROBABILITY) {
       const sites = getPotentialTargets(state.board, state.drones);
       return randomChoice(sites);
     }
   }
 }
 
+//
 // Drone names
+//
 const GOOD_ADJECTIVES = fs.readFileSync(
   path.join(__dirname, './goodAdjectives.txt'),
   'utf8',

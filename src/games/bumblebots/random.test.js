@@ -81,8 +81,8 @@ describe('Bumblebots - random events', () => {
       };
 
     Math.random = jest.fn()
-      .mockReturnValue(0.999)
-      .mockReturnValueOnce(0.1);  // Target-spawn probability check
+      .mockReturnValueOnce(0.09)
+      .mockReturnValueOnce(0.999);  // Target-spawn probability check
 
     const target = random.generateTargetEvent({ board, drones, turnNumber: 50 });
     expect(target).toEqual([13, 13]);

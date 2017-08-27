@@ -212,23 +212,22 @@ docker-compose up
 
 Bumblebots:
 - Random events
--- Creating targets (flowers)
--- Respawing drones
+  * Respawing drones
 
 - Fix bug where the whole server crashes and burns if a client crashes
 
 - Randomise starting arena
--- Size
--- Starting positions
--- Existing walls
--- Number of drones
+  * Size
+  * Starting positions
+  * Existing walls
+  * Number of drones
 
 - GraphQL stuff:
--- Create an out-stream for spectator updates
--- Simple spectator stream page (dump JSON for now)
--- Maybe try GraphQL subscriptions and Apollo because it's hip and trendy
+  * Create an out-stream for spectator updates
+  * Simple spectator stream page (dump JSON for now)
+  * Maybe try GraphQL subscriptions and Apollo because it's hip and trendy
 
 - Things that will make the game much better:
--- Record when a bot does not get a move in
--- Record when a bot makes an invalid move
--- Record when a bot makes a valid move but gets blocked by another bot
+  * Record when a bot does not get a move in
+  * Record when a bot makes an invalid move
+  * Record when a bot makes a valid move but gets blocked by another bot

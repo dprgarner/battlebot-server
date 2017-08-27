@@ -73,7 +73,7 @@ export function createInitialUpdate(bots) {
             # . . x x x . . #
              # # # # # # # #
     `),
-    // TODO auto-generate.
+    // TODO auto-generate, respecting maxDrones.
     drones: {
       [bots[0]]: {
         [droneNames[0][0]]: { position: [1, 3] },
@@ -156,7 +156,7 @@ export function reducer({ state, orders }, update) {
       });
     });
 
-    // Randomly add new targets (flowers).
+    // Potentially add a new target (flower).
     const newTarget = generateTargetEvent(state);
     if (newTarget) {
       board = clone(board);
