@@ -179,6 +179,122 @@ describe('Bumblebots (reducer)', () => {
         { name: 'BotOne', droneId: 'A', position: [5, 5] },
       ]);
     });
+
+    it('modifies the board, drone list, and score on reaching a target', () => {
+      const state = {
+        ...initialState,
+        board: utils.parseHexBoard(`
+               # # # # # # # #
+              # . . + + + . . #
+             # . . . . . . . . #
+            # . . # # . # # . . #
+           # . . # . . . . # . . #
+          # . . . . £ . . . . . . #
+         # . . # . . . . . . # . . #
+        # . . # . . . . . . . # . . #
+         # . . # . . . . . . # . . #
+          # . . . . . . £ . . . . #
+           # . . # . . . . # . . #
+            # . . # # . # # . . #
+             # . . . . . . . . #
+              # . . x x x . . #
+               # # # # # # # #
+        `),
+        drones: {
+          BotOne: {
+            A: { position: [5, 5] },
+          },
+          BotTwo: {
+            Z: { position: [7, 7] },
+          },
+        },
+        score: {
+          BotOne: 2,
+          BotTwo: 4,
+        },
+      };
+
+      const update = { type: bumblebots.BUMBLEBOTS_TICK, turnNumber: 1 };
+      const reduced = bumblebots.reducer({ state, orders: {} }, update);
+      expect(reduced.state.drones).toEqual({
+        BotOne: {},
+        BotTwo: {
+          Z: { position: [7, 7] },
+        },
+      });
+      expect(reduced.state.score).toEqual({
+        BotOne: 3,
+        BotTwo: 4,
+      });
+      expect(reduced.state.board).toEqual(utils.parseHexBoard(`
+             # # # # # # # #
+            # . . + + + . . #
+           # . . . . . . . . #
+          # . . # # . # # . . #
+         # . . # + + . . # . . #
+        # . . . + # + . . . . . #
+       # . . # . + + . . . # . . #
+      # . . # . . . . . . . # . . #
+       # . . # . . . . . . # . . #
+        # . . . . . . £ . . . . #
+         # . . # . . . . # . . #
+          # . . # # . # # . . #
+           # . . . . . . . . #
+            # . . x x x . . #
+             # # # # # # # #
+      `));
+    });
+
+    it('does not replace a wall with territory', () => {
+      const state = {
+        ...initialState,
+        board: utils.parseHexBoard(`
+               # # # # # # # #
+              # . . + + + . . #
+             # . . . . . . . . #
+            # . . # # . # # . . #
+           # . . # £ . . . # . . #
+          # . . . . . . . . . . . #
+         # . . # . . . . . . # . . #
+        # . . # . . . . . . . # . . #
+         # . . # . . . . . . # . . #
+          # . . . . . . £ . . . . #
+           # . . # . . . . # . . #
+            # . . # # . # # . . #
+             # . . . . . . . . #
+              # . . x x x . . #
+               # # # # # # # #
+        `),
+        drones: {
+          BotOne: {
+            A: { position: [4, 4] },
+          },
+          BotTwo: {
+            Z: { position: [7, 7] },
+          },
+        },
+      };
+
+      const update = { type: bumblebots.BUMBLEBOTS_TICK, turnNumber: 1 };
+      const reduced = bumblebots.reducer({ state, orders: {} }, update);
+      expect(reduced.state.board).toEqual(utils.parseHexBoard(`
+             # # # # # # # #
+            # . . + + + . . #
+           # . . . . . . . . #
+          # . . # # . # # . . #
+         # . . # # + . . # . . #
+        # . . . + + . . . . . . #
+       # . . # . . . . . . # . . #
+      # . . # . . . . . . . # . . #
+       # . . # . . . . . . # . . #
+        # . . . . . . £ . . . . #
+         # . . # . . . . # . . #
+          # . . # # . # # . . #
+           # . . . . . . . . #
+            # . . x x x . . #
+             # # # # # # # #
+      `));
+    });
   });
 
   describe('conclusion', () => {

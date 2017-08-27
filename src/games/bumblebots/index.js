@@ -1,12 +1,18 @@
 import _ from 'underscore';
 import Rx from 'rxjs';
+import clone from 'clone';
 
 import { SOCKET_INCOMING } from 'battlebots/const';
-import { sanitiseOrdersUpdate, resolveDroneMoves } from './orders';
+import {
+  sanitiseOrdersUpdate,
+  resolveDroneMoves,
+  POSSIBLE_MOVES,
+} from './orders';
 import {
   parseHexBoard,
   generateGoodName,
   generateBadName,
+  BUMBLEBOTS_SPACE_WALL,
   BUMBLEBOTS_SPACE_TARGET,
 } from './utils';
 
@@ -119,14 +125,42 @@ export function reducer({ state, orders }, update) {
 
   if (update.type === BUMBLEBOTS_TICK) {
     let { board, drones, score } = state;
+
+    // Get new drone positions
     drones = resolveDroneMoves(board.length, drones, orders);
+
+    // If any drones reach a target, remove the drone, add territory to the
+    // board, and increase the score.
+    const dronesReachingTarget = resolveTargets(board, drones);
+    _.each(dronesReachingTarget, ({ name, droneId, position }) => {
+      drones = _.mapObject(drones, (dronesByName) => 
+        _.omit(dronesByName, droneId),
+      );
+      score = { ...score, [name]: score[name] + 1 };
+      board = clone(board);
+      _.each(POSSIBLE_MOVES, move => {
+        board[position[0] + move[0]][position[1] + move[1]] = (
+          board[position[0] + move[0]][position[1] + move[1]] ||
+          state.territory[name]
+        );
+        board[position[0]][position[1]] = BUMBLEBOTS_SPACE_WALL;
+      });
+    });
+
+    // If the game is over, declare a winner.
     let result = null;
     if (update.turnNumber === BUMBLEBOTS_TURN_LIMIT) {
       result = { victor: null, reason: BUMBLEBOTS_FULL_TIME };
     }
-    const dronesReachingTarget = resolveTargets(board, drones);
 
-    state = { ...state, drones, board, result, turnNumber: update.turnNumber };
+    state = {
+      ...state,
+      drones,
+      board,
+      score,
+      result,
+      turnNumber: update.turnNumber,
+    };
     return { state, outgoing: createOutgoing(state), orders: {} };
   }
 }

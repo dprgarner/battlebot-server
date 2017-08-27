@@ -1,7 +1,7 @@
 import _ from 'underscore';
 import merge from 'merge';
 
-const POSSIBLE_MOVES = {
+export const POSSIBLE_MOVES = {
   UL: [-1, -1],
   UR: [-1, 0],
   R: [0, 1],
