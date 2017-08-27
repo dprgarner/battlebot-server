@@ -18,13 +18,18 @@ const NAMES = fs.readFileSync(
   'utf8',
 ).trim().split('\n');
 
+export const BUMBLEBOTS_SPACE_EMPTY = 0;
+export const BUMBLEBOTS_SPACE_WALL = 1;
+export const BUMBLEBOTS_SPACE_TARGET = 2;
+export const BUMBLEBOTS_SPACE_CLAIMED_0 = 5;
+export const BUMBLEBOTS_SPACE_CLAIMED_1 = 6;
 
 const CHAR_TO_INT = {
-  '.': 0,
-  '#': 1,
-  '£': 2,
-  '+': 3,
-  'x': 4,
+  '.': BUMBLEBOTS_SPACE_EMPTY,
+  '#': BUMBLEBOTS_SPACE_WALL,
+  '£': BUMBLEBOTS_SPACE_TARGET,
+  '+': BUMBLEBOTS_SPACE_CLAIMED_0,
+  'x': BUMBLEBOTS_SPACE_CLAIMED_1,
 };
 const INT_TO_CHAR = _.invert(CHAR_TO_INT);
 

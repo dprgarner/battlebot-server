@@ -43,14 +43,14 @@ const initialState = {
           # . . + + + . . #
          # . . . . . . . . #
         # . . # # . # # . . #
-       # . . # £ . . . # . . #
-      # . . . . . . . . . . . #
-     # . . # . . . . . . # . . #
-    # . . # . . . . . . . # £ . #
-     # . . # . . . . . . # . . #
-      # . . . . . . . . . . . #
        # . . # . . . . # . . #
-        # £ . # # . # # . . #
+      # . . . . £ . . . . . . #
+     # . . # . . . . . . # . . #
+    # . . # . . . . . . . # . . #
+     # . . # . . . . . . # . . #
+      # . . . . . . £ . . . . #
+       # . . # . . . . # . . #
+        # . . # # . # # . . #
          # . . . . . . . . #
           # . . x x x . . #
            # # # # # # # #
@@ -60,8 +60,8 @@ const initialState = {
     BotTwo: {},
   },
   territory: {
-    BotOne: 3,
-    BotTwo: 4,
+    BotOne: bumblebotsUtils.BUMBLEBOTS_SPACE_CLAIMED_0,
+    BotTwo: bumblebotsUtils.BUMBLEBOTS_SPACE_CLAIMED_1,
   },
   score: {
     BotOne: 0,
@@ -500,6 +500,41 @@ describe('Bumblebots (reducer)', () => {
           Z: { position: [7, 7] },
         },
       });
+    });
+  });
+
+  describe('obtaining a target', () => {
+    it('notes which bots have reached a target (flower)', () => {
+      const board = bumblebotsUtils.parseHexBoard(`
+               # # # # # # # #
+              # . . + + + . . #
+             # . . . . . . . . #
+            # . . # # . # # . . #
+           # . . # . . . . # . . #
+          # . . . . £ . . . . . . #
+         # . . # . . . . . . # . . #
+        # . . # . . . . . . . # . . #
+         # . . # . . . . . . # . . #
+          # . . . . . . £ . . . . #
+           # . . # . . . . # . . #
+            # . . # # . # # . . #
+             # . . . . . . . . #
+              # . . x x x . . #
+               # # # # # # # #
+      `);
+      const drones = {
+        BotOne: {
+          A: { position: [5, 5] },
+        },
+        BotTwo: {
+          Z: { position: [7, 7] },
+        },
+      };
+
+      const resolved = bumblebots.resolveTargets(board, drones);
+      expect(resolved).toEqual([
+        { name: 'BotOne', droneId: 'A', position: [5, 5] },
+      ]);
     });
   });
 

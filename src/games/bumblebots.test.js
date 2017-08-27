@@ -29,8 +29,8 @@ const initialState = {
     BotTwo: {},
   },
   territory: {
-    BotOne: 3,
-    BotTwo: 4,
+    BotOne: bumblebotsUtils.BUMBLEBOTS_SPACE_CLAIMED_0,
+    BotTwo: bumblebotsUtils.BUMBLEBOTS_SPACE_CLAIMED_1,
   },
   score: {
     BotOne: 0,
@@ -43,7 +43,14 @@ const initialState = {
 
 describe('Bumblebots (general)', () => {
   describe('parsing', () => {
+    beforeAll(() => {
+      // Sanity check.
+      expect(bumblebotsUtils.BUMBLEBOTS_SPACE_CLAIMED_0).toEqual(5)
+      expect(bumblebotsUtils.BUMBLEBOTS_SPACE_CLAIMED_1).toEqual(6)
+    });
+
     it('parses string-boards to int-boards', () => {
+
       const parsedBoard = bumblebotsUtils.parseHexBoard(`
                # # # # # # # #
               # . . + + + . . #
@@ -64,7 +71,7 @@ describe('Bumblebots (general)', () => {
 
       expect(parsedBoard).toEqual([
         [1, 1, 1, 1, 1, 1, 1, 1],
-        [1, 0, 0, 3, 3, 3, 0, 0, 1],
+        [1, 0, 0, 5, 5, 5, 0, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1],
         [1, 0, 0, 1, 2, 0, 0, 0, 1, 0, 0, 1],
@@ -76,7 +83,7 @@ describe('Bumblebots (general)', () => {
         [ ,  ,  , 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1],
         [ ,  ,  ,  , 1, 2, 0, 1, 1, 0, 1, 1, 0, 0, 1],
         [ ,  ,  ,  ,  , 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [ ,  ,  ,  ,  ,  , 1, 0, 0, 4, 4, 4, 0, 0, 1],
+        [ ,  ,  ,  ,  ,  , 1, 0, 0, 6, 6, 6, 0, 0, 1],
         [ ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1],
       ]);
     });
@@ -84,7 +91,7 @@ describe('Bumblebots (general)', () => {
     it('renders int-boards as strings', () => {
       const renderedBoard = bumblebotsUtils.renderHexBoard([
         [1, 1, 1, 1, 1, 1, 1, 1],
-        [1, 0, 0, 3, 3, 3, 0, 0, 1],
+        [1, 0, 0, 5, 5, 5, 0, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1],
         [1, 0, 0, 1, 2, 0, 0, 0, 1, 0, 0, 1],
@@ -96,7 +103,7 @@ describe('Bumblebots (general)', () => {
         [ ,  ,  , 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1],
         [ ,  ,  ,  , 1, 2, 0, 1, 1, 0, 1, 1, 0, 0, 1],
         [ ,  ,  ,  ,  , 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [ ,  ,  ,  ,  ,  , 1, 0, 0, 4, 4, 4, 0, 0, 1],
+        [ ,  ,  ,  ,  ,  , 1, 0, 0, 6, 6, 6, 0, 0, 1],
         [ ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1],
       ]);
       const stringBoard = (

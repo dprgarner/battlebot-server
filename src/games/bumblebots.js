@@ -7,6 +7,7 @@ import {
   parseHexBoard,
   generateGoodName,
   generateBadName,
+  BUMBLEBOTS_SPACE_TARGET,
 } from './bumblebotsUtils';
 
 export const BUMBLEBOTS_TICK = 'BUMBLEBOTS_TICK';
@@ -94,6 +95,18 @@ export function sideEffects(incoming$) {
     .map(turnNumber => ({ type: BUMBLEBOTS_TICK, turnNumber }));
 }
 
+export function resolveTargets(board, drones, score) {
+  const dronesReachingTarget = [];
+  _.each(drones, (dronesByName, name) => {
+    _.each(dronesByName, ({ position }, droneId) => {
+      if (board[position[0]][position[1]] === BUMBLEBOTS_SPACE_TARGET) {
+        dronesReachingTarget.push({ name, droneId, position });
+      }
+    });
+  });
+  return dronesReachingTarget;
+}
+
 export function reducer({ state, orders }, update) {
   if (update.type === SOCKET_INCOMING) {
     // Check that the update is in the correct format: an object with orders.
@@ -105,13 +118,15 @@ export function reducer({ state, orders }, update) {
   }
 
   if (update.type === BUMBLEBOTS_TICK) {
-    const drones = resolveDroneMoves(state.board.length, state.drones, orders);
+    let { board, drones, score } = state;
+    drones = resolveDroneMoves(board.length, drones, orders);
     let result = null;
     if (update.turnNumber === BUMBLEBOTS_TURN_LIMIT) {
       result = { victor: null, reason: BUMBLEBOTS_FULL_TIME };
     }
-    state = { ...state, drones, result, turnNumber: update.turnNumber };
-    console.log(drones);
+    const dronesReachingTarget = resolveTargets(board, drones);
+
+    state = { ...state, drones, board, result, turnNumber: update.turnNumber };
     return { state, outgoing: createOutgoing(state), orders: {} };
   }
 }
