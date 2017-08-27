@@ -14,6 +14,8 @@ import {
   generateBadName,
   BUMBLEBOTS_SPACE_WALL,
   BUMBLEBOTS_SPACE_TARGET,
+  BUMBLEBOTS_SPACE_CLAIMED_0,
+  BUMBLEBOTS_SPACE_CLAIMED_1,
 } from './utils';
 
 export const BUMBLEBOTS_TICK = 'BUMBLEBOTS_TICK';
@@ -78,12 +80,12 @@ export function createInitialUpdate(bots) {
       },
     },
     territory: {
-      BotOne: 3,
-      BotTwo: 4,
+      [bots[0]]: BUMBLEBOTS_SPACE_CLAIMED_0,
+      [bots[1]]: BUMBLEBOTS_SPACE_CLAIMED_1,
     },
     score: {
-      BotOne: 0,
-      BotTwo: 0,
+      [bots[0]]: 0,
+      [bots[1]]: 0,
     },
     result: null,
     turnNumber: 0,
