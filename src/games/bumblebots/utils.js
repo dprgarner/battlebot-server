@@ -3,6 +3,14 @@ import path from 'path';
 
 import _ from 'underscore';
 
+import {
+  BUMBLEBOTS_SPACE_EMPTY,
+  BUMBLEBOTS_SPACE_WALL,
+  BUMBLEBOTS_SPACE_TARGET,
+  BUMBLEBOTS_SPACE_CLAIMED_0,
+  BUMBLEBOTS_SPACE_CLAIMED_1,
+} from './const';
+
 const GOOD_ADJECTIVES = fs.readFileSync(
   path.join(__dirname, './goodAdjectives.txt'),
   'utf8',
@@ -17,12 +25,6 @@ const NAMES = fs.readFileSync(
   path.join(__dirname, './names.txt'),
   'utf8',
 ).trim().split('\n');
-
-export const BUMBLEBOTS_SPACE_EMPTY = 0;
-export const BUMBLEBOTS_SPACE_WALL = 1;
-export const BUMBLEBOTS_SPACE_TARGET = 2;
-export const BUMBLEBOTS_SPACE_CLAIMED_0 = 5;
-export const BUMBLEBOTS_SPACE_CLAIMED_1 = 6;
 
 const CHAR_TO_INT = {
   '.': BUMBLEBOTS_SPACE_EMPTY,

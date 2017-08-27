@@ -3,6 +3,7 @@ import _ from 'underscore';
 import * as bumblebots from '.';
 import * as orders from './orders';
 import * as utils from './utils';
+import { BUMBLEBOTS_TICK } from './const';
 import { initialState } from './testUtils';
 
 describe('Bumblebots orders', () => {
@@ -176,7 +177,7 @@ describe('Bumblebots orders', () => {
   });
 
   describe('resolving drone moves', () => {
-    const update = { type: bumblebots.BUMBLEBOTS_TICK, turnNumber: 1 };
+    const update = { type: BUMBLEBOTS_TICK, turnNumber: 1 };
 
     it('moves the drones around', () => {
       const state1 = {

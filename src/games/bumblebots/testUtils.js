@@ -1,8 +1,10 @@
-import * as utils from './utils';
+import { parseHexBoard } from './utils';
+
+import { BUMBLEBOTS_SPACE_CLAIMED_0, BUMBLEBOTS_SPACE_CLAIMED_1 } from './const';
 
 export const initialState = {
   bots: ['BotOne', 'BotTwo'],
-  board: utils.parseHexBoard(`
+  board: parseHexBoard(`
            # # # # # # # #
           # . . + + + . . #
          # . . . . . . . . #
@@ -24,8 +26,8 @@ export const initialState = {
     BotTwo: {},
   },
   territory: {
-    BotOne: utils.BUMBLEBOTS_SPACE_CLAIMED_0,
-    BotTwo: utils.BUMBLEBOTS_SPACE_CLAIMED_1,
+    BotOne: BUMBLEBOTS_SPACE_CLAIMED_0,
+    BotTwo: BUMBLEBOTS_SPACE_CLAIMED_1,
   },
   score: {
     BotOne: 0,

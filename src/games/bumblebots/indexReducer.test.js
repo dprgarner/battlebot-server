@@ -3,38 +3,13 @@ import _ from 'underscore';
 import { SOCKET_INCOMING } from 'battlebots/const';
 
 import * as bumblebots from '.';
-import * as utils from './utils';
+import { parseHexBoard } from './utils';
 import { initialState } from './testUtils';
-
-`
-             # # # # # # # # # # # # # #
-            # . . . . . + + + . . . . . #
-           # . . . . . . + + . . . . . . #
-          # . . . . . . . . . . . . . . . #
-         # . . . . . . . . . . . . . . . . #
-        # . . . . . . . . . . . . . . . . . #
-       # . . . . . . . . . . . . . . . . . . #
-      # . . . . . + C'. . . . * * . . . . . . #
-     # . . . . . + # + . . . * # X'. C . . . . #
-    # . . . . . . + A'. . . . Z'* . . . . . . . #
-   # . . . . . . . . . . . . . . . . . . . . . . #
-  # . . . . . . . . . . . . . + + . . . . B . . . #
- # + . . . . . . . . . . . . + # + . . . . . . . * #
-# + + . . . . . . . . . . . . + + . . . . . . . * * #
- # + . . . . 0 0 . . . . . . O O . . . . . . . . * #
-  # . . . . 0 # 0 . . . . . O # O . . . . . A . . #
-   # . . . . 0 0 . . . . . . O O . . . . . . . . #
-    # . . . . . . . . o o . . . . . 0 0 . . . . #
-     # . . . . . . . o # o @ @ . . 0 # 0 . . . #
-      # . . . . . . . o o @ # @ . . 0 0 . . . #
-       # . . . . . . . . . @ @ . . . . . . . #
-        # . . . . . . . . . . . . . . . . . #
-         # . . . . . . . . . . . . . . . . #
-          # . . . . . . . . . . . . . . . #
-           # . . . . . . . . . . . . . . #
-            # . . . . . * * * . . . . . #
-             # # # # # # # # # # # # # #
-`
+import {
+  BUMBLEBOTS_TICK,
+  BUMBLEBOTS_TURN_LIMIT,
+  BUMBLEBOTS_FULL_TIME,
+} from './const';
 
 describe('Bumblebots (reducer)', () => {
   describe('queuing orders', () => {
@@ -148,7 +123,7 @@ describe('Bumblebots (reducer)', () => {
 
   describe('obtaining a target', () => {
     it('notes which bots have reached a target (flower)', () => {
-      const board = utils.parseHexBoard(`
+      const board = parseHexBoard(`
                # # # # # # # #
               # . . + + + . . #
              # . . . . . . . . #
@@ -183,7 +158,7 @@ describe('Bumblebots (reducer)', () => {
     it('modifies the board, drone list, and score on reaching a target', () => {
       const state = {
         ...initialState,
-        board: utils.parseHexBoard(`
+        board: parseHexBoard(`
                # # # # # # # #
               # . . + + + . . #
              # . . . . . . . . #
@@ -214,7 +189,7 @@ describe('Bumblebots (reducer)', () => {
         },
       };
 
-      const update = { type: bumblebots.BUMBLEBOTS_TICK, turnNumber: 1 };
+      const update = { type: BUMBLEBOTS_TICK, turnNumber: 1 };
       const reduced = bumblebots.reducer({ state, orders: {} }, update);
       expect(reduced.state.drones).toEqual({
         BotOne: {},
@@ -226,7 +201,7 @@ describe('Bumblebots (reducer)', () => {
         BotOne: 3,
         BotTwo: 4,
       });
-      expect(reduced.state.board).toEqual(utils.parseHexBoard(`
+      expect(reduced.state.board).toEqual(parseHexBoard(`
              # # # # # # # #
             # . . + + + . . #
            # . . . . . . . . #
@@ -248,7 +223,7 @@ describe('Bumblebots (reducer)', () => {
     it('does not replace a wall with territory', () => {
       const state = {
         ...initialState,
-        board: utils.parseHexBoard(`
+        board: parseHexBoard(`
                # # # # # # # #
               # . . + + + . . #
              # . . . . . . . . #
@@ -275,9 +250,9 @@ describe('Bumblebots (reducer)', () => {
         },
       };
 
-      const update = { type: bumblebots.BUMBLEBOTS_TICK, turnNumber: 1 };
+      const update = { type: BUMBLEBOTS_TICK, turnNumber: 1 };
       const reduced = bumblebots.reducer({ state, orders: {} }, update);
-      expect(reduced.state.board).toEqual(utils.parseHexBoard(`
+      expect(reduced.state.board).toEqual(parseHexBoard(`
              # # # # # # # #
             # . . + + + . . #
            # . . . . . . . . #
@@ -309,8 +284,8 @@ describe('Bumblebots (reducer)', () => {
         },
       };
       const finalUpdate = {
-        type: bumblebots.BUMBLEBOTS_TICK,
-        turnNumber: bumblebots.BUMBLEBOTS_TURN_LIMIT,
+        type: BUMBLEBOTS_TICK,
+        turnNumber: BUMBLEBOTS_TURN_LIMIT,
       };
 
       const reduced = bumblebots.reducer(
@@ -318,18 +293,18 @@ describe('Bumblebots (reducer)', () => {
       );
       const { state: state2, orders: orders2 } = reduced;
       expect(orders2).toEqual({});
-      expect(bumblebots.BUMBLEBOTS_TURN_LIMIT).toBeDefined();
-      expect(state2.turnNumber).toEqual(bumblebots.BUMBLEBOTS_TURN_LIMIT);
+      expect(BUMBLEBOTS_TURN_LIMIT).toBeDefined();
+      expect(state2.turnNumber).toEqual(BUMBLEBOTS_TURN_LIMIT);
       expect(state2.result).toEqual({
         victor: null,
-        reason: bumblebots.BUMBLEBOTS_FULL_TIME,
+        reason: BUMBLEBOTS_FULL_TIME,
       });
     });
 
     it('declares the bot with the highest score the winner', () => {
       const finalUpdate = {
-        type: bumblebots.BUMBLEBOTS_TICK,
-        turnNumber: bumblebots.BUMBLEBOTS_TURN_LIMIT,
+        type: BUMBLEBOTS_TICK,
+        turnNumber: BUMBLEBOTS_TURN_LIMIT,
       };
 
       const state1 = {
@@ -351,7 +326,7 @@ describe('Bumblebots (reducer)', () => {
       );
       expect(reduced1.state.result).toEqual({
         victor: 'BotOne',
-        reason: bumblebots.BUMBLEBOTS_FULL_TIME,
+        reason: BUMBLEBOTS_FULL_TIME,
       });
 
       const state2 = {
@@ -373,7 +348,7 @@ describe('Bumblebots (reducer)', () => {
       );
       expect(reduced2.state.result).toEqual({
         victor: 'BotTwo',
-        reason: bumblebots.BUMBLEBOTS_FULL_TIME,
+        reason: BUMBLEBOTS_FULL_TIME,
       });
     });
   });

@@ -1,16 +1,11 @@
 import _ from 'underscore';
 import merge from 'merge';
 
-import { BUMBLEBOTS_SPACE_EMPTY, BUMBLEBOTS_SPACE_TARGET } from './utils';
-
-export const POSSIBLE_MOVES = {
-  UL: [-1, -1],
-  UR: [-1, 0],
-  R: [0, 1],
-  DR: [1, 1],
-  DL: [1, 0],
-  L: [0, -1],
-};
+import {
+  POSSIBLE_MOVES,
+  BUMBLEBOTS_SPACE_EMPTY,
+  BUMBLEBOTS_SPACE_TARGET,
+} from './const';
 
 function validateDroneOrder(state, name, order, droneId) {
   // Checks whether the move is in the correct format and not moving somewhere

@@ -1,15 +1,17 @@
-import * as utils from './utils';
+import { parseHexBoard, renderHexBoard } from './utils';
+
+import { BUMBLEBOTS_SPACE_CLAIMED_0, BUMBLEBOTS_SPACE_CLAIMED_1 } from './const';
 
 describe('Bumblebots utils', () => {
   describe('parsing', () => {
     beforeAll(() => {
       // Sanity check.
-      expect(utils.BUMBLEBOTS_SPACE_CLAIMED_0).toEqual(5)
-      expect(utils.BUMBLEBOTS_SPACE_CLAIMED_1).toEqual(6)
+      expect(BUMBLEBOTS_SPACE_CLAIMED_0).toEqual(5)
+      expect(BUMBLEBOTS_SPACE_CLAIMED_1).toEqual(6)
     });
 
     it('parses string-boards to int-boards', () => {
-      const parsedBoard = utils.parseHexBoard(`
+      const parsedBoard = parseHexBoard(`
                # # # # # # # #
               # . . + + + . . #
              # . . . . . . . . #
@@ -47,7 +49,7 @@ describe('Bumblebots utils', () => {
     });
 
     it('renders int-boards as strings', () => {
-      const renderedBoard = utils.renderHexBoard([
+      const renderedBoard = renderHexBoard([
         [1, 1, 1, 1, 1, 1, 1, 1],
         [1, 0, 0, 5, 5, 5, 0, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],

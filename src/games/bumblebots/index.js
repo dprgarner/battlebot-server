@@ -3,37 +3,35 @@ import Rx from 'rxjs';
 import clone from 'clone';
 
 import { SOCKET_INCOMING } from 'battlebots/const';
+import { sanitiseOrdersUpdate, resolveDroneMoves } from './orders';
+import { parseHexBoard, generateGoodName, generateBadName } from './utils';
+
+import { generateRandomEvents } from './random';
+
 import {
-  sanitiseOrdersUpdate,
-  resolveDroneMoves,
-  POSSIBLE_MOVES,
-} from './orders';
-import {
-  parseHexBoard,
-  generateGoodName,
-  generateBadName,
+  BUMBLEBOTS_TICK,
+  BUMBLEBOTS_FULL_TIME,
+  BUMBLEBOTS_TICK_TIME,
+  BUMBLEBOTS_TURN_LIMIT,
+  BUMBLEBOTS_SPAWN_DELAY,
   BUMBLEBOTS_SPACE_WALL,
   BUMBLEBOTS_SPACE_TARGET,
   BUMBLEBOTS_SPACE_CLAIMED_0,
   BUMBLEBOTS_SPACE_CLAIMED_1,
-} from './utils';
-
-export const BUMBLEBOTS_TICK = 'BUMBLEBOTS_TICK';
-export const BUMBLEBOTS_FULL_TIME = 'BUMBLEBOTS_FULL_TIME';
-
-export const BUMBLEBOTS_TICK_TIME = 50;
-export const BUMBLEBOTS_TURN_LIMIT = 100;
+  POSSIBLE_MOVES,
+} from './const';
 
 export function createOutgoing(state) {
   return _.object(state.bots.map(name => [name, _.pick(
     state,
     'bots',
     'territory',
-    'turnNumber',
+    'maxDrones',
     'board',
     'drones',
     'score',
     'result',
+    'turnNumber',
   )]));
 }
 
@@ -47,9 +45,10 @@ export function getDbRecord(props) {
     _.pick(
       state,
       'bots',
+      'territory',
+      'maxDrones',
       'board',
       'drones',
-      'territory',
       'score',
       'result',
       'turns',
@@ -59,17 +58,23 @@ export function getDbRecord(props) {
 
 export function createInitialUpdate(bots) {
   const droneNames = [[], []];
-  for (let i = 0; i < 3; i++) {
+  const maxDrones = 3;
+  for (let i = 0; i < maxDrones; i++) {
     const name = generateGoodName(droneNames[0]);
     droneNames[0].push(name);
   }
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < maxDrones; i++) {
     const name = generateBadName(droneNames[1]);
     droneNames[1].push(name);
   }
 
   const state = {
     bots,
+    territory: {
+      [bots[0]]: BUMBLEBOTS_SPACE_CLAIMED_0,
+      [bots[1]]: BUMBLEBOTS_SPACE_CLAIMED_1,
+    },
+    maxDrones,
     board: parseHexBoard(`
              # # # # # # # #
             # . . + + + . . #
@@ -87,6 +92,7 @@ export function createInitialUpdate(bots) {
             # . . x x x . . #
              # # # # # # # #
     `),
+    // TODO auto-generate.
     drones: {
       [bots[0]]: {
         [droneNames[0][0]]: { position: [1, 3] },
@@ -99,10 +105,6 @@ export function createInitialUpdate(bots) {
         [droneNames[1][2]]: { position: [13, 9] },
       },
     },
-    territory: {
-      [bots[0]]: BUMBLEBOTS_SPACE_CLAIMED_0,
-      [bots[1]]: BUMBLEBOTS_SPACE_CLAIMED_1,
-    },
     score: {
       [bots[0]]: 0,
       [bots[1]]: 0,
@@ -112,6 +114,10 @@ export function createInitialUpdate(bots) {
 
     turns: [],
     droneNames,
+    spawnDue: {
+      [bots[0]]: [],
+      [bots[1]]: [],
+    },
   };
   return { state, orders: {}, outgoing: createOutgoing(state) };
 }
@@ -170,6 +176,7 @@ export function reducer({ state, orders }, update) {
     });
 
     // Perform any random events. TODO
+    // const events = generateRandomEvents(state);
 
     // Add the turn to the history.
     turns = [
