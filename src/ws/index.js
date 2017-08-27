@@ -2,14 +2,13 @@ import Rx from 'rxjs';
 import { run } from '@cycle/rxjs-run';
 import Collection from '@cycle/collection';
 
+import { makeDbDriver } from 'battlebots/db';
+import { AUTHENTICATE_ADD, AUTHENTICATE_REMOVE } from 'battlebots/const';
+
 import Authenticator from './Authenticator';
+import Game from './Game';
 import makeWsDriver from './sockets';
 import Matcher from './Matcher';
-import { makeDbDriver } from '../db';
-
-import { AUTHENTICATE_ADD, AUTHENTICATE_REMOVE } from '../const';
-
-import Game from './Game';
 
 function main(sources) {
   const wsIn$ = sources.ws;

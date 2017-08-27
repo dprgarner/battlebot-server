@@ -2,15 +2,14 @@ import Rx from 'rxjs';
 import WebSocket from 'ws';
 import { adapt } from '@cycle/run/lib/adapt';
 
-import { createRandomHash } from '../hash';
-
+import { createRandomHash } from 'battlebots/hash';
 import {
   SOCKET_INCOMING,
   SOCKET_OUTGOING,
   SOCKET_OPEN,
   SOCKET_CLOSE,
   SOCKET_ERROR,
-} from '../const';
+} from 'battlebots/const';
 
 export function wsObserver(ws) {
   // An observer for outgoing JSON messages to the socket.

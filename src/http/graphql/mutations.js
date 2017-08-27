@@ -1,7 +1,7 @@
-import { ClientError } from '../error';
-import connect from '../../db';
-import games from '../../games';
-import { createRandomHash } from '../../hash';
+import { ClientError } from 'battlebots/http/error';
+import connect from 'battlebots/db';
+import games from 'battlebots/games';
+import { createRandomHash } from 'battlebots/hash';
 
 export function registerBot(gameType, name, owner) {
   return Promise.resolve()

@@ -1,7 +1,7 @@
 import _ from 'underscore';
 import Rx from 'rxjs';
 
-import { SOCKET_INCOMING } from '../../const';
+import { SOCKET_INCOMING } from 'battlebots/const';
 import { sanitiseOrdersUpdate, resolveDroneMoves } from './orders';
 import {
   parseHexBoard,

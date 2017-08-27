@@ -1,7 +1,7 @@
 import _ from 'underscore';
 import Rx from 'rxjs';
 
-import { createHash, createRandomHash } from '../hash';
+import { createHash, createRandomHash } from 'battlebots/hash';
 import { wsObserver, wsObservable } from './sockets';
 
 import {

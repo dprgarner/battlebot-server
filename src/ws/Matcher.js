@@ -3,7 +3,7 @@ import clone from 'clone';
 import Rx from 'rxjs';
 import WebSocket from 'ws';
 
-import { AUTHENTICATE_REMOVE } from '../const';
+import { AUTHENTICATE_REMOVE } from 'battlebots/const';
 
 function MatcherWithoutContest(sources) {
   const addRemoveSocket$ = sources.sockets;

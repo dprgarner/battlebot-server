@@ -3,7 +3,7 @@ import _ from 'underscore';
 import * as bumblebots from '.';
 import * as orders from './orders';
 import * as utils from './utils';
-import { SOCKET_INCOMING } from '../../const';
+import { SOCKET_INCOMING } from 'battlebots/const';
 
 const initialState = {
   bots: ['BotOne', 'BotTwo'],

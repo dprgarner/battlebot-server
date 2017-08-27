@@ -1,11 +1,11 @@
 import _ from 'underscore';
 import Rx from 'rxjs';
 
-import games from '../games';
-import makeWsDriver from './sockets';
-import { createShortRandomHash } from '../hash';
+import games from 'battlebots/games';
+import { createShortRandomHash } from 'battlebots/hash';
+import { SOCKET_OUTGOING, SOCKET_CLOSE } from 'battlebots/const';
 
-import { SOCKET_OUTGOING, SOCKET_CLOSE } from '../const';
+import makeWsDriver from './sockets';
 
 const GAME_DB_SAVE = 'GAME_DB_SAVE';
 
