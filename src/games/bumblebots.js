@@ -16,12 +16,8 @@ const POSSIBLE_MOVES = {
 export const BUMBLEBOTS_TICK = 'BUMBLEBOTS_TICK';
 export const BUMBLEBOTS_FULL_TIME = 'BUMBLEBOTS_FULL_TIME';
 
-export const BUMBLEBOTS_TICK_TIME = 250;
+export const BUMBLEBOTS_TICK_TIME = 200;
 export const BUMBLEBOTS_TURN_LIMIT = 100;
-
-function createOutgoing(bots, state) {
-  return {};
-}
 
 const CHAR_TO_INT = {
   '.': 0,
@@ -61,7 +57,7 @@ export function parseHexBoard(str) {
   for (let i = 0; i < collapsedRows.length; i++) {
     let addDots = i - (maxWidth - 1) / 2
     if (addDots > 0) {
-      collapsedRows[i] = '.'.repeat(addDots) + collapsedRows[i];
+      collapsedRows[i] = ' '.repeat(addDots) + collapsedRows[i];
     }
   }
 
@@ -82,6 +78,12 @@ export function renderHexBoard(rows) {
     stringRows[i] = ' '.repeat(addPadding) + stringRows[i];
   }
   return `\n${stringRows.join('\n')}\n`;
+}
+
+export function createOutgoing(state) {
+  return _.object(state.bots.map(name =>
+    [name, _.omit(state, 'turns')],
+  ));
 }
 
 export function createInitialUpdate(bots) {
@@ -120,7 +122,7 @@ export function createInitialUpdate(bots) {
       BotOne: 3,
       BotTwo: 4,
     },
-    collected: {
+    score: {
       BotOne: 0,
       BotTwo: 0,
     },
@@ -128,7 +130,7 @@ export function createInitialUpdate(bots) {
     turnNumber: 0,
     turns: [],
   };
-  return { state, orders: {}, outgoing: createOutgoing(bots, state) };
+  return { state, orders: {}, outgoing: createOutgoing(state) };
 }
 
 export function sideEffects(incoming$) {
@@ -169,17 +171,15 @@ export function sanitiseOrdersUpdate(state, { name, orders }) {
   );
 }
 
-function resolveDroneMoves(state, orders) {
+function resolveDroneMoves(size, drones, orders) {
   // Construct arrays of the bots' current positions and the positions to
   // which they are trying to move.
-  const currentPositions = _.times(state.board.length, () => []);
-  const intendedPositions = _.times(state.board.length, () => 
-    _.times(state.board[state.board.length - 1].length, () => [])
-  );
+  const currentPositions = _.times(size, () => []);
+  const intendedPositions = _.times(size, () => _.times(size, () => []));
 
-  _.each(state.drones, (dronesByBot, name) => {
+  _.each(drones, (dronesByBot, name) => {
     _.each(dronesByBot, ({ position: [i, j] }, droneId ) => {
-      const drone = state.drones[name][droneId];
+      const drone = drones[name][droneId];
       const order = (orders[name] || {})[droneId] || null;
       const moveTo = order ? [
         drone.position[0] + POSSIBLE_MOVES[order][0],
@@ -244,11 +244,11 @@ function resolveDroneMoves(state, orders) {
   _.each(_.flatten(intendedPositions), ({ name, droneId, moveTo }) => {
     if (!newDrones[name]) newDrones[name] = {};
     newDrones[name][droneId] = {
-      ...state.drones[name][droneId],
+      ...drones[name][droneId],
       position: moveTo,
     };
   });
-  return merge.recursive(true, state.drones, newDrones);
+  return merge.recursive(true, drones, newDrones);
 }
 
 export function reducer({ state, orders }, update) {
@@ -258,17 +258,18 @@ export function reducer({ state, orders }, update) {
 
     // Amend the orders with the sanitised orders.
     orders = {...orders, [update.name]: sanitiseOrdersUpdate(state, update) };
+    console.log(update, orders);
     return { state, outgoing: {}, orders };
   }
 
   if (update.type === BUMBLEBOTS_TICK) {
-    const drones = resolveDroneMoves(state, orders);
+    const drones = resolveDroneMoves(state.board.length, state.drones, orders);
     let result = null;
     if (update.turnNumber === BUMBLEBOTS_TURN_LIMIT) {
       result = { victor: null, reason: BUMBLEBOTS_FULL_TIME };
     }
     state = { ...state, drones, result, turnNumber: update.turnNumber };
-    return { state, outgoing: {}, orders: {} };
+    return { state, outgoing: createOutgoing(state), orders: {} };
   }
 }
 

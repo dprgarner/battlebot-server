@@ -3,6 +3,37 @@ import _ from 'underscore';
 import * as bumblebots from './bumblebots';
 import { SOCKET_INCOMING } from '../const';
 
+
+`
+             # # # # # # # # # # # # # #
+            # . . . . . + + + . . . . . #
+           # . . . . . . + + . . . . . . #
+          # . . . . . . . . . . . . . . . #
+         # . . . . . . . . . . . . . . . . #
+        # . . . . . . . . . . . . . . . . . #
+       # . . . . . . . . . . . . . . . . . . #
+      # . . . . . + C'. . . . * * . . . . . . #
+     # . . . . . + # + . . . * # X'. C . . . . #
+    # . . . . . . + A'. . . . Z'* . . . . . . . #
+   # . . . . . . . . . . . . . . . . . . . . . . #
+  # . . . . . . . . . . . . . + + . . . . B . . . #
+ # + . . . . . . . . . . . . + # + . . . . . . . * #
+# + + . . . . . . . . . . . . + + . . . . . . . * * #
+ # + . . . . 0 0 . . . . . . O O . . . . . . . . * #
+  # . . . . 0 # 0 . . . . . O # O . . . . . A . . #
+   # . . . . 0 0 . . . . . . O O . . . . . . . . #
+    # . . . . . . . . o o . . . . . 0 0 . . . . #
+     # . . . . . . . o # o @ @ . . 0 # 0 . . . #
+      # . . . . . . . o o @ # @ . . 0 0 . . . #
+       # . . . . . . . . . @ @ . . . . . . . #
+        # . . . . . . . . . . . . . . . . . #
+         # . . . . . . . . . . . . . . . . #
+          # . . . . . . . . . . . . . . . #
+           # . . . . . . . . . . . . . . #
+            # . . . . . * * * . . . . . #
+             # # # # # # # # # # # # # #
+`
+
 const initialState = {
   bots: ['BotOne', 'BotTwo'],
   board: bumblebots.parseHexBoard(`
@@ -30,7 +61,7 @@ const initialState = {
     BotOne: 3,
     BotTwo: 4,
   },
-  collected: {
+  score: {
     BotOne: 0,
     BotTwo: 0,
   },
@@ -471,7 +502,7 @@ describe('Bumblebots (reducer)', () => {
   });
 
   describe('conclusion', () => {
-    it('stops the game after 100 turns', () => {
+    it('stops the game after BUMBLEBOTS_TURN_LIMIT turns', () => {
       const state1 = {
         ...initialState,
         drones: {
@@ -481,14 +512,18 @@ describe('Bumblebots (reducer)', () => {
           BotTwo: {},
         },
       };
-      const finalUpdate = { type: bumblebots.BUMBLEBOTS_TICK, turnNumber: 100 };
+      const finalUpdate = {
+        type: bumblebots.BUMBLEBOTS_TICK,
+        turnNumber: bumblebots.BUMBLEBOTS_TURN_LIMIT,
+      };
 
       const reduced = bumblebots.reducer(
         { state: state1, orders: {} }, finalUpdate
       );
       const { state: state2, orders: orders2 } = reduced;
       expect(orders2).toEqual({});
-      expect(state2.turnNumber).toEqual(100);
+      expect(bumblebots.BUMBLEBOTS_TURN_LIMIT).toBeDefined();
+      expect(state2.turnNumber).toEqual(bumblebots.BUMBLEBOTS_TURN_LIMIT);
       expect(state2.result).toEqual({
         victor: null,
         reason: bumblebots.BUMBLEBOTS_FULL_TIME,

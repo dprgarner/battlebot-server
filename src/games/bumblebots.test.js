@@ -30,7 +30,7 @@ const initialState = {
     BotOne: 3,
     BotTwo: 4,
   },
-  collected: {
+  score: {
     BotOne: 0,
     BotTwo: 0,
   },
@@ -69,13 +69,13 @@ describe('Bumblebots (general)', () => {
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1],
         [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 1],
-        [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1],
-        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1],
-        [0, 0, 0, 0, 1, 2, 0, 1, 1, 0, 1, 1, 0, 0, 1],
-        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [0, 0, 0, 0, 0, 0, 1, 0, 0, 4, 4, 4, 0, 0, 1],
-        [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+        [ , 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+        [ ,  , 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [ ,  ,  , 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1],
+        [ ,  ,  ,  , 1, 2, 0, 1, 1, 0, 1, 1, 0, 0, 1],
+        [ ,  ,  ,  ,  , 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [ ,  ,  ,  ,  ,  , 1, 0, 0, 4, 4, 4, 0, 0, 1],
+        [ ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1],
       ]);
     });
 
@@ -89,13 +89,13 @@ describe('Bumblebots (general)', () => {
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1],
         [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 1],
-        [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1],
-        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1],
-        [0, 0, 0, 0, 1, 2, 0, 1, 1, 0, 1, 1, 0, 0, 1],
-        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [0, 0, 0, 0, 0, 0, 1, 0, 0, 4, 4, 4, 0, 0, 1],
-        [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+        [ , 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+        [ ,  , 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [ ,  ,  , 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1],
+        [ ,  ,  ,  , 1, 2, 0, 1, 1, 0, 1, 1, 0, 0, 1],
+        [ ,  ,  ,  ,  , 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [ ,  ,  ,  ,  ,  , 1, 0, 0, 4, 4, 4, 0, 0, 1],
+        [ ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1],
       ]);
       const stringBoard = (
 `
@@ -231,26 +231,42 @@ describe('Bumblebots (general)', () => {
       update = { name: 'BotTwo', orders: { Z: 'D' } };
       expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
     });
+
+    it('returns false if moving into a claimed area', () => {
+      const state = {
+        ...initialState,
+        drones: {
+          BotOne: {
+            A: { position: [12, 10] },
+          },
+          BotTwo: {
+            Z: { position: [2, 4] },
+          },
+        },
+      };
+
+      let update;
+      update = { name: 'BotOne', orders: { A: 'DL' }};
+      expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
+
+      update = { name: 'BotOne', orders: { Z: 'UR' }};
+      expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
+    });
   });
 
-  it('returns false if moving into a claimed area', () => {
-    const state = {
-      ...initialState,
-      drones: {
-        BotOne: {
-          A: { position: [12, 10] },
+  describe('createOutgoing', () => {
+    it('returns a representation of the full state to each bot', () => {
+      const state = {
+        ...initialState,
+        drones: {
+          BotOne: { A: [7, 7] },
+          BotTwo: { Z: [8, 7] },
         },
-        BotTwo: {
-          Z: { position: [2, 4] },
-        },
-      },
-    };
-
-    let update;
-    update = { name: 'BotOne', orders: { A: 'DL' }};
-    expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
-
-    update = { name: 'BotOne', orders: { Z: 'UR' }};
-    expect(bumblebots.sanitiseOrdersUpdate(state, update)).toEqual({});
+      };
+      expect(bumblebots.createOutgoing(state)).toEqual({
+        BotOne: _.omit(state, 'turns'),
+        BotTwo: _.omit(state, 'turns'),
+      });
+    });
   });
 });
