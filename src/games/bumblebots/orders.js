@@ -1,6 +1,8 @@
 import _ from 'underscore';
 import merge from 'merge';
 
+import { BUMBLEBOTS_SPACE_EMPTY, BUMBLEBOTS_SPACE_TARGET } from './utils';
+
 export const POSSIBLE_MOVES = {
   UL: [-1, -1],
   UR: [-1, 0],
@@ -30,7 +32,12 @@ function validateDroneOrder(state, name, order, droneId) {
   ];
 
   const hex = state.board[position[0]][position[1]];
-  if (hex !== 0 && hex !== state.territory[name]) return false;
+  const allowedMoves = [
+    BUMBLEBOTS_SPACE_EMPTY,
+    BUMBLEBOTS_SPACE_TARGET,
+    state.territory[name],
+  ];
+  if (!allowedMoves.includes(hex)) return false;
 
   return true;
 }

@@ -2,6 +2,7 @@ import _ from 'underscore';
 
 import * as bumblebots from '.';
 import * as orders from './orders';
+import * as utils from './utils';
 import { initialState } from './testUtils';
 
 describe('Bumblebots orders', () => {
@@ -52,6 +53,41 @@ describe('Bumblebots orders', () => {
       update = { name: 'BotTwo', orders: { Z: 'R' } };
       expect(orders.sanitiseOrdersUpdate(state, update))
         .toEqual(update.orders);
+    });
+
+    it('allows moves into a target', () => {
+      const state = {
+        ...initialState,
+        board: utils.parseHexBoard(`
+                 # # # # # # # #
+                # . . + + + . . #
+               # . . . . . . . . #
+              # . . # # . # # . . #
+             # . . # £ . . . # . . #
+            # . . . . . . . . . . . #
+           # . . # . . . . . . # . . #
+          # . . # . . . . . . . # £ . #
+           # . . # . . . . . . # . . #
+            # . . . . . . . . . . . #
+             # . . # . . . . # . . #
+              # £ . # # . # # . . #
+               # . . . . . . . . #
+                # . . x x x . . #
+                 # # # # # # # #
+        `),
+        drones: {
+          BotOne: {
+            A: { position: [5, 5] },
+          },
+          BotTwo: {
+            Z: { position: [2, 4] },
+          },
+        },
+      };
+
+      let update;
+      update = { name: 'BotOne', orders: { A: 'UL' }};
+      expect(orders.sanitiseOrdersUpdate(state, update)).toEqual({ A: 'UL' });
     });
 
     it('returns false if trying to move another bot\'s drones', () => {
