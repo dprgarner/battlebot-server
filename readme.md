@@ -100,37 +100,6 @@ To play a bot in a contest, the bot should add the name of a contest to its auth
 
 When a bot joins the server to play a tournament, it will only play other bots playing in the same tournament, and it will only play each bot in the tournament a set number of times (currently five games each way).
 
-## Codebase
-
-The WebSocket server is implemented in JavaScript with [RxJS 5](https://github.com/ReactiveX/rxjs), an implementation of the [Reactive Extensions](http://reactivex.io/) design pattern/framework. The HTTP site is written with [Express](https://expressjs.com/).
-
-The server saves registered bots and completed games to a MongoDB database.
-
-To start the server, start up a MongoDB server, and run `npm start` with the port and MongoDB URI in the env variables:
-```
-MONGODB_URI=mongodb://localhost:27017/battlebots PORT=3000 npm start
-```
-
-### Implementing new games
-A game can be added simply by dropping a new file into `./games`.
-
-A game module must export a function `validate (State, Turn) => Bool` which, for given state and turn objects, must return a boolean of whether the move should be accepted as valid or not. This should also check that it's the turn of the bot attempting to make the move.
-
-The game module must also export a function `reducer (State, Turn) => State`, which creates the new state of the game from the existing state of the game. This new state must contain `bots`, `waitingFor`, and `complete`. The reducer should also record the `reason` the game ended.
-
-### Tests
-
-There are some unit tests and some end-to-end tests.
-
-The unit tests are implemented in Jest, primarily for some utility functions and for the Noughts and Crosses game implementation.
-
-The end-to-end tests are run with `npm run e2e`. This requires MongoDB to be installed locally. The tests create a test database at "mongod://localhost/test_db", spin up the server in a subprocess, register bots and play Noughts and Crosses games, checking that the games are saved to the test database.
-
-### APIs
-
-All non-websocket API requests are served by the [GraphQL](http://graphql.org/learn/) API. 
-The interactive tool GraphiQL is located [here](https://blunderdome-server.herokuapp.com/graphql).
-
 ## Games
 
 ### Noughts and Crosses
@@ -202,11 +171,43 @@ including the last valid turn:
 
 ## Development
 
-Download Docker and Docker Compose. Build and start the servers with:
+The WebSocket server is implemented in JavaScript with [RxJS 5](https://github.com/ReactiveX/rxjs), an implementation of the [Reactive Extensions](http://reactivex.io/) design pattern/framework. The HTTP site is written with [Express](https://expressjs.com/).
 
+The server saves registered bots and completed games to a MongoDB database.
+
+To start the server, start up a MongoDB server, and run `npm start` with the port and MongoDB URI in the env variables:
+```
+MONGODB_URI=mongodb://localhost:27017/battlebots PORT=3000 npm start
+```
+
+Alternatively, download Docker and Docker Compose, and build and start the servers with:
 ```bash
 docker-compose up
 ```
+
+### Implementing new games
+Games are exported in `./src/games/index.js`. Each game module must export the functions `createInitialUpdate`, `reducer`, `sideEffects`, and `getDbRecord`.
+
+The function `createInitialUpdate : [BotNames] -> State` takes in the array of bot names and returns the initial state of the game.
+
+The function `reducer : (Acc, Update) -> Acc` takes in the previous accumulated value representing the state and any new updates. The accumulated value must contain the state of the game at the top level, which should have a key `result` which is null until the game has ended. When the reducer updates, any messages in `Acc.outgoing` are dispatched to the clients.
+
+The function `sideEffects : Event$ -> Update$ ` is a map on RxJS streams. It takes in the output of the reducer AND any new updates from the clients. It should return a stream of side-effect events to be consumed by the reducer (e.g. time-dependent events).
+
+The function `getDbRecord : { gameId, startTime, contest, state } -> Obj` takes in the data of the game, and should specify how to save the game to the database.
+
+### Tests
+
+There are some unit tests and some end-to-end tests.
+
+The unit tests are implemented in Jest, primarily for some utility functions and for the Noughts and Crosses game implementation.
+
+The end-to-end tests are run with `npm run e2e`. This requires MongoDB to be installed locally. The tests create a test database at "mongod://localhost/test_db", spin up the server in a subprocess, register bots and play Noughts and Crosses games, checking that the games are saved to the test database.
+
+### APIs
+
+All non-websocket API requests are served by the [GraphQL](http://graphql.org/learn/) API. 
+The interactive tool GraphiQL is located [here](https://blunderdome-server.herokuapp.com/graphql).
 
 ## TODO
 
