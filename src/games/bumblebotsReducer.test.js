@@ -1,6 +1,8 @@
 import _ from 'underscore';
 
 import * as bumblebots from './bumblebots';
+import * as bumblebotsUtils from './bumblebotsUtils';
+
 import { SOCKET_INCOMING } from '../const';
 
 
@@ -36,7 +38,7 @@ import { SOCKET_INCOMING } from '../const';
 
 const initialState = {
   bots: ['BotOne', 'BotTwo'],
-  board: bumblebots.parseHexBoard(`
+  board: bumblebotsUtils.parseHexBoard(`
            # # # # # # # #
           # . . + + + . . #
          # . . . . . . . . #
