@@ -21,20 +21,40 @@ import {
 export const BUMBLEBOTS_TICK = 'BUMBLEBOTS_TICK';
 export const BUMBLEBOTS_FULL_TIME = 'BUMBLEBOTS_FULL_TIME';
 
-export const BUMBLEBOTS_TICK_TIME = 200;
+export const BUMBLEBOTS_TICK_TIME = 50;
 export const BUMBLEBOTS_TURN_LIMIT = 100;
 
 export function createOutgoing(state) {
   return _.object(state.bots.map(name => [name, _.pick(
     state,
     'bots',
+    'territory',
+    'turnNumber',
     'board',
     'drones',
-    'territory',
     'score',
     'result',
-    'turnNumber',
   )]));
+}
+
+export function getDbRecord(props) {
+  const gameType = 'BUMBLEBOTS';
+  const { gameId, startTime, contest, state } = props;
+
+  return _.extend(
+    _.pick({ contest }, _.identity),
+    { gameType, _id: gameId, startTime },
+    _.pick(
+      state,
+      'bots',
+      'board',
+      'drones',
+      'territory',
+      'score',
+      'result',
+      'turns',
+    ),
+  );
 }
 
 export function createInitialUpdate(bots) {
@@ -126,7 +146,7 @@ export function reducer({ state, orders }, update) {
   }
 
   if (update.type === BUMBLEBOTS_TICK) {
-    let { board, drones, score } = state;
+    let { board, drones, score, turns } = state;
 
     // Get new drone positions
     drones = resolveDroneMoves(board.length, drones, orders);
@@ -149,14 +169,30 @@ export function reducer({ state, orders }, update) {
       });
     });
 
+    // Perform any random events. TODO
+
+    // Add the turn to the history.
+    turns = [
+      ...turns,
+      { board, drones, score, turnNumber: state.turnNumber },
+    ];
+
     // If the game is over, declare a winner.
     let result = null;
     if (update.turnNumber === BUMBLEBOTS_TURN_LIMIT) {
-      result = { victor: null, reason: BUMBLEBOTS_FULL_TIME };
+      let victor = null;
+      if (score[state.bots[0]] > score[state.bots[1]]) {
+        victor = state.bots[0];
+      }
+      if (score[state.bots[0]] < score[state.bots[1]]) {
+        victor = state.bots[1];
+      }
+      result = { victor, reason: BUMBLEBOTS_FULL_TIME };
     }
 
     state = {
       ...state,
+      turns,
       drones,
       board,
       score,
@@ -165,15 +201,4 @@ export function reducer({ state, orders }, update) {
     };
     return { state, outgoing: createOutgoing(state), orders: {} };
   }
-}
-
-export function getDbRecord(props) {
-  const gameType = 'bumblebots';
-  const { gameId, startTime, contest, state } = props;
-
-  return _.extend(
-    _.pick({ contest }, _.identity),
-    state,
-    { gameType, _id: gameId, startTime, turns: state.turns }
-  );
 }

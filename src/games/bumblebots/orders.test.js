@@ -202,9 +202,9 @@ describe('Bumblebots orders', () => {
       const { state: state2, orders: orders2 } = reduced;
       expect(orders2).toEqual({});
       expect(
-        _.omit(state1, 'drones', 'turnNumber')
+        _.omit(state1, 'drones', 'turnNumber', 'turns')
       ).toEqual(
-        _.omit(state2, 'drones', 'turnNumber')
+        _.omit(state2, 'drones', 'turnNumber', 'turns')
       );
       expect(state2.turnNumber).toEqual(state1.turnNumber + 1);
 

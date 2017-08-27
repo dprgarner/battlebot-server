@@ -325,5 +325,56 @@ describe('Bumblebots (reducer)', () => {
         reason: bumblebots.BUMBLEBOTS_FULL_TIME,
       });
     });
+
+    it('declares the bot with the highest score the winner', () => {
+      const finalUpdate = {
+        type: bumblebots.BUMBLEBOTS_TICK,
+        turnNumber: bumblebots.BUMBLEBOTS_TURN_LIMIT,
+      };
+
+      const state1 = {
+        ...initialState,
+        drones: {
+          BotOne: {
+            A: { position: [6, 7] },
+          },
+          BotTwo: {},
+        },
+        score: {
+          BotOne: 4,
+          BotTwo: 3,
+        }
+      };
+      const reduced1 = bumblebots.reducer(
+        { state: state1, orders: {} },
+        finalUpdate,
+      );
+      expect(reduced1.state.result).toEqual({
+        victor: 'BotOne',
+        reason: bumblebots.BUMBLEBOTS_FULL_TIME,
+      });
+
+      const state2 = {
+        ...initialState,
+        drones: {
+          BotOne: {
+            A: { position: [6, 7] },
+          },
+          BotTwo: {},
+        },
+        score: {
+          BotOne: 3,
+          BotTwo: 4,
+        }
+      };
+      const reduced2 = bumblebots.reducer(
+        { state: state2, orders: {} },
+        finalUpdate,
+      );
+      expect(reduced2.state.result).toEqual({
+        victor: 'BotTwo',
+        reason: bumblebots.BUMBLEBOTS_FULL_TIME,
+      });
+    });
   });
 });

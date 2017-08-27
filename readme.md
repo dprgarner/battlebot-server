@@ -210,12 +210,20 @@ docker-compose up
 
 ## TODO
 
-- Keep writing them tests
+Bumblebots:
+- Random events
+-- Creating targets (flowers)
+-- Respawing drones
 
-Next game:
-- Create an out-stream for spectator updates
-- Simple spectator stream page (dump JSON for now)
+- Fix bug where the whole server crashes and burns if a client crashes
+
+- Randomise starting arena
+-- Size
+-- Starting positions
+-- Existing walls
+-- Number of drones
+
+- GraphQL stuff:
+-- Create an out-stream for spectator updates
+-- Simple spectator stream page (dump JSON for now)
 -- Maybe try GraphQL subscriptions and Apollo because it's hip and trendy
--- Closed information updates?
-- Randomly-spawning maze?
-- Random item drops (flower-blooms)?
