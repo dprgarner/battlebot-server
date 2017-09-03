@@ -18,8 +18,8 @@ describe('Bumblebots (general)', () => {
         },
       };
       expect(bumblebots.createOutgoing(state)).toEqual({
-        BotOne: _.omit(state, 'turns'),
-        BotTwo: _.omit(state, 'turns'),
+        BotOne: _.omit(state, 'turns', 'connected'),
+        BotTwo: _.omit(state, 'turns', 'connected'),
       });
     });
   });

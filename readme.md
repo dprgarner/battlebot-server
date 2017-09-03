@@ -215,8 +215,6 @@ Bumblebots:
 - Random events
   * Respawing drones
 
-- Fix bug where the whole server crashes and burns if a client crashes
-
 - Randomise starting arena
   * Size
   * Starting positions

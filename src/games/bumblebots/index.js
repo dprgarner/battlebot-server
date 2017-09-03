@@ -13,7 +13,7 @@ import { parseHexBoard, generateGoodName, generateBadName } from './utils';
 import { sanitiseOrdersUpdate, resolveDroneMoves } from './orders';
 
 export function createOutgoing(state) {
-  return _.object(state.bots.map(name => [name, _.pick(
+  return _.object(state.connected.map(name => [name, _.pick(
     state,
     'bots',
     'territory',

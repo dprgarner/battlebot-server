@@ -36,4 +36,5 @@ export const initialState = {
   result: null,
   turnNumber: 0,
   turns: [],
+  connected: ['BotOne', 'BotTwo'],
 };
