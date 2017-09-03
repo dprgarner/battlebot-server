@@ -8,7 +8,11 @@ import {
   SOCKET_ERROR,
 } from 'battlebots/consts';
 import * as consts from './consts';
-import { generateTargetEvent, getDroneNames } from './random';
+import {
+  generateTargetEvent,
+  getDroneNames,
+  generateDroneEvents,
+} from './random';
 import { parseHexBoard, generateGoodName, generateBadName } from './utils';
 import { sanitiseOrdersUpdate, resolveDroneMoves } from './orders';
 
@@ -16,6 +20,7 @@ export function createOutgoing(state) {
   return _.object(state.connected.map(name => [name, _.pick(
     state,
     'bots',
+    'spawnPoints',
     'territory',
     'maxDrones',
     'board',
@@ -36,6 +41,7 @@ export function getDbRecord(props) {
     _.pick(
       state,
       'bots',
+      'spawnPoints',
       'territory',
       'maxDrones',
       'board',
@@ -101,6 +107,10 @@ export function createInitialUpdate(bots) {
       [bots[0]]: [],
       [bots[1]]: [],
     },
+    spawnPoints: {
+      [bots[0]]: [[1, 3], [1, 4], [1, 5]],
+      [bots[1]]: [[13, 11], [13, 10], [13, 9]],
+    },
     connected: bots,
   };
   return { state, orders: {}, outgoing: createOutgoing(state) };
@@ -158,7 +168,7 @@ function onDisconnect({ state, orders }, update) {
 }
 
 function onTick({ state, orders }, { turnNumber }) {
-  let { board, drones, score, turns, spawnDue } = state;
+  let { board, drones, score, turns, spawnDue, droneNames } = state;
 
   // Get new drone positions
   drones = resolveDroneMoves(board.length, drones, orders);
@@ -188,23 +198,36 @@ function onTick({ state, orders }, { turnNumber }) {
     };
   });
 
-  // Potentially add a new target (flower).
+  // Potentially spawn a new target (flower).
   const newTarget = generateTargetEvent(state);
   if (newTarget) {
     board = clone(board);
     board[newTarget[0]][newTarget[1]] = consts.BUMBLEBOTS_SPACE_TARGET;
   }
 
-  // Add the turn to the history.
-  turns = [
-    ...turns,
-    { board, drones, score, turnNumber },
-  ];
+  // Potentially spawn new drones.
+  _.each(generateDroneEvents(state), ({ name, droneId, position }) => {
+    drones[name][droneId] = { position };
+    const botId = state.bots.indexOf(name);
+    droneNames = clone(droneNames);
+    droneNames[botId].push(droneId);
+
+    spawnDue = {
+      ...spawnDue,
+      [name]: _.tail(spawnDue[name]),
+    };
+  });
 
   // If the game is over, declare a winner.
   let result = (turnNumber === consts.BUMBLEBOTS_TURN_LIMIT) ?
     getResult(state.bots, score, consts.BUMBLEBOTS_FULL_TIME) :
     null;
+
+  // Add the turn to the history.
+  turns = [
+    ...turns,
+    { board, drones, score, turnNumber },
+  ];
 
   state = {
     ...state,
@@ -215,6 +238,7 @@ function onTick({ state, orders }, { turnNumber }) {
     result,
     spawnDue,
     turnNumber,
+    droneNames,
   };
   return { state, outgoing: createOutgoing(state), orders: {} };
 }

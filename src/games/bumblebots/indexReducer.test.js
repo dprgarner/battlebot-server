@@ -12,6 +12,10 @@ import {
   BUMBLEBOTS_SPAWN_DELAY,
 } from './consts';
 
+import * as random from './random';
+
+random.generateDroneEvents = () => [];
+
 describe('Bumblebots (reducer)', () => {
   describe('queuing orders', () => {
     it('queues up a valid order request', () => {
@@ -123,7 +127,7 @@ describe('Bumblebots (reducer)', () => {
   });
 
   describe('obtaining a target', () => {
-    it('notes which bots have reached a target (flower)', () => {
+    it('notes which drones have reached a target (flower)', () => {
       const board = parseHexBoard(`
                # # # # # # # #
               # . . + + + . . #
@@ -279,6 +283,57 @@ describe('Bumblebots (reducer)', () => {
             # . . x x x . . #
              # # # # # # # #
       `));
+    });
+  });
+
+  describe('respawning drones', () => {
+    beforeEach(() => {
+      random.generateDroneEvents = () => [{
+        name: 'BotOne',
+        droneId: 'B',
+        position: [1, 4],
+      }];
+    });
+
+    afterEach(() => {
+      random.generateDroneEvents = () => [];
+    });
+
+    it('generates new drones if requested', () => {
+      const state = {
+        ...initialState,
+        drones: {
+          BotOne: {
+            A: { position: [7, 6] },
+          },
+          BotTwo: {
+            Z: { position: [7, 7] },
+          },
+        },
+        spawnDue: {
+          BotOne: [8],
+          BotTwo: [9],
+        },
+        turnNumber: 7,
+        droneNames: [['A'], ['Z']],
+      };
+      const update = { type: BUMBLEBOTS_TICK, turnNumber: 8 };
+
+      const reduced = bumblebots.reducer({ state, orders: {} }, update);
+      expect(reduced.state.drones).toEqual({
+        BotOne: {
+          A: { position: [7, 6] },
+          B: { position: [1, 4] }
+        },
+        BotTwo: {
+          Z: { position: [7, 7] },
+        },
+      });
+      expect(reduced.state.droneNames).toEqual([['A', 'B'], ['Z']]);
+      expect(reduced.state.spawnDue).toEqual({
+        BotOne: [],
+        BotTwo: [9],
+      });
     });
   });
 

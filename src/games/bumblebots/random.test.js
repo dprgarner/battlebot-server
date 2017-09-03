@@ -87,4 +87,62 @@ describe('Bumblebots - random events', () => {
     const target = random.generateTargetEvent({ board, drones, turnNumber: 50 });
     expect(target).toEqual([13, 13]);
   });
+
+  it('spawns a new bot if due', () => {
+    const state = {
+      bots: ['BotOne', 'BotTwo'],
+      board: parseHexBoard(`
+               # # # # # # # #
+              # . . + + + . . #
+             # . . . . . . . . #
+            # . . # # . # # . . #
+           # . . # £ . . . # . . #
+          # . . . . . . . . . . . #
+         # . . # . . . . . . # . . #
+        # . . # . . . . . . . # £ . #
+         # . . # . . . . . . # . . #
+          # . . . . . . . . . . . #
+           # . . # . . . . # . . #
+            # £ . # # . # # . . #
+             # . . . . . . . . #
+              # . . x x x . . #
+               # # # # # # # #
+      `),
+      drones: {
+        BotOne: { A: { position: [5, 6] } },
+        BotTwo: { Z: { position: [7, 7] } },
+      },
+      turnNumber: 10,
+      spawnDue: {
+        BotOne: [11],
+        BotTwo: [10],
+      },
+      spawnPoints: {
+        BotOne: [[1, 3], [1, 4], [1, 5]],
+        BotTwo: [[13, 11], [13, 10], [13, 9]],
+      },
+    };
+
+    Math.random = jest.fn()
+      .mockReturnValue(0.999);
+
+    const droneEvents = random.generateDroneEvents(state);
+    expect(droneEvents).toEqual([{
+      name: 'BotTwo',
+      droneId: 'VulgarZipporah',
+      position: [13, 9],
+    }]);
+  });
+
+  describe('getPotentialSpawns', () => {
+    it('filters down the list of potential spawn points', () => {
+      const spawnPoints = [[1, 3], [1, 4], [1, 5]];
+      const drones = {
+        BotOne: { A: { position: [1, 4] } },
+        BotTwo: { Z: { position: [7, 7] } },
+      };
+      const availableSpawns = random.getPotentialSpawns(spawnPoints, drones);
+      expect(availableSpawns).toEqual([[1, 3], [1, 5]]);
+    });
+  })
 });

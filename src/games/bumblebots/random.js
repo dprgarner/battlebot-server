@@ -49,6 +49,42 @@ export function generateTargetEvent(state) {
   }
 }
 
+export function getPotentialSpawns(spawnPoints, drones) {
+  const droneLocations = [];
+  _.each(drones, (dronesByName, name) => {
+    _.each(dronesByName, ({ position }, droneId) => {
+      droneLocations.push(position);
+    });
+  });
+
+  const sites = _.filter(spawnPoints, ([x, y]) => {
+    return !_.any(droneLocations, ([dx, dy]) => x === dx && y === dy);
+  });
+  return sites;
+}
+
+export function generateDroneEvents(state) {
+  const events = [];
+  _.each(state.spawnDue, (spawnsDue, name) => {
+    // Check if there is a new drone due for this bot.
+    if (!spawnsDue.length || spawnsDue[0] > state.turnNumber) return;
+
+    // Look for a space which is not occupied by a drone.
+    const sites = getPotentialSpawns(state.spawnPoints[name], state.drones);
+    if (sites.length) {
+      const botIndex = state.bots.indexOf(name);
+      const droneId = droneNameGenerators[botIndex](state.droneNames);
+
+      events.push({
+        name,
+        droneId,
+        position: randomChoice(sites),
+      });
+    };
+  });
+  return events;
+}
+
 //
 // Drone names
 //
@@ -67,31 +103,32 @@ const NAMES = fs.readFileSync(
   'utf8',
 ).trim().split('\n');
 
-function generateGoodName(existingNames) {
-  const name = randomChoice(GOOD_ADJECTIVES) + randomChoice(NAMES);
-  if (existingNames && existingNames.includes(name)) {
-    return generateName(existingNames);
-  }
-  return name;
-}
+const droneNameGenerators = [
+  (existingNames) => {
+    const name = randomChoice(GOOD_ADJECTIVES) + randomChoice(NAMES);
+    if (existingNames && existingNames.includes(name)) {
+      return generateName(existingNames);
+    }
+    return name;
+  },
 
-function generateBadName(existingNames) {
-  const name = randomChoice(BAD_ADJECTIVES) + randomChoice(NAMES);
-  if (existingNames && existingNames.includes(name)) {
-    return generateName(existingNames);
-  }
-  return name;
-}
+  (existingNames) => {
+    const name = randomChoice(BAD_ADJECTIVES) + randomChoice(NAMES);
+    if (existingNames && existingNames.includes(name)) {
+      return generateName(existingNames);
+    }
+    return name;
+  },
+];
 
 export function getDroneNames(maxDrones) {
-  const droneNames = [[], []];
-  for (let i = 0; i < maxDrones; i++) {
-    const name = generateGoodName(droneNames[0]);
-    droneNames[0].push(name);
-  }
-  for (let i = 0; i < maxDrones; i++) {
-    const name = generateBadName(droneNames[1]);
-    droneNames[1].push(name);
+  const droneNames = [];
+  for (let botIndex = 0; botIndex < 2; botIndex++) {
+    droneNames.push([]);
+    for (let droneIndex = 0; droneIndex < maxDrones; droneIndex++) {
+      const name = droneNameGenerators[botIndex](droneNames);
+      droneNames[botIndex].push(name);
+    }
   }
   return droneNames;
 }

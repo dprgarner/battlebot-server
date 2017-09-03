@@ -17,9 +17,16 @@ describe('Bumblebots (general)', () => {
           BotTwo: { Z: [8, 7] },
         },
       };
+      const expectedState = _.omit(
+        state,
+        'turns',
+        'connected',
+        'spawnDue',
+        'droneNames',
+      );
       expect(bumblebots.createOutgoing(state)).toEqual({
-        BotOne: _.omit(state, 'turns', 'connected', 'spawnDue', 'droneNames'),
-        BotTwo: _.omit(state, 'turns', 'connected', 'spawnDue', 'droneNames'),
+        BotOne: expectedState,
+        BotTwo: expectedState,
       });
     });
   });

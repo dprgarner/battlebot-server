@@ -42,5 +42,9 @@ export const initialState = {
     BotOne: [],
     BotTwo: [],
   },
+  spawnPoints: {
+    BotOne: [[1, 3], [1, 4], [1, 5]],
+    BotTwo: [[13, 9], [13, 10], [13, 11]],
+  },
   connected: ['BotOne', 'BotTwo'],
 };
