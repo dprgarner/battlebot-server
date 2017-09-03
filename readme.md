@@ -212,19 +212,16 @@ The interactive tool GraphiQL is located [here](https://blunderdome-server.herok
 ## TODO
 
 Bumblebots:
-- Random events
-  * Respawing drones
+- GraphQL stuff:
+  * Create an out-stream for spectator updates
+  * Simple spectator stream page (dump JSON for now)
+  * Maybe try GraphQL subscriptions and Apollo because it's hip and trendy
 
 - Randomise starting arena
   * Size
   * Starting positions
   * Existing walls
   * Number of drones
-
-- GraphQL stuff:
-  * Create an out-stream for spectator updates
-  * Simple spectator stream page (dump JSON for now)
-  * Maybe try GraphQL subscriptions and Apollo because it's hip and trendy
 
 - Things that will make the game much better:
   * Record when a bot does not get a move in
