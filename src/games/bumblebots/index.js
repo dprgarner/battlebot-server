@@ -2,7 +2,11 @@ import _ from 'underscore';
 import Rx from 'rxjs';
 import clone from 'clone';
 
-import { SOCKET_INCOMING } from 'battlebots/consts';
+import {
+  SOCKET_INCOMING,
+  SOCKET_CLOSE,
+  SOCKET_ERROR,
+} from 'battlebots/consts';
 import * as consts from './consts';
 import { generateTargetEvent, getDroneNames } from './random';
 import { parseHexBoard, generateGoodName, generateBadName } from './utils';
@@ -97,8 +101,20 @@ export function createInitialUpdate(bots) {
       [bots[0]]: [],
       [bots[1]]: [],
     },
+    connected: bots,
   };
   return { state, orders: {}, outgoing: createOutgoing(state) };
+}
+
+function getResult(bots, score, reason) {
+  let victor = null;
+  if (score[bots[0]] > score[bots[1]]) {
+    victor = bots[0];
+  }
+  if (score[bots[0]] < score[bots[1]]) {
+    victor = bots[1];
+  }
+  return { victor, reason };
 }
 
 export function sideEffects(incoming$) {
@@ -126,6 +142,18 @@ function onIncomingUpdate({ state, orders }, update) {
 
   // Amend the orders with the sanitised orders.
   orders = {...orders, [update.name]: sanitiseOrdersUpdate(state, update) };
+  return { state, outgoing: {}, orders };
+}
+
+function onDisconnect({ state, orders }, update) {
+  state = {...state, connected: _.without(state.connected, update.name)};
+
+  let result = (!state.connected.length) ?
+    getResult(state.bots, state.score, consts.BUMBLEBOTS_DISCONNECT) :
+    null;
+
+  state.result = result;
+
   return { state, outgoing: {}, orders };
 }
 
@@ -167,17 +195,9 @@ function onTick({ state, orders }, update) {
   ];
 
   // If the game is over, declare a winner.
-  let result = null;
-  if (update.turnNumber === consts.BUMBLEBOTS_TURN_LIMIT) {
-    let victor = null;
-    if (score[state.bots[0]] > score[state.bots[1]]) {
-      victor = state.bots[0];
-    }
-    if (score[state.bots[0]] < score[state.bots[1]]) {
-      victor = state.bots[1];
-    }
-    result = { victor, reason: consts.BUMBLEBOTS_FULL_TIME };
-  }
+  let result = (update.turnNumber === consts.BUMBLEBOTS_TURN_LIMIT) ?
+    getResult(state.bots, score, consts.BUMBLEBOTS_FULL_TIME) :
+    null;
 
   state = {
     ...state,
@@ -192,11 +212,15 @@ function onTick({ state, orders }, update) {
 }
 
 export function reducer(stateWithMeta, update) {
-  if (update.type === SOCKET_INCOMING) {
-    return onIncomingUpdate(stateWithMeta, update);
-  }
-
-  if (update.type === consts.BUMBLEBOTS_TICK) {
-    return onTick(stateWithMeta, update);
+  switch (update.type) {
+    case SOCKET_INCOMING:
+      return onIncomingUpdate(stateWithMeta, update);
+    case SOCKET_CLOSE:
+    case SOCKET_ERROR:
+      return onDisconnect(stateWithMeta, update);
+    case consts.BUMBLEBOTS_TICK:
+      return onTick(stateWithMeta, update);
+    default:
+      return stateWithMeta;
   }
 }
