@@ -1,6 +1,6 @@
 import _ from 'underscore';
 
-import { SOCKET_INCOMING } from 'battlebots/const';
+import { SOCKET_INCOMING } from 'battlebots/consts';
 
 import * as bumblebots from '.';
 import * as orders from './orders';

@@ -2,13 +2,11 @@ import _ from 'underscore';
 import Rx from 'rxjs';
 import clone from 'clone';
 
-import { SOCKET_INCOMING } from 'battlebots/const';
-import { sanitiseOrdersUpdate, resolveDroneMoves } from './orders';
-import { parseHexBoard, generateGoodName, generateBadName } from './utils';
-
-import { generateTargetEvent, getDroneNames } from './random';
-
+import { SOCKET_INCOMING } from 'battlebots/consts';
 import * as consts from './consts';
+import { generateTargetEvent, getDroneNames } from './random';
+import { parseHexBoard, generateGoodName, generateBadName } from './utils';
+import { sanitiseOrdersUpdate, resolveDroneMoves } from './orders';
 
 export function createOutgoing(state) {
   return _.object(state.bots.map(name => [name, _.pick(
@@ -122,75 +120,83 @@ export function resolveTargets(board, drones, score) {
   return dronesReachingTarget;
 }
 
-export function reducer({ state, orders }, update) {
-  if (update.type === SOCKET_INCOMING) {
-    // Check that the update is in the correct format: an object with orders.
-    if (!update.orders) return { state, orders, outgoing: {} };
+function onIncomingUpdate({ state, orders }, update) {
+  // Check that the update is in the correct format: an object with orders.
+  if (!update.orders) return { state, orders, outgoing: {} };
 
-    // Amend the orders with the sanitised orders.
-    orders = {...orders, [update.name]: sanitiseOrdersUpdate(state, update) };
-    return { state, outgoing: {}, orders };
+  // Amend the orders with the sanitised orders.
+  orders = {...orders, [update.name]: sanitiseOrdersUpdate(state, update) };
+  return { state, outgoing: {}, orders };
+}
+
+function onTick({ state, orders }, update) {
+  let { board, drones, score, turns } = state;
+
+  // Get new drone positions
+  drones = resolveDroneMoves(board.length, drones, orders);
+
+  // If any drones reach a target, remove the drone, add territory to the
+  // board, and increase the score.
+  const dronesReachingTarget = resolveTargets(board, drones);
+  _.each(dronesReachingTarget, ({ name, droneId, position }) => {
+    drones = _.mapObject(drones, (dronesByName) => 
+      _.omit(dronesByName, droneId),
+    );
+    score = { ...score, [name]: score[name] + 1 };
+    board = clone(board);
+    _.each(consts.POSSIBLE_MOVES, move => {
+      board[position[0] + move[0]][position[1] + move[1]] = (
+        board[position[0] + move[0]][position[1] + move[1]] ||
+        state.territory[name]
+      );
+      board[position[0]][position[1]] = consts.BUMBLEBOTS_SPACE_WALL;
+    });
+  });
+
+  // Potentially add a new target (flower).
+  const newTarget = generateTargetEvent(state);
+  if (newTarget) {
+    board = clone(board);
+    board[newTarget[0]][newTarget[1]] = consts.BUMBLEBOTS_SPACE_TARGET;
+  }
+
+  // Add the turn to the history.
+  turns = [
+    ...turns,
+    { board, drones, score, turnNumber: state.turnNumber },
+  ];
+
+  // If the game is over, declare a winner.
+  let result = null;
+  if (update.turnNumber === consts.BUMBLEBOTS_TURN_LIMIT) {
+    let victor = null;
+    if (score[state.bots[0]] > score[state.bots[1]]) {
+      victor = state.bots[0];
+    }
+    if (score[state.bots[0]] < score[state.bots[1]]) {
+      victor = state.bots[1];
+    }
+    result = { victor, reason: consts.BUMBLEBOTS_FULL_TIME };
+  }
+
+  state = {
+    ...state,
+    turns,
+    drones,
+    board,
+    score,
+    result,
+    turnNumber: update.turnNumber,
+  };
+  return { state, outgoing: createOutgoing(state), orders: {} };
+}
+
+export function reducer(stateWithMeta, update) {
+  if (update.type === SOCKET_INCOMING) {
+    return onIncomingUpdate(stateWithMeta, update);
   }
 
   if (update.type === consts.BUMBLEBOTS_TICK) {
-    let { board, drones, score, turns } = state;
-
-    // Get new drone positions
-    drones = resolveDroneMoves(board.length, drones, orders);
-
-    // If any drones reach a target, remove the drone, add territory to the
-    // board, and increase the score.
-    const dronesReachingTarget = resolveTargets(board, drones);
-    _.each(dronesReachingTarget, ({ name, droneId, position }) => {
-      drones = _.mapObject(drones, (dronesByName) => 
-        _.omit(dronesByName, droneId),
-      );
-      score = { ...score, [name]: score[name] + 1 };
-      board = clone(board);
-      _.each(consts.POSSIBLE_MOVES, move => {
-        board[position[0] + move[0]][position[1] + move[1]] = (
-          board[position[0] + move[0]][position[1] + move[1]] ||
-          state.territory[name]
-        );
-        board[position[0]][position[1]] = consts.BUMBLEBOTS_SPACE_WALL;
-      });
-    });
-
-    // Potentially add a new target (flower).
-    const newTarget = generateTargetEvent(state);
-    if (newTarget) {
-      board = clone(board);
-      board[newTarget[0]][newTarget[1]] = consts.BUMBLEBOTS_SPACE_TARGET;
-    }
-
-    // Add the turn to the history.
-    turns = [
-      ...turns,
-      { board, drones, score, turnNumber: state.turnNumber },
-    ];
-
-    // If the game is over, declare a winner.
-    let result = null;
-    if (update.turnNumber === consts.BUMBLEBOTS_TURN_LIMIT) {
-      let victor = null;
-      if (score[state.bots[0]] > score[state.bots[1]]) {
-        victor = state.bots[0];
-      }
-      if (score[state.bots[0]] < score[state.bots[1]]) {
-        victor = state.bots[1];
-      }
-      result = { victor, reason: consts.BUMBLEBOTS_FULL_TIME };
-    }
-
-    state = {
-      ...state,
-      turns,
-      drones,
-      board,
-      score,
-      result,
-      turnNumber: update.turnNumber,
-    };
-    return { state, outgoing: createOutgoing(state), orders: {} };
+    return onTick(stateWithMeta, update);
   }
 }

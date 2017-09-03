@@ -9,7 +9,7 @@ import {
   SOCKET_OPEN,
   SOCKET_CLOSE,
   SOCKET_ERROR,
-} from 'battlebots/const';
+} from 'battlebots/consts';
 
 export function wsObserver(ws) {
   // An observer for outgoing JSON messages to the socket.
