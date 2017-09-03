@@ -14,7 +14,7 @@ export function log(msg) {
 }
 
 export function bundleAndStartMongo(done) {
-  this.timeout(5000);
+  this.timeout(8000);
 
   MongoClientPromise.connect('mongodb://localhost:27017/test_db')
   .catch(e => {
