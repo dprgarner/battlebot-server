@@ -3,7 +3,7 @@ import { run } from '@cycle/rxjs-run';
 import Collection from '@cycle/collection';
 
 import { makeDbDriver } from 'battlebots/db';
-import { AUTHENTICATE_ADD, AUTHENTICATE_REMOVE } from 'battlebots/consts';
+import { AUTHENTICATE_ADD, AUTHENTICATE_REMOVE } from 'battlebots/ws/consts';
 
 import Authenticator from './Authenticator';
 import Game from './Game';

@@ -6,7 +6,7 @@ import {
   SOCKET_INCOMING,
   SOCKET_CLOSE,
   SOCKET_ERROR,
-} from 'battlebots/consts';
+} from 'battlebots/ws/consts';
 import * as consts from './consts';
 import {
   generateTargetEvent,

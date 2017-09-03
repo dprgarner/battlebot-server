@@ -1,7 +1,7 @@
 import _ from 'underscore';
 import Rx from 'rxjs';
 
-import { SOCKET_CLOSE, SOCKET_ERROR } from 'battlebots/consts';
+import { SOCKET_CLOSE, SOCKET_ERROR } from 'battlebots/ws/consts';
 
 const REASON_TIMEOUT = 'timeout';
 const REASON_DISCONNECT = 'disconnect';
