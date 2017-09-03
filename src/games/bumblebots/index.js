@@ -94,6 +94,11 @@ export function createInitialUpdate(bots) {
         [droneNames[1][2]]: { position: [13, 9] },
       },
     },
+    // TODO auto-generate
+    spawnPoints: {
+      [bots[0]]: [[1, 3], [1, 4], [1, 5]],
+      [bots[1]]: [[13, 11], [13, 10], [13, 9]],
+    },
     score: {
       [bots[0]]: 0,
       [bots[1]]: 0,
@@ -106,10 +111,6 @@ export function createInitialUpdate(bots) {
     spawnDue: {
       [bots[0]]: [],
       [bots[1]]: [],
-    },
-    spawnPoints: {
-      [bots[0]]: [[1, 3], [1, 4], [1, 5]],
-      [bots[1]]: [[13, 11], [13, 10], [13, 9]],
     },
     connected: bots,
   };
@@ -125,13 +126,6 @@ function getResult(bots, score, reason) {
     victor = bots[1];
   }
   return { victor, reason };
-}
-
-export function sideEffects(incoming$) {
-  return Rx.Observable.interval(consts.BUMBLEBOTS_TICK_TIME)
-    .skip(1)
-    .take(consts.BUMBLEBOTS_TURN_LIMIT)
-    .map(turnNumber => ({ type: consts.BUMBLEBOTS_TICK, turnNumber }));
 }
 
 export function resolveTargets(board, drones, score) {
@@ -241,6 +235,13 @@ function onTick({ state, orders }, { turnNumber }) {
     droneNames,
   };
   return { state, outgoing: createOutgoing(state), orders: {} };
+}
+
+export function sideEffects(incoming$) {
+  return Rx.Observable.interval(consts.BUMBLEBOTS_TICK_TIME)
+    .skip(1)
+    .take(consts.BUMBLEBOTS_TURN_LIMIT)
+    .map(turnNumber => ({ type: consts.BUMBLEBOTS_TICK, turnNumber }));
 }
 
 export function reducer(stateWithMeta, update) {
