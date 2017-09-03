@@ -2,8 +2,6 @@ import _ from 'underscore';
 import Rx from 'rxjs';
 
 import { createHash, createRandomHash } from 'battlebots/hash';
-import { wsObserver, wsObservable } from './sockets';
-
 import {
   AUTHENTICATE_ADD,
   AUTHENTICATE_REMOVE,
@@ -12,7 +10,9 @@ import {
   SOCKET_OPEN,
   SOCKET_CLOSE,
   SOCKET_ERROR,
-} from '../const';
+} from 'battlebots/consts';
+
+import { wsObserver, wsObservable } from './sockets';
 
 const AUTHENTICATE_DB = 'AUTHENTICATE_DB';
 const AUTHENTICATE_TIMEOUT = 10000;
