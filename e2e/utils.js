@@ -36,8 +36,8 @@ export function bundleAndStartMongo(done) {
     this.babel = spawn(
       path.join(__dirname, '..', 'node_modules', '.bin', babelFile),
       [
-        'src',
-        '--out-dir', 'build',
+        'server',
+        '--out-dir', 'build-server',
         '--ignore', 'test.js',
         '--copy-files',
         '--source-maps', 'inline',
@@ -95,7 +95,7 @@ export function restartServerAndClearDb() {
   this.timeout(3500);
   this.server = spawn(
     'node',
-    [path.join(__dirname, '..', 'build', 'index.js')],
+    [path.join(__dirname, '..', 'build-server', 'index.js')],
     {
       env: {
         ...process.env, 

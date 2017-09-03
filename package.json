@@ -7,7 +7,7 @@
   "description": "A server for AI battles!",
   "main": "index.js",
   "scripts": {
-    "start": "babel src --out-dir build --ignore test.js --copy-files --source-maps inline && node build/index.js",
+    "start": "babel server --out-dir build-server --ignore test.js --copy-files --source-maps inline && node build-server/index.js",
     "test": "jest",
     "watchtest": "jest --watch",
     "coverage": "opn coverage/lcov-report/index.html",
@@ -17,10 +17,10 @@
   "jest": {
     "collectCoverage": true,
     "collectCoverageFrom": [
-      "src/**/*.js"
+      "server/**/*.js"
     ],
     "testPathIgnorePatterns": [
-      "<rootDir>/build/",
+      "<rootDir>/build-server/",
       "<rootDir>/e2e/",
       "<rootDir>/node_modules/"
     ],

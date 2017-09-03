@@ -1,4 +1,4 @@
-build
+build-server
 coverage
 node_modules
 *.swp
