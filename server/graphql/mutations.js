@@ -1,6 +1,6 @@
-import { ClientError } from 'battlebots/http/error';
 import connect from 'battlebots/db';
-import games from 'battlebots/games';
+import games from 'battlebots/ws/games';
+import { ClientError } from 'battlebots/error';
 import { createRandomHash } from 'battlebots/hash';
 
 export function registerBot(gameType, name, owner) {

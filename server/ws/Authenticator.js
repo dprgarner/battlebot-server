@@ -10,7 +10,7 @@ import {
   SOCKET_OPEN,
   SOCKET_CLOSE,
   SOCKET_ERROR,
-} from 'battlebots/ws/consts';
+} from './consts';
 
 import { wsObserver, wsObservable } from './sockets';
 

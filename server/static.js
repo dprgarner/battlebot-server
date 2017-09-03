@@ -7,7 +7,7 @@ export default function addStaticRoutes(app) {
   app.get('/', (req, res, next) => {
     // Serve the readme
     fs.readFile(
-      path.resolve(__dirname, '..', '..', 'readme.md'),
+      path.resolve(__dirname, '..', 'readme.md'),
       'utf8',
       (err, readmeTxt) => {
         if (err) return next(err);
@@ -43,7 +43,6 @@ export default function addStaticRoutes(app) {
     res.sendFile(path.resolve(
       __dirname,
       '..',
-      '..',
       'node_modules',
       'github-markdown-css',
       'github-markdown.css'
@@ -51,6 +50,6 @@ export default function addStaticRoutes(app) {
   });
 
   app.get('/favicon.ico', function (req, res) {
-    res.sendFile(path.resolve(__dirname, '..', '..', 'favicon.ico'));
+    res.sendFile(path.resolve(__dirname, '..', 'favicon.ico'));
   });
 }

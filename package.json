@@ -24,6 +24,9 @@
       "<rootDir>/e2e/",
       "<rootDir>/node_modules/"
     ],
+    "moduleNameMapper": {
+      "^battlebots/(.*)$": "<rootDir>/server/$1"
+    },
     "verbose": true
   },
   "author": "David Garner",
