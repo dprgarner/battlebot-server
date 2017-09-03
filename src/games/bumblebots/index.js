@@ -157,14 +157,14 @@ function onDisconnect({ state, orders }, update) {
   return { state, outgoing: {}, orders };
 }
 
-function onTick({ state, orders }, update) {
-  let { board, drones, score, turns } = state;
+function onTick({ state, orders }, { turnNumber }) {
+  let { board, drones, score, turns, spawnDue } = state;
 
   // Get new drone positions
   drones = resolveDroneMoves(board.length, drones, orders);
 
   // If any drones reach a target, remove the drone, add territory to the
-  // board, and increase the score.
+  // board, increase the score, and queue up a new drone after a delay.
   const dronesReachingTarget = resolveTargets(board, drones);
   _.each(dronesReachingTarget, ({ name, droneId, position }) => {
     drones = _.mapObject(drones, (dronesByName) => 
@@ -179,6 +179,13 @@ function onTick({ state, orders }, update) {
       );
       board[position[0]][position[1]] = consts.BUMBLEBOTS_SPACE_WALL;
     });
+    spawnDue = {
+      ...spawnDue,
+      [name]: [
+        ...spawnDue[name],
+        turnNumber + consts.BUMBLEBOTS_SPAWN_DELAY,
+      ],
+    };
   });
 
   // Potentially add a new target (flower).
@@ -191,11 +198,11 @@ function onTick({ state, orders }, update) {
   // Add the turn to the history.
   turns = [
     ...turns,
-    { board, drones, score, turnNumber: state.turnNumber },
+    { board, drones, score, turnNumber },
   ];
 
   // If the game is over, declare a winner.
-  let result = (update.turnNumber === consts.BUMBLEBOTS_TURN_LIMIT) ?
+  let result = (turnNumber === consts.BUMBLEBOTS_TURN_LIMIT) ?
     getResult(state.bots, score, consts.BUMBLEBOTS_FULL_TIME) :
     null;
 
@@ -206,7 +213,8 @@ function onTick({ state, orders }, update) {
     board,
     score,
     result,
-    turnNumber: update.turnNumber,
+    spawnDue,
+    turnNumber,
   };
   return { state, outgoing: createOutgoing(state), orders: {} };
 }

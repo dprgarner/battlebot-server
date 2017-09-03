@@ -9,6 +9,7 @@ import {
   BUMBLEBOTS_TICK,
   BUMBLEBOTS_TURN_LIMIT,
   BUMBLEBOTS_FULL_TIME,
+  BUMBLEBOTS_SPAWN_DELAY,
 } from './consts';
 
 describe('Bumblebots (reducer)', () => {
@@ -155,7 +156,7 @@ describe('Bumblebots (reducer)', () => {
       ]);
     });
 
-    it('modifies the board, drone list, and score on reaching a target', () => {
+    it('modifies the relevant state on reaching a target', () => {
       const state = {
         ...initialState,
         board: parseHexBoard(`
@@ -187,9 +188,14 @@ describe('Bumblebots (reducer)', () => {
           BotOne: 2,
           BotTwo: 4,
         },
+        spawnDue: {
+          BotOne: [],
+          BotTwo: [],
+        },
+        turnNumber: 7,
       };
 
-      const update = { type: BUMBLEBOTS_TICK, turnNumber: 1 };
+      const update = { type: BUMBLEBOTS_TICK, turnNumber: 8 };
       const reduced = bumblebots.reducer({ state, orders: {} }, update);
       expect(reduced.state.drones).toEqual({
         BotOne: {},
@@ -218,6 +224,10 @@ describe('Bumblebots (reducer)', () => {
             # . . x x x . . #
              # # # # # # # #
       `));
+      expect(reduced.state.spawnDue).toEqual({
+        BotOne: [8 + BUMBLEBOTS_SPAWN_DELAY],
+        BotTwo: [],
+      });
     });
 
     it('does not replace a wall with territory', () => {

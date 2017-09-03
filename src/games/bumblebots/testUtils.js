@@ -33,8 +33,14 @@ export const initialState = {
     BotOne: 0,
     BotTwo: 0,
   },
+
   result: null,
   turnNumber: 0,
   turns: [],
+  droneNames: [[], []],
+  spawnDue: {
+    BotOne: [],
+    BotTwo: [],
+  },
   connected: ['BotOne', 'BotTwo'],
 };

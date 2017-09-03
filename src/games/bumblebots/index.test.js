@@ -18,8 +18,8 @@ describe('Bumblebots (general)', () => {
         },
       };
       expect(bumblebots.createOutgoing(state)).toEqual({
-        BotOne: _.omit(state, 'turns', 'connected'),
-        BotTwo: _.omit(state, 'turns', 'connected'),
+        BotOne: _.omit(state, 'turns', 'connected', 'spawnDue', 'droneNames'),
+        BotTwo: _.omit(state, 'turns', 'connected', 'spawnDue', 'droneNames'),
       });
     });
   });
