@@ -1,6 +1,9 @@
 import { install } from 'source-map-support';
 install();
 
+import fs from 'fs';
+import path from 'path';
+
 import express from 'express';
 
 import addStaticRoutes from './static';
@@ -14,7 +17,9 @@ function createHttpServer(port) {
   const app = express();
   app.set('port', port);
 
-  addStaticRoutes(app);
+  app.use(express.static(path.resolve(__dirname, '..', 'build-client')));
+  app.use(express.static(path.resolve(__dirname, '..', 'static')));
+
   app.use('/graphql', graphQLEndpoint);
 
   app.use((err, req, res, next) => {

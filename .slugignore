@@ -1,1 +1,3 @@
 *.test.js
+client
+e2e
