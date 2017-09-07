@@ -21,15 +21,17 @@
   "jest": {
     "collectCoverage": true,
     "collectCoverageFrom": [
-      "server/**/*.js"
+      "{server,client}/**/*.{js,jsx}"
     ],
     "testPathIgnorePatterns": [
+      "<rootDir>/build-client/",
       "<rootDir>/build-server/",
       "<rootDir>/e2e/",
       "<rootDir>/node_modules/"
     ],
     "moduleNameMapper": {
-      "^battlebots/(.*)$": "<rootDir>/server/$1"
+      "^battlebots/(.*)$": "<rootDir>/server/$1",
+      "^battlebots-client/(.*)$": "<rootDir>/client/$1"
     },
     "verbose": true
   },
