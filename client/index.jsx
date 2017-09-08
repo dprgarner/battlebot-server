@@ -1,31 +1,44 @@
 import styled from 'styled-components';
-
-import React from 'react';
+import {
+  ApolloClient,
+  ApolloProvider,
+  createNetworkInterface,
+} from 'react-apollo';
 import { render } from 'react-dom';
-
 import 'normalize.css';
 
+import ArticleBox from 'battlebots-client/ArticleBox';
+import BotList from 'battlebots-client/BotList';
+
 const Body = styled.div`
-  height: calc(100vh - 100px);
-  padding: 50px;
+  height: calc(100vh - 40px);
+  padding: 20px;
 `;
 
-const BigContainer = styled.article`
-  background-color: #e0e0e0;
-  border-radius: 15px;
-  border: 1px solid #888;
-  padding: 30px;
-`;
-
-function App() {
+function Root() {
   return (
     <Body>
-      <BigContainer>
+      <BotList />
+      <ArticleBox>
         <a href="https://github.com/dprgarner/battlebot-server">
           { 'Github page for the Battlebot Server' }
         </a>
-      </BigContainer>
+      </ArticleBox>
     </Body>
+  );
+}
+
+const networkInterface = createNetworkInterface({
+  uri: '/graphql',
+});
+
+const client = new ApolloClient({ networkInterface });
+
+function App() {
+  return (
+    <ApolloProvider client={client}>
+      <Root />
+    </ApolloProvider>
   );
 }
 
