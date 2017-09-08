@@ -2,6 +2,7 @@ import styled from 'styled-components';
 import { gql, graphql } from 'react-apollo';
 
 import ArticleBox from 'battlebots-client/components/ArticleBox';
+import StatusWrapper from 'battlebots-client/components/StatusWrapper';
 import getBotList from './query.gql';
 
 const HeaderText = styled.h3`
@@ -9,16 +10,7 @@ const HeaderText = styled.h3`
   font-size: 20px;
 `;
 
-function BotList(props) {
-  const { loading, error, bots } = props.data;
-
-  if (loading) {
-    return <span>Loading...</span>;
-  }
-  if (error) {
-    return <span>{ error.message }</span>;
-  }
-
+function BotList({ data: { bots } }) {
   return (
     <ArticleBox>
       <HeaderText>Noughts and Crosses bots:</HeaderText>
@@ -33,4 +25,4 @@ function BotList(props) {
   );
 }
 
-export default graphql(getBotList)(BotList);
+export default graphql(getBotList)(StatusWrapper(BotList));
