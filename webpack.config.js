@@ -6,8 +6,10 @@ var CopyWebpackPlugin = require('copy-webpack-plugin');
 var webpack = require('webpack');
 
 module.exports = {
+  context: __dirname,
+
   entry: {
-    app: ['./client'],
+    app: './client',
   },
 
   output: {
