@@ -10,7 +10,7 @@
     "postinstall": "npm run build -s",
     "build": "npm-run-all -p build-server build-client",
     "build-server": "babel server --out-dir build-server --ignore test.js --copy-files --source-maps inline",
-    "build-client": "webpack --display-error-details",
+    "build-client": "webpack",
     "start": "node build-server/index.js",
     "test": "jest",
     "watchtest": "jest --watch",
