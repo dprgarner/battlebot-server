@@ -6,7 +6,6 @@ import path from 'path';
 
 import express from 'express';
 
-import addStaticRoutes from './static';
 import createGameSocketServer from './ws';
 import graphQLEndpoint from './graphql';
 import { ClientError } from './error';
