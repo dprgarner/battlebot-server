@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { gql, graphql } from 'react-apollo';
 
 import ArticleBox from 'battlebots-client/components/ArticleBox';
-import getBotList from './query.graphql';
+import getBotList from './query.gql';
 
 const HeaderText = styled.h3`
   margin: 0;

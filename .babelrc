@@ -4,6 +4,7 @@
     ["module-alias", [
       { "src": "./server", "expose": "battlebots" },
       { "src": "./client", "expose": "battlebots-client" }
-    ]]
+    ]],
+    "transform-decorators"
   ]
 }
