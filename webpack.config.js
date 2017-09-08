@@ -2,7 +2,6 @@ var os = require('os');
 var path = require('path');
 
 var _ = require('underscore');
-var CopyWebpackPlugin = require('copy-webpack-plugin');
 var webpack = require('webpack');
 
 module.exports = {
@@ -35,6 +34,12 @@ module.exports = {
         test: /\.css$/,
         use: ['style-loader', 'css-loader'],
       },
+
+      {
+        test: /\.(graphql|gql)$/,
+        exclude: /node_modules/,
+        loader: 'graphql-tag/loader',
+      },
     ],
   },
 
@@ -42,10 +47,6 @@ module.exports = {
     new webpack.ProvidePlugin({
       React: 'react',
     }),
-
-    new CopyWebpackPlugin([
-      { from: './static/*', to: '[name].[ext]' },
-    ]),
   ],
 
   resolve: {

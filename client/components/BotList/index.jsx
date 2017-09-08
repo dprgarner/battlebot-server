@@ -1,20 +1,12 @@
 import styled from 'styled-components';
 import { gql, graphql } from 'react-apollo';
 
-import ArticleBox from 'battlebots-client/ArticleBox';
+import ArticleBox from 'battlebots-client/components/ArticleBox';
+import getBotList from './query.graphql';
 
 const HeaderText = styled.h3`
   margin: 0;
   font-size: 20px;
-`;
-
-const getBotList = gql`
-  query botList {
-    bots(gameType: NOUGHTS_AND_CROSSES) {
-      name
-      owner
-    }
-  }
 `;
 
 function BotList(props) {

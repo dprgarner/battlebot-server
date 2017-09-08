@@ -1,0 +1,6 @@
+query botList {
+  bots(gameType: NOUGHTS_AND_CROSSES) {
+    name
+    owner
+  }
+}
