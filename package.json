@@ -8,9 +8,9 @@
   "main": "index.js",
   "scripts": {
     "postinstall": "npm run build -s",
-    "build": "npm-run-all build-server build-client",
+    "build": "npm-run-all -p build-server build-client",
     "build-server": "babel server --out-dir build-server --ignore test.js --copy-files --source-maps inline",
-    "build-client": "webpack --config=webpack.config.js",
+    "build-client": "webpack --display-error-details",
     "start": "node build-server/index.js",
     "test": "jest",
     "watchtest": "jest --watch",
