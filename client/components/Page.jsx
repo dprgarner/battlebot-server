@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 import TopNav from 'client/components/TopNav';
 import SidePanel from 'client/components/SidePanel';
-import Main from 'client/components/Main';
+import MainPanel from 'client/components/MainPanel';
 
 const Body = styled.div`
   height: 100vh;
@@ -27,9 +27,9 @@ const SideMainContainer = styled.div`
 
 const SidePanelContainer = styled.aside`
   padding: 10px;
-  border-left: 1px solid #888;
-  border-right: 1px solid #888;
-  background-color: #e0e0e0;
+  border-left: ${props => props.theme.border};
+  border-right: ${props => props.theme.border};
+  background-color: ${props => props.theme.background};
 `;
 
 export default function Page() {
@@ -41,7 +41,7 @@ export default function Page() {
           <SidePanel />
         </SidePanelContainer>
         <MainContainer>
-          <Main />
+          <MainPanel />
         </MainContainer>
       </SideMainContainer>
     </Body>

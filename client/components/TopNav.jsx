@@ -2,8 +2,8 @@ import styled from 'styled-components';
 
 const NavContainer = styled.nav`
   display: block;
-  background-color: #e0e0e0;
-  border: 1px solid #888;
+  background-color: ${props => props.theme.background};
+  border: ${props => props.theme.border};
 `;
 
 const HorizUl = styled.ul`
@@ -12,7 +12,7 @@ const HorizUl = styled.ul`
 `;
 
 const HorizLi = styled.li`
-  border-right: 1px solid #888;
+  border-right: ${props => props.theme.border};
   display: inline-block;
   padding: 10px;
 `;
