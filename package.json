@@ -31,7 +31,7 @@
     ],
     "moduleNameMapper": {
       "^battlebots/(.*)$": "<rootDir>/server/$1",
-      "^battlebots-client/(.*)$": "<rootDir>/client/$1"
+      "^client/(.*)$": "<rootDir>/client/$1"
     },
     "verbose": true
   },

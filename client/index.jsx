@@ -7,7 +7,7 @@ import {
 import { render } from 'react-dom';
 import 'normalize.css';
 
-import Page from 'battlebots-client/components/Page';
+import Page from 'client/components/Page';
 
 const networkInterface = createNetworkInterface({
   uri: '/graphql',
