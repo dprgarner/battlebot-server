@@ -1,0 +1,8 @@
+query allGames {
+  games(gameType: NOUGHTS_AND_CROSSES, filters: { limit: 10 }) {
+    ...on NoughtsAndCrossesGame {
+      id
+      bots { name }
+    }
+  }
+}

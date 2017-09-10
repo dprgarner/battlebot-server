@@ -21,9 +21,16 @@ export default function TopNav(props) {
   return (
     <NavContainer>
       <HorizUl>
-        <HorizLi>Aaaaaaa</HorizLi>
-        <HorizLi>Bbbbbb</HorizLi>
-        <HorizLi>Cccccc</HorizLi>
+        <HorizLi>
+          <a href="https://github.com/dprgarner/battlebot-server">
+            { 'Source code (Github)' }
+          </a>
+        </HorizLi>
+        <HorizLi>
+          <a href="https://travis-ci.org/dprgarner/battlebot-server">
+            { 'Travis' }
+          </a>
+        </HorizLi>
       </HorizUl>
     </NavContainer>
   );

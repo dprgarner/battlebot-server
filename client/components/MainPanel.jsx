@@ -14,12 +14,6 @@ export default function Main() {
       <HeaderText>
         Noughts and Crosses Games
       </HeaderText>
-      <ArticleBox>
-        <a href="https://github.com/dprgarner/battlebot-server">
-          { 'Github page for the Battlebot Server' }
-        </a>
-      </ArticleBox>
-      <Spinner />
     </div>
   );
 }
