@@ -1,11 +1,10 @@
+import Spinner from 'client/components/Spinner';
+
 export default function StatusWrapper(BaseComponent) {
   function StatusWrapped(props) {
     if (props.data.loading) {
-      // TODO spinner
       return (
-        <span>
-          Loading...
-        </span>
+        <Spinner />
       );
     }
 
