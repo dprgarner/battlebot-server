@@ -1,6 +1,7 @@
 import Spinner from 'client/components/Spinner';
+import { getDisplayName } from 'client/utils';
 
-export default function StatusWrapper(BaseComponent) {
+export default function statusWrapper(BaseComponent) {
   function StatusWrapped(props) {
     if (props.data.loading) {
       return (
@@ -19,9 +20,7 @@ export default function StatusWrapper(BaseComponent) {
     return <BaseComponent {...props} />
   }
 
-  StatusWrapped.displayName = `StatusWrapped(${
-    BaseComponent.displayName || BaseComponent.name    
-  })`;
+  StatusWrapped.displayName = `StatusWrapped(${getDisplayName(BaseComponent)})`;
 
   return StatusWrapped;
 }

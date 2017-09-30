@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { gql, graphql } from 'react-apollo';
 
-import StatusWrapper from 'client/components/StatusWrapper';
+import statusWrapper from 'client/components/statusWrapper';
 import getBotList from './query.gql';
 
 const HeaderText = styled.h3`
@@ -21,4 +21,4 @@ function BotList({ data: { bots } }) {
   );
 }
 
-export default graphql(getBotList)(StatusWrapper(BotList));
+export default graphql(getBotList)(statusWrapper(BotList));

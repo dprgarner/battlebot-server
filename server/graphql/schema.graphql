@@ -36,7 +36,7 @@ type Bot {
   # The game type that this bot is registered for.
   gameType: GameType!
 
-  # The creator of the bot. Defaults to "Anonymous".
+  # The creator of the bot.
   owner: String!
 
   dateRegistered: String
