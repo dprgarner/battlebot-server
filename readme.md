@@ -13,7 +13,6 @@ A boilerplate Python Client is located here: https://github.com/dprgarner/battle
 ## Overview
 
 Before playing games, a new bot must first be registered with the server, which involves making a POST request to an API, specifying the name of the bot, the game the bot plays, and its owner. A registered bot is associated to a single type of game. When the request is successful, an automatically-generated password is returned, which should be stored for authenticating the bot in the future. The API is implemented in GraphQL, with the schema [here](https://github.com/dprgarner/battlebot-server/blob/master/src/http/graphql/schema.graphql).
-
 ```bash
 > cat request.json
 {"query": "
@@ -49,7 +48,6 @@ Before playing games, a new bot must first be registered with the server, which 
 ```
 
 To play a game, the bot should connect to the server via a (secure) WebSocket and authenticate itself in its first message to the server. The message should contain the name of the bot, the game that the bot plays, and its password. The message can also optionally contain the name of a contest. If the authentication fails, the server will (attempt to) send `{ "authentication": "failed" }` and then close the connection. If the authentication succeeds, the server will respond with a confirmation message.
-
 ```javascript
 // To the server:
 {
@@ -77,7 +75,6 @@ Once the game ends, the server will attempt to send a final update to both bots 
 ## Contests
 
 To play a bot in a contest, the bot should add the name of a contest to its authentication JSON message:
-
 ```javascript
 // To the server:
 {
@@ -126,7 +123,6 @@ The initial state of a game is of this form:
 ```
 
 A turn dispatched from the client to the server should specify the mark to place and the space to place it in. A space is specified as a two-entry array, with each entry an integer from 0 to 2, specifying the row and column to place the mark in respectively.  The mark should be "O" or "X", depending on whether the client is playing "X"es or "O"s.
-
 ```javascript
 { "mark": "X", "space": [2, 2] }
 ```
@@ -134,7 +130,6 @@ A turn dispatched from the client to the server should specify the mark to place
 The server will respond with an object containing the key `state` with the new state of the game, and `turn` containing the most recently attempted turn. The `turn` object will also include the extra data of the player that made the turn, the time the turn was made, and the boolean `valid` stating whether the turn was valid or not. If the move is invalid, then this update is sent only to the bot which attempted the invalid move, along with the (unchanged) state of the game. If the move is valid, then the turn and new state of the game will be sent to both bots.
 
 The following is an example of a server response, at the end of the game, including the last valid turn:
-
 ```javascript
 {
   "turn": {
@@ -176,8 +171,29 @@ The game processes moves in 'ticks', with each tick time currently set to 250ms.
 
 New flowers will appear in the arena during a game. When a drone reaches a flower, the drone will 'occupy the flower' (leave play), and the tile with the flower will be converted into a wall. Any empty spaces adjacent to the claimed flower will become safe zones for the bot. Only drones belonging to that bot can move through the safe zone. A new drone will spawn in the starting positions to replace this drone after 5 turns, provided that there is an empty spawn point. No flowers will appear in the first 15 ticks or the last 15 ticks of the game, and flowers will not spawn in a bot's safe zone or in walls.
 
-The game board is hexagonal. This is represented in the state object as a 2d array, where the position in the 2d array corresponds to the position in the hexagonal arena relative to axes parallel to the top left corner. In the array representation, `0` refers to empty space, `1` refers to walls, `2` to flowers, `5` to safe areas for the first player, and `6` to safe areas for the second player. An example board with a string-formatted representation is shown below, with `#` for walls, `.` for empty space, `£` for flowers, and `+`/`x` for safe zones. (The JavaScript unit tests and the Python client use the same convention for rendering the board as a string.)
+The game board is hexagonal. This is represented in the state object as a 2d array of integers, where the position in the 2d array corresponds to the position in the hexagonal arena relative to axes parallel to the top left corner. In the array representation, `0` refers to empty space, `1` refers to walls, `2` to flowers, `5` to safe areas for the first player, and `6` to safe areas for the second player. An example of a board represented as an array is included below.
+```javascript
+// Array representation:
+[
+  [1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 0, 0, 5, 5, 5, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1],
+  [1, 0, 0, 1, 2, 0, 0, 0, 1, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+  [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 1],
+  [ , 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+  [ ,  , 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [ ,  ,  , 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1],
+  [ ,  ,  ,  , 1, 2, 0, 1, 1, 0, 1, 1, 0, 0, 1],
+  [ ,  ,  ,  ,  , 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [ ,  ,  ,  ,  ,  , 1, 0, 0, 6, 6, 6, 0, 0, 1],
+  [ ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1],
+]
+```
 
+As this is perhaps easier to visualise in a string-formatted representation, the JavaScript unit tests and the Python client render the hexagonal board as a string, with `#` for walls, `.` for empty space, `£` for flowers, and `+`/`x` for safe zones. The above board example, converted into the string representation, is included below.
 ```javascript
 // String representation:
 `
@@ -197,24 +213,6 @@ The game board is hexagonal. This is represented in the state object as a 2d arr
             #   .   .   x   x   x   .   .   #
               #   #   #   #   #   #   #   #
 `
-// Array representation:
-[
-  [1, 1, 1, 1, 1, 1, 1, 1],
-  [1, 0, 0, 5, 5, 5, 0, 0, 1],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1],
-  [1, 0, 0, 1, 2, 0, 0, 0, 1, 0, 0, 1],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1],
-  [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 1],
-  [ , 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1],
-  [ ,  , 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [ ,  ,  , 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1],
-  [ ,  ,  ,  , 1, 2, 0, 1, 1, 0, 1, 1, 0, 0, 1],
-  [ ,  ,  ,  ,  , 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [ ,  ,  ,  ,  ,  , 1, 0, 0, 6, 6, 6, 0, 0, 1],
-  [ ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1],
-]
 ```
 
 The drones and the board are returned separately in the state object. When sending orders to the server, the order is expected to be a JSON object with a single key `orders` containing the names of the drones as keys and a string specifying the direction to move. The six possible strings specifying direction are `UL`, `UR`, `R`, `DR`, `DL`, or `L`. (The drone will stay in place if no string is specified, or if the string is not recognised).
