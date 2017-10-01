@@ -1,15 +1,15 @@
 import styled from 'styled-components';
 import { gql, graphql } from 'react-apollo';
 
-import statusWrapper from 'client/components/statusWrapper';
-import getBotList from './query.gql';
+import withStatus from 'client/components/withStatus';
+import GET_BOT_LIST from './query.gql';
 
 const HeaderText = styled.h3`
   margin: 0;
   font-size: 20px;
 `;
 
-function BotList({ data: { bots } }) {
+function BotList({ data: { bots = []} }) {
   return (
     <ul>
       { bots.map(({ name, owner }) => (
@@ -21,4 +21,4 @@ function BotList({ data: { bots } }) {
   );
 }
 
-export default graphql(getBotList)(statusWrapper(BotList));
+export default graphql(GET_BOT_LIST)(withStatus(BotList));

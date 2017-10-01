@@ -11,25 +11,28 @@ const Body = styled.div`
   font-family: Arial;
 `;
 
-const MainContainer = styled.div`
+let MainContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow-y: scroll;
-  width: 100%;
+  margin-left: 222px;
 `;
 
 const SideMainContainer = styled.div`
   display: flex;
   flex-direction: row;
   height: 100%;
+  margin-top: 40px;
 `;
 
 const SidePanelContainer = styled.aside`
-  padding: 10px;
+  background-color: ${props => props.theme.background};
   border-left: ${props => props.theme.border};
   border-right: ${props => props.theme.border};
-  background-color: ${props => props.theme.background};
+  height: 100%;
+  padding: 10px;
+  position: fixed;
+  width: 200px;
 `;
 
 export default function Page() {
@@ -40,6 +43,7 @@ export default function Page() {
         <SidePanelContainer>
           <SidePanel />
         </SidePanelContainer>
+
         <MainContainer>
           <MainBody />
         </MainContainer>

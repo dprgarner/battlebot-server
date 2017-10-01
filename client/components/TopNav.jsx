@@ -4,6 +4,9 @@ const NavContainer = styled.nav`
   display: block;
   background-color: ${props => props.theme.background};
   border: ${props => props.theme.border};
+  height: 38px;
+  position: fixed;
+  width: 100%;
 `;
 
 const HorizUl = styled.ul`

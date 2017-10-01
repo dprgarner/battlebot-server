@@ -1,9 +1,18 @@
-query allGames {
-  games(gameType: NOUGHTS_AND_CROSSES, filters: { limit: 10 }) {
+query allGames($offset: Int) {
+  games(
+    gameType: NOUGHTS_AND_CROSSES,
+    filters: {
+      limit: 24,
+      offset: $offset,
+    },
+  ) {
     ...on NoughtsAndCrossesGame {
       id
       bots { name }
-      victor { name }
+      result {
+        victor { name }
+      }
+      startTime
     }
   }
 }

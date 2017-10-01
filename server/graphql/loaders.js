@@ -75,20 +75,17 @@ function GamesLoader() {
         delete gameQuery.anyBots;
       }
 
-      if (gameQuery.limit) return connect(db => db
+      return connect(db => {
+        let query = db
         .collection('games')
-        .find(_.omit(gameQuery, 'limit'))
-        .sort({ startTime: -1 })
-        .limit(gameQuery.limit)
-        .toArray()
-      );
+        .find(_.omit(gameQuery, 'limit', 'offset'))
+        .sort({ startTime: -1 });
 
-      return connect(db => db
-        .collection('games')
-        .find(gameQuery)
-        .sort({ startTime: -1 })
-        .toArray()
-      );
+        if (gameQuery.limit) query = query.limit(gameQuery.limit);
+        if (gameQuery.offset) query = query.skip(gameQuery.offset);
+
+        return query.toArray();
+      });
     })),
     { cacheKeyFn: stringify }
   );

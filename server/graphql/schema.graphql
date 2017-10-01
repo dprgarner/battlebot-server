@@ -92,6 +92,9 @@ input GameInput {
   # The maximum number of results to return.
   limit: Int
 
+  # The offset of the first game to return.
+  offset: Int
+
   # Filter to games in this contest.
   contest: ID
 
