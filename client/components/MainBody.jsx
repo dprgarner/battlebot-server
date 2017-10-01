@@ -2,6 +2,7 @@ import styled from 'styled-components';
 
 import ArticleBox from 'client/components/ArticleBox';
 import Spinner from 'client/components/Spinner';
+import GameList from 'client/components/GameList';
 
 const HeaderText = styled.h1`
   font-size: 30px;
@@ -14,6 +15,7 @@ export default function Main() {
       <HeaderText>
         Noughts and Crosses Games
       </HeaderText>
+      <GameList />
     </div>
   );
 }

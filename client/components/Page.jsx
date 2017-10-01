@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 import TopNav from 'client/components/TopNav';
 import SidePanel from 'client/components/SidePanel';
-import MainPanel from 'client/components/MainPanel';
+import MainBody from 'client/components/MainBody';
 
 const Body = styled.div`
   height: 100vh;
@@ -41,7 +41,7 @@ export default function Page() {
           <SidePanel />
         </SidePanelContainer>
         <MainContainer>
-          <MainPanel />
+          <MainBody />
         </MainContainer>
       </SideMainContainer>
     </Body>

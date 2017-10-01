@@ -1,4 +1,4 @@
-query BotList {
+query allBots {
   bots(gameType: NOUGHTS_AND_CROSSES) {
     name
     owner

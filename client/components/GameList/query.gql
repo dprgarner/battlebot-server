@@ -3,6 +3,7 @@ query allGames {
     ...on NoughtsAndCrossesGame {
       id
       bots { name }
+      victor { name }
     }
   }
 }
