@@ -68,13 +68,11 @@ To play a game, the bot should connect to the server via a (secure) WebSocket an
 
 Once a client has successfully authenticated itself, the server will then either immediately match up the bot with an available connected bot, or wait until another bot connects, or disconnect after a few minutes.
 
-Once a game starts, the server will send an update to both bots containing the initial state of the game in the key `state`, including the starting game board and the next player to move. The structure of this object is specific to the particular game, but it will always include the list `bots` of the bots playing the game, a list `waitingFor` of bots that the server is expecting a move from, and a boolean `complete` stating whether the game is still in progress. For a two-player abstract strategy game, `waitingFor` will only ever contain a single bot.
+Once a game starts, the server will send an update to both bots containing the initial state of the game in the key `state`, including the starting game board and the next player to move. The structure of this object is specific to the particular game.
 
-When it is a bot's turn to move, the bot should send a turn to the server over the WebSocket. The format of the turn will be specific to the game, but it should always be valid JSON, and should not need to reference the game name or the bot name (as this is already known by the server).
+When it is a bot's turn to move, the bot should send a turn to the server over the WebSocket. The format of the turn will be specific to the game, but it should always be valid JSON, and should not need to reference the game name or the bot name, as these are already known by the server. The server will then reply with an object containing the state of the game.
 
-The server will then reply with an object containing the keys `state` and `turn`. The `turn` will be the most recently attempted turn, but will also include the extra data of the player that made the turn `player`, the `time` the turn was made, and the boolean `valid` stating whether the turn was valid or not. If the move is invalid, then this update is sent only to the bot which attempted the invalid move, along with the (unchanged) state of the game. If the move is valid, then the turn and new state of the game will be sent to both bots.
-
-Once the game ends, the server will attempt to send a final update to both bots containing the final state of the board, and then close both connections. The final state of the board will contain the object `result`, with the key `victor`set to the ID of the winning bot or null if the game ends in a draw, and the key `reason` stating how the game was decided. A game can be completed normally, but can also end if a bot is disqualified by disconnecting early, making three invalid turns during the course of the game, or taking longer than five seconds to take a turn.
+Once the game ends, the server will attempt to send a final update to both bots containing the final state of the board, and then close both connections. The final state of the board will contain the object `result`, with the key `victor` set to the ID of the winning bot or null if the game ends in a draw, and the key `reason` stating how the game was decided. A game can be completed normally, but can also end if a bot is disqualified by disconnecting early, making three invalid turns during the course of the game, or taking longer than five seconds to take a turn.
 
 ## Contests
 
@@ -133,8 +131,9 @@ A turn dispatched from the client to the server should specify the mark to place
 { "mark": "X", "space": [2, 2] }
 ```
 
-The following is an example of a server response, at the end of the game,
-including the last valid turn:
+The server will respond with an object containing the key `state` with the new state of the game, and `turn` containing the most recently attempted turn. The `turn` object will also include the extra data of the player that made the turn, the time the turn was made, and the boolean `valid` stating whether the turn was valid or not. If the move is invalid, then this update is sent only to the bot which attempted the invalid move, along with the (unchanged) state of the game. If the move is valid, then the turn and new state of the game will be sent to both bots.
+
+The following is an example of a server response, at the end of the game, including the last valid turn:
 
 ```javascript
 {
@@ -169,6 +168,142 @@ including the last valid turn:
 }
 ```
 
+### Bumblebots
+
+Bumblebots is a turn-based real-time strategy game with a Bumblebee theme. Your drones have to navigate a hexagonal arena and stake out the randomly-appearing flowers before the other bot's drones reach them. Once a drone reaches a flower, the drone claims the flower and vanishes, and the area around the flower becomes impassible to the opponent's drones. The bot which claims the most flowers during the game is the winner.
+
+The game processes moves in 'ticks', with each tick time currently set to 250ms. When the game starts and after each subsequent tick, the server will send an update to the connected bots containing the current positions of the drones and the current layout of the board. The connected bots can send orders to the server at any time, which will be resolved simultaneously at the next tick time. A bot can choose to move any or all of its drones within a single tick. If a received drone order is missing, or invalid, or involves collisions with walls or other drones, then the order is ignored, and the drone does not move. There is no penalty for missing or invalid orders. The game ends after a set number of ticks, currently set to 100.
+
+New flowers will appear in the arena during a game. When a drone reaches a flower, the drone will 'occupy the flower' (leave play), and the tile with the flower will be converted into a wall. Any empty spaces adjacent to the claimed flower will become safe zones for the bot. Only drones belonging to that bot can move through the safe zone. A new drone will spawn in the starting positions to replace this drone after 5 turns, provided that there is an empty spawn point. No flowers will appear in the first 15 ticks or the last 15 ticks of the game, and flowers will not spawn in a bot's safe zone or in walls.
+
+The game board is hexagonal. This is represented in the state object as a 2d array, where the position in the 2d array corresponds to the position in the hexagonal arena relative to axes parallel to the top left corner. In the array representation, `0` refers to empty space, `1` refers to walls, `2` to flowers, `5` to safe areas for the first player, and `6` to safe areas for the second player. An example board with a string-formatted representation is shown below, with `#` for walls, `.` for empty space, `£` for flowers, and `+`/`x` for safe zones. (The JavaScript unit tests and the Python client use the same convention for rendering the board as a string.)
+
+```javascript
+// String representation:
+`
+              #   #   #   #   #   #   #   #
+            #   .   .   +   +   +   .   .   #
+          #   .   .   .   .   .   .   .   .   #
+        #   .   .   #   #   .   #   #   .   .   #
+      #   .   .   #   £   .   .   .   #   .   .   #
+    #   .   .   .   .   .   .   .   .   .   .   .   #
+  #   .   .   #   .   .   .   .   .   .   #   .   .   #
+#   .   .   #   .   .   .   .   .   .   .   #   £   .   #
+  #   .   .   #   .   .   .   .   .   .   #   .   .   #
+    #   .   .   .   .   .   .   .   .   .   .   .   #
+      #   .   .   #   .   .   .   .   #   .   .   #
+        #   £   .   #   #   .   #   #   .   .   #
+          #   .   .   .   .   .   .   .   .   #
+            #   .   .   x   x   x   .   .   #
+              #   #   #   #   #   #   #   #
+`
+// Array representation:
+[
+  [1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 0, 0, 5, 5, 5, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1],
+  [1, 0, 0, 1, 2, 0, 0, 0, 1, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+  [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 1],
+  [ , 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+  [ ,  , 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [ ,  ,  , 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1],
+  [ ,  ,  ,  , 1, 2, 0, 1, 1, 0, 1, 1, 0, 0, 1],
+  [ ,  ,  ,  ,  , 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [ ,  ,  ,  ,  ,  , 1, 0, 0, 6, 6, 6, 0, 0, 1],
+  [ ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1],
+]
+```
+
+The drones and the board are returned separately in the state object. When sending orders to the server, the order is expected to be a JSON object with a single key `orders` containing the names of the drones as keys and a string specifying the direction to move. The six possible strings specifying direction are `UL`, `UR`, `R`, `DR`, `DL`, or `L`. (The drone will stay in place if no string is specified, or if the string is not recognised).
+
+Drone moves are processed simultaneously at tick time - there is no advantage to submitting a turn before the opponent. If any drones attempt to move into a wall or an opponent's safe zone, then the move is cancelled. If any two drones attempt to move into the same space, then the move is cancelled. It is still possible, however, for drones to move in a line, or even a circle, if all drone moves in the procession are unblocked.
+
+An example update sent from the server:
+```javascript
+{
+  "result": null,
+  "turnNumber": 0,
+  "score": {
+    "Bumble1": 0,
+    "Bumble2": 0
+  },
+  "spawnPoints": {
+    "Bumble1": [
+      [1, 3],
+      [1, 4],
+      [1, 5]
+    ],
+    "Bumble2": [
+      [13, 11],
+      [13, 10],
+      [13, 9]
+    ]
+  },
+  "drones": {
+    "Bumble1": {
+      "SensitiveIvy": {
+        "position": [1, 5]
+      },
+      "PowerfulWilla": {
+        "position": [1, 4]
+      },
+      "AgreeableLeah": {
+        "position": [1, 3]
+      }
+    },
+    "Bumble2": {
+      "FoolishEsther": {
+        "position": [13, 9]
+      },
+      "MoodyClaudia": {
+        "position": [13, 10]
+      },
+      "CantankerousBetsy": {
+        "position": [13, 11]
+      }
+    }
+  },
+  "territory": {
+    "Bumble1": 5,
+    "Bumble2": 6
+  },
+  "board": [
+    [1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 5, 5, 5, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1],
+    [1, 0, 0, 1, 2, 0, 0, 0, 1, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 ],
+    [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1 ],
+    [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 1 ],
+    [null, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1 ],
+    [null, null, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 ],
+    [null, null, null, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1 ],
+    [null, null, null, null, 1, 2, 0, 1, 1, 0, 1, 1, 0, 0, 1 ],
+    [null, null, null, null, null, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 ],
+    [null, null, null, null, null, null, 1, 0, 0, 6, 6, 6, 0, 0, 1 ],
+    [null, null, null, null, null, null, null, 1, 1, 1, 1, 1, 1, 1, 1]
+  ],
+  "maxDrones": 3,
+  "bots": [
+    "Bumble1",
+    "Bumble2"
+  ]
+}
+```
+
+An example update sent to the server from the bot `Bumble`:
+```javascript
+{
+  "SensitiveIvy": "L",
+  "PowerfulWilla": "DR",
+  "AgreeableLeah": "UR"
+}
+```
+
 ## Development
 
 The WebSocket server is implemented in JavaScript with [RxJS 5](https://github.com/ReactiveX/rxjs), an implementation of the [Reactive Extensions](http://reactivex.io/) design pattern/framework. The HTTP site is written with [Express](https://expressjs.com/).
@@ -194,7 +329,7 @@ The function `reducer : (Acc, Update) -> Acc` takes in the previous accumulated 
 
 The function `sideEffects : Event$ -> Update$ ` is a map on RxJS streams. It takes in the output of the reducer AND any new updates from the clients. It should return a stream of side-effect events to be consumed by the reducer (e.g. time-dependent events).
 
-The function `getDbRecord : { gameId, startTime, contest, state } -> Obj` takes in the data of the game, and should specify how to save the game to the database.
+The function `getDbRecord : { gameId, startTime, contest, state } -> Obj` takes in the data of the game, and should return a MongoDB-indexable representation of the game to be saved to the database.
 
 ### Tests
 
@@ -223,7 +358,7 @@ Bumblebots:
   * Existing walls
   * Number of drones
 
-- Things that will make the game much better:
+- Things that will make the game better:
   * Record when a bot does not get a move in
   * Record when a bot makes an invalid move
   * Record when a bot makes a valid move but gets blocked by another bot
