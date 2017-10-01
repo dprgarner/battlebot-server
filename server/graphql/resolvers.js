@@ -11,7 +11,7 @@ const baseGameResolver = {
 
   result: ({ gameType, result }) => (result && _.extend({ gameType }, result)),
 
-  contest: ({ gameType, contest }) => ({ gameType, contest }),
+  contest: ({ gameType, contest }) => (contest && { gameType, contest }),
 };
 
 const resolvers = {

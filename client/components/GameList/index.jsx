@@ -24,11 +24,6 @@ function GameList({ data: { games = [] } }) {
             <h4>
               { moment(startTime).format('DD/MM/YYYY HH:mm:ss') }
             </h4>
-            { contest ? (
-              <div>
-                { `Contest: ${contest.name}` }
-              </div>
-            ) : null }
             <div>
               { victor && bots[0].name === victor.name ? (
                 <b>
@@ -42,6 +37,11 @@ function GameList({ data: { games = [] } }) {
                 </b> 
               ) : bots[1].name }
             </div>
+            { contest ? (
+              <p>
+                { `Contest: ${contest.name}` }
+              </p>
+            ) : null }
           </GameCard>
         </Grid.Item>
       )) }

@@ -13,6 +13,9 @@ query allGames($offset: Int) {
         victor { name }
       }
       startTime
+      contest {
+        name
+      }
     }
   }
 }
