@@ -165,13 +165,13 @@ The following is an example of a server response, at the end of the game, includ
 
 ### Bumblebots
 
-Bumblebots is a turn-based real-time strategy game with a Bumblebee theme. Your drones have to navigate a hexagonal arena and stake out the randomly-appearing flowers before the other bot's drones reach them. Once a drone reaches a flower, the drone claims the flower and vanishes, and the area around the flower becomes impassible to the opponent's drones. The bot which claims the most flowers during the game is the winner.
+Bumblebots is a turn-based real-time strategy game with a Bumblebee theme. Your drones have to navigate a hexagonal arena and stake out the randomly-appearing flowers before the other bot's drones reach them. Once a drone reaches a flower, the drone claims the flower and is removed from play, and the area around the flower becomes impassible to the opponent's drones. The bot which claims the most flowers during the game is the winner.
 
-The game processes moves in 'ticks', with each tick time currently set to 250ms. When the game starts and after each subsequent tick, the server will send an update to the connected bots containing the current positions of the drones and the current layout of the board. The connected bots can send orders to the server at any time, which will be resolved simultaneously at the next tick time. A bot can choose to move any or all of its drones within a single tick. If a received drone order is missing, or invalid, or involves collisions with walls or other drones, then the order is ignored, and the drone does not move. There is no penalty for missing or invalid orders. The game ends after a set number of ticks, currently set to 100.
+The game is played in 'ticks', with each tick time currently set to 250ms. When the game starts and after each subsequent tick, the server will send an update to the connected bots containing the current positions of the drones and the current layout of the board. The connected bots can send orders to the server at any time, which will be resolved simultaneously with the other bot's moves at the next tick time. A bot can choose to move any or all of its drones within a single tick. If a received drone order is missing, or invalid, or involves collisions with walls or other drones, then the order is ignored, and the drone does not move. There is no penalty for missing or invalid orders. The game ends after a set number of ticks, currently set to 100.
 
-New flowers will appear in the arena during a game. When a drone reaches a flower, the drone will 'occupy the flower' (leave play), and the tile with the flower will be converted into a wall. Any empty spaces adjacent to the claimed flower will become safe zones for the bot. Only drones belonging to that bot can move through the safe zone. A new drone will spawn in the starting positions to replace this drone after 5 turns, provided that there is an empty spawn point. No flowers will appear in the first 15 ticks or the last 15 ticks of the game, and flowers will not spawn in a bot's safe zone or in walls.
+New flowers will appear in the arena during a game. When a drone reaches a flower, the drone will occupy the flower (leave play), and the tile with the flower will be converted into a wall. Any empty spaces adjacent to the claimed flower will become safe zones for the bot. Only drones controlled by that bot can move through the safe zone. A new drone will spawn in the starting positions to replace this drone after 5 turns, provided that there is an empty spawn point. No flowers will appear in the first 15 ticks or the last 15 ticks of the game, and flowers will not spawn in a safe zone or in a wall.
 
-The game board is hexagonal. This is represented in the state object as a 2d array of integers, where the position in the 2d array corresponds to the position in the hexagonal arena relative to axes parallel to the top left corner. In the array representation, `0` refers to empty space, `1` refers to walls, `2` to flowers, `5` to safe areas for the first player, and `6` to safe areas for the second player. An example of a board represented as an array is included below.
+The game board is hexagonal. This is represented in the state object as a 2d array of integers, where the position in the 2d array corresponds to the position in the hexagonal arena relative to axes parallel to the top left corner (see the string representation below). In the array representation, `0` refers to empty space, `1` refers to walls, `2` to flowers, `5` to safe areas for the first player, and `6` to safe areas for the second player. The positions of the drones are returned separately from the board array. An example of a board represented as an array is included below.
 ```javascript
 // Array representation:
 [
@@ -193,7 +193,7 @@ The game board is hexagonal. This is represented in the state object as a 2d arr
 ]
 ```
 
-As this is perhaps easier to visualise in a string-formatted representation, the JavaScript unit tests and the Python client render the hexagonal board as a string, with `#` for walls, `.` for empty space, `£` for flowers, and `+`/`x` for safe zones. The above board example, converted into the string representation, is included below.
+As this is perhaps easier to visualise in a string-formatted representation, the JavaScript unit tests and the Python client use a string representation of the board, with `#` for walls, `.` for empty space, `£` for flowers, and `+`/`x` for safe zones. The above example board, converted into the string representation, is included below.
 ```javascript
 // String representation:
 `
@@ -215,11 +215,11 @@ As this is perhaps easier to visualise in a string-formatted representation, the
 `
 ```
 
-The drones and the board are returned separately in the state object. When sending orders to the server, the order is expected to be a JSON object with a single key `orders` containing the names of the drones as keys and a string specifying the direction to move. The six possible strings specifying direction are `UL`, `UR`, `R`, `DR`, `DL`, or `L`. (The drone will stay in place if no string is specified, or if the string is not recognised).
+When sending orders to the server, the order is expected to be a JSON object with a single key `orders` containing the names of the drones as keys and a string specifying the direction to move. The six possible strings specifying direction are `UL`, `UR`, `R`, `DR`, `DL`, or `L`. (The drone will stay in place if no string is specified, or if the string order is not recognised).
 
-Drone moves are processed simultaneously at tick time - there is no advantage to submitting a turn before the opponent. If any drones attempt to move into a wall or an opponent's safe zone, then the move is cancelled. If any two drones attempt to move into the same space, then the move is cancelled. It is still possible, however, for drones to move in a line, or even a circle, if all drone moves in the procession are unblocked.
+Drone moves are processed simultaneously at tick time - there is no advantage in submitting a turn before the opponent. If any drones attempt to move into a wall or an opponent's safe zone, then the move is cancelled. If any two drones attempt to move into the same space, then the move is cancelled. It is still possible, however, for drones to move in a line, or even a circle, if all drone moves in the procession are unblocked.
 
-An example update sent from the server:
+The following is an example update sent from the server at the start of a game:
 ```javascript
 {
   "result": null,
@@ -293,12 +293,14 @@ An example update sent from the server:
 }
 ```
 
-An example update sent to the server from the bot `Bumble`:
+The following is an example set of orders sent to the server:
 ```javascript
 {
-  "SensitiveIvy": "L",
-  "PowerfulWilla": "DR",
-  "AgreeableLeah": "UR"
+  "orders": {
+    "SensitiveIvy": "L",
+    "PowerfulWilla": "DR",
+    "AgreeableLeah": "UR"
+  }
 }
 ```
 
