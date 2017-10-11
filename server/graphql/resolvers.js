@@ -52,6 +52,7 @@ const resolvers = {
     X: (marks, _, { Bot }) => Bot.load(
       { gameType: 'NOUGHTS_AND_CROSSES', name: marks.X }
     ),
+
     O: (marks, _, { Bot }) => Bot.load(
       { gameType: 'NOUGHTS_AND_CROSSES', name: marks.O }
     ),

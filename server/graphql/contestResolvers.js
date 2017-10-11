@@ -42,51 +42,52 @@ function balanced(bots) {
   return sortedBots;
 }
 
+const SCORING = {
+  PUNITIVE: punishLosses,
+  BALANCED: balanced,
+  AMBITIOUS: rewardWins,
+};
+
 export default {
   Contest: {
     name: ({ contest }) => contest,
+
     games: ({ contest, game }, { filters }, { Games }) => (
       Games.load(_.extend({ contest, game }, _.omit(filters, 'contest')))
     ),
-    rankings: ({ gameType, contest }, { method }, { Games }) => (
-      Games.load({ contest, gameType }).then(gameDocuments => {
-        const bots = {};
 
-        gameDocuments.forEach(game => {
-          game.bots.forEach(bot => {
-            if (!bots[bot]) bots[bot] = {
-              gameType,
-              contest,
-              bot,
-              wins: 0,
-              losses: 0,
-              draws: 0,
-            };
-            if (game.result.victor === bot) {
-              bots[bot].wins += 1;
-            } else if (!game.result.victor) {
-              bots[bot].draws += 1;
-            } else {
-              bots[bot].losses += 1;
-            }
-          });
+    rankings: async ({ gameType, contest }, { method = 'AMBITIOUS' }, { Games }) => {
+      const gameDocuments = await Games.load({ contest, gameType });
+      const bots = {};
+
+      gameDocuments.forEach(game => {
+        game.bots.forEach(bot => {
+          if (!bots[bot]) bots[bot] = {
+            gameType,
+            contest,
+            bot,
+            wins: 0,
+            losses: 0,
+            draws: 0,
+          };
+          if (game.result.victor === bot) {
+            bots[bot].wins += 1;
+          } else if (!game.result.victor) {
+            bots[bot].draws += 1;
+          } else {
+            bots[bot].losses += 1;
+          }
         });
+      });
 
-        switch (method) {
-          case 'punitive':
-            return punishLosses(bots);
-          case 'balanced':
-            return balanced(bots);
-          case 'ambitious':
-          default:
-            return rewardWins(bots);
-        };
-      })
-    ),
+      return SCORING[method](bots);
+    }
   },
 
   ContestRanking: {
-    bot: ({ gameType, bot }, _args, { Bot }) => Bot.load({ gameType, name: bot }),
+    bot: ({ gameType, bot }, _args, { Bot }) => (
+      Bot.load({ gameType, name: bot })
+    ),
 
     played: ({ gameType, contest, bot }, _args, { Games }) => (
       Games.load({ gameType, contest }).then(

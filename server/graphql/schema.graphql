@@ -59,16 +59,7 @@ type Contest {
 
   # The ranking of the bots in this contest. Accepts an argument
   # for how to score the bots.
-  rankings(
-    # The way to rank the scores. 
-    # The default method "ambitious" assigns 3 points for a win and 1 for a 
-    # draw, which favours bots which prioritise winning.
-    # The method "punitive" assigns 3 points for a win and 2 for a draw,
-    # which favours bots which prioritise avoiding losing.
-    # The method "balanced" assigns 2 points for a win and 1 for a draw,
-    # which favours winning and avoiding losing equally.
-    method: String
-  ): [ContestRanking]
+  rankings(method: RankingMethod): [ContestRanking]
 }
 
 type ContestRanking {
@@ -85,6 +76,21 @@ type ContestRanking {
 
   # The score in the current ranking method.
   score: Int!
+}
+
+# The method of generating the scores in contests.
+enum RankingMethod {
+  # "Ambitious" assigns 3 points for a win and 1 for a draw, which favours
+  # bots which prioritise winning.
+  AMBITIOUS
+
+  # "Balanced" assigns 2 points for a win and 1 for a draw, which
+  # favours winning and avoiding losing equally.
+  BALANCED
+
+  # "Punitive" assigns 3 points for a win and 2 for a draw, which favours
+  # bots which prioritise avoiding losing.
+  PUNITIVE
 }
 
 # An input type for performing a query on a collection of games.
